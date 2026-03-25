@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="wlBody" x1="14" y1="48" x2="96" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffe08e"/>
+      <stop offset="1" stop-color="#f28a1a"/>
+    </linearGradient>
+    <linearGradient id="wlBeam" x1="48" y1="64" x2="120" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9dd5ff"/>
+      <stop offset="1" stop-color="#eef9ff"/>
+    </linearGradient>
+  </defs>
+  <rect x="14" y="48" width="74" height="32" rx="10" fill="url(#wlBody)"/>
+  <rect x="20" y="56" width="56" height="16" rx="7" fill="#254588"/>
+  <rect x="30" y="80" width="22" height="24" rx="8" fill="#6f4ec6"/>
+  <path d="M87 56h22a8 8 0 0 1 0 16H87z" fill="#ff6f7d"/>
+  <rect x="52" y="62" width="66" height="4" rx="2" fill="url(#wlBeam)"/>
+  <rect x="104" y="60" width="14" height="8" rx="4" fill="#ffedc8"/>
+</svg>

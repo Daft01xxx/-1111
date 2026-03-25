@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="mm-shell" x1="5" y1="6" x2="27" y2="27" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9af2d3"/>
+      <stop offset="1" stop-color="#53ba95"/>
+    </linearGradient>
+    <linearGradient id="mm-core" x1="6" y1="8" x2="26" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1a2c3f"/>
+      <stop offset="1" stop-color="#111b29"/>
+    </linearGradient>
+  </defs>
+  <circle cx="16" cy="16" r="14" fill="#131926"/>
+  <circle cx="16" cy="16" r="13" fill="none" stroke="url(#mm-shell)" stroke-width="1.4" opacity=".82"/>
+  <rect x="6" y="9" width="20" height="14" rx="4.3" fill="url(#mm-core)" stroke="url(#mm-shell)" stroke-width="1.4"/>
+  <path d="M10 13v6M13.8 12.2v7.6M17.6 13v6M21.4 12.2v7.6" stroke="#d7fff0" stroke-width="1.7" stroke-linecap="round"/>
+  <circle cx="24.5" cy="10.2" r="0.9" fill="#9cf2d5"/>
+</svg>

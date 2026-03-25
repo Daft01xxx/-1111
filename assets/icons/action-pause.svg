@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="p-ring" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffe0aa"/>
+      <stop offset="100%" stop-color="#ee8616"/>
+    </linearGradient>
+    <linearGradient id="p-bars" x1="20" y1="18" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fff8e8"/>
+      <stop offset="100%" stop-color="#f3d4a0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="24" fill="#131926"/>
+  <circle cx="32" cy="32" r="22" fill="none" stroke="url(#p-ring)" stroke-width="2.8"/>
+  <circle cx="32" cy="32" r="18.3" fill="#211b19" stroke="rgba(255,214,149,0.26)" stroke-width="1.2"/>
+  <rect x="22.3" y="18.4" width="8.4" height="27.2" rx="4.2" fill="url(#p-bars)"/>
+  <rect x="33.3" y="18.4" width="8.4" height="27.2" rx="4.2" fill="url(#p-bars)"/>
+  <circle cx="20.5" cy="20.5" r="1.1" fill="#ffd08a"/>
+</svg>

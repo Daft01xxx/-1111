@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="wcBlade" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(86 67) rotate(90) scale(22)">
+      <stop offset="0" stop-color="#fff4cf"/>
+      <stop offset=".7" stop-color="#ffd053"/>
+      <stop offset="1" stop-color="#f28a1a"/>
+    </radialGradient>
+  </defs>
+  <rect x="14" y="56" width="62" height="22" rx="9" fill="#2e3d64"/>
+  <rect x="24" y="78" width="22" height="24" rx="8" fill="#b65917"/>
+  <circle cx="86" cy="67" r="22" fill="url(#wcBlade)"/>
+  <circle cx="86" cy="67" r="13.5" fill="#ff769e"/>
+  <circle cx="86" cy="67" r="6.2" fill="#fff8ea"/>
+  <g fill="#ffe8b5">
+    <path d="M85 43h3v8h-3z"/>
+    <path d="M85 83h3v8h-3z"/>
+    <path d="M104 66h8v3h-8z"/>
+    <path d="M60 66h8v3h-8z"/>
+    <path d="m98 51 6-5 2 2-5 6z"/>
+    <path d="m74 79-6 5-2-2 5-6z"/>
+  </g>
+</svg>

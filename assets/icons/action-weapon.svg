@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="w-shell" x1="9" y1="12" x2="55" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffe6b8"/>
+      <stop offset="100%" stop-color="#f39a2c"/>
+    </linearGradient>
+    <linearGradient id="w-core" x1="17" y1="24" x2="39" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fff7e7"/>
+      <stop offset="100%" stop-color="#ffd89a"/>
+    </linearGradient>
+    <linearGradient id="w-grip" x1="22" y1="36" x2="31" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5b3925"/>
+      <stop offset="100%" stop-color="#2f1d12"/>
+    </linearGradient>
+  </defs>
+  <rect x="7" y="7" width="50" height="50" rx="15" fill="#131926"/>
+  <rect x="9" y="9" width="46" height="46" rx="13" fill="none" stroke="rgba(241,194,110,0.42)" stroke-width="1.5"/>
+  <path d="M13 24h28l10 6-10 6H13z" fill="url(#w-shell)" stroke="#f4b866" stroke-width="1"/>
+  <rect x="18" y="26" width="13.5" height="8" rx="4" fill="url(#w-core)"/>
+  <path d="M23 36h8v11.5l-4 4-4-4z" fill="url(#w-grip)"/>
+  <circle cx="47.5" cy="30" r="3.8" fill="#ffd67c"/>
+  <circle cx="47.5" cy="30" r="1.6" fill="#fff4dd"/>
+  <path d="M52.5 30h4.5" stroke="#ffd67c" stroke-width="2.4" stroke-linecap="round"/>
+</svg>

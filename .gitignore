@@ -1,0 +1,8 @@
+.vercel
+output/
+test-results/
+server.log
+server.err.log
+.server.pid
+.DS_Store
+Thumbs.db

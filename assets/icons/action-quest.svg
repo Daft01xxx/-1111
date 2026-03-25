@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="q-shell" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffe1ad"/>
+      <stop offset="100%" stop-color="#ef8a1a"/>
+    </linearGradient>
+    <linearGradient id="q-core" x1="10" y1="10" x2="54" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1d2940"/>
+      <stop offset="1%" stop-color="#11192a"/>
+      <stop offset="100%" stop-color="#11192a"/>
+    </linearGradient>
+    <linearGradient id="q-star" x1="22" y1="20" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#b2ffe1"/>
+      <stop offset="100%" stop-color="#58be9a"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="52" height="52" rx="16" fill="#131926"/>
+  <rect x="8" y="8" width="48" height="48" rx="14" fill="url(#q-core)" stroke="url(#q-shell)" stroke-width="2"/>
+  <circle cx="32" cy="32" r="14.3" fill="#1f2128" stroke="rgba(255,220,170,0.28)" stroke-width="1.2"/>
+  <path d="M32 20.5 35.4 29 44.6 32 35.4 35.1 32 43.5 28.7 35.1 19.4 32 28.7 29z" fill="url(#q-star)" stroke="#8ce1c1" stroke-width="1"/>
+  <circle cx="32" cy="32" r="2.7" fill="#dbfff2"/>
+</svg>

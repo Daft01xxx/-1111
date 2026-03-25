@@ -1,0 +1,929 @@
+Original prompt: Rewrite the NaPiwas battle game from scratch in a new folder and host it on localhost.
+
+- 2026-03-14: Started a clean-room rewrite in `napiwas-game-from-scratch`.
+- Constraint: do not reuse the old game code; only use the gameplay brief and visual direction as requirements.
+- Planned stack: static HTML + CSS + vanilla JS canvas game with its own localhost server.
+- Must-have before finish: menu, playable battle loop, auto-fire, boss phase, touch controls, pause, game over, local high score, `render_game_to_text`, `advanceTime(ms)`, localhost hosting, Playwright validation.
+- Implemented from scratch: `index.html`, `styles.css`, `game.js`, `server.mjs`, localhost start/stop scripts.
+- Implemented gameplay core: start menu, battle loop, auto-fire, movement slider, left/right controls, weapon cycling, pickups, hazards, score, lives, boss spawning logic, pause, quest overlay, game over, high score persistence.
+- Implemented automation hooks: `window.render_game_to_text()` and `window.advanceTime(ms)`.
+- Localhost status: scratch build is served from `http://127.0.0.1:8080`.
+- Validation: Playwright client now works with `text=PLAY` against the scratch build after fixing overlay pointer interception.
+- Validation: latest states in `output/web-game/state-0.json` and `state-2.json` confirm the new build enters `playing` mode, has a live player, bullets, score/lives/weapon state, and no dependency on the old codebase.
+- Validation: `8080` was reclaimed from the previous non-scratch deploy and now points at the rewrite process only.
+- 2026-03-14: Upgraded the scratch build UI and rendering instead of replacing the gameplay loop.
+- Added: richer HUD wiring for active buffs, run intel, session best, next boss status, live arena chips, and boss roster highlighting.
+- Added: fullscreen support from header/menu plus `F` hotkey and fullscreen UI state sync.
+- Added: higher-detail canvas art for player coin-cat, reward icons, pickups, hazards, weapon shots, and boss textures/patterns.
+- Quality: reduced per-frame UI churn for quest list, weapon dock, nav state, buffs, and boss roster via small UI caches.
+- Validation: `node --check game.js` passes after the render/UI refactor.
+- Validation: Playwright long-run scenario using `playwright-actions-long.json` now reaches live combat and a `gameover` state with active targets on screen; see `output/web-game/state-3.json` and `output/web-game/shot-3.png`.
+- Residual risk: boss-phase visuals were upgraded and the boss loop is still intact, but this pass did not do a long automated validation all the way to the 500-score boss threshold.
+- 2026-03-14: Added another polish pass for menu systems, pause/gameover intel, audio toggling, and stronger game-feel.
+- Added: header/menu sound toggle, difficulty descriptor, menu status strip, arsenal floor preview, richer pause summary, and richer game-over stats.
+- Added: boss intro banner and camera shake hooks to make starts, hits, pickups, and boss events feel more physical.
+- Validation: menu-only Playwright run confirms `mode=menu` with `audioEnabled=true`, and a targeted `#sound-button` click flips the state to `audioEnabled=false`.
+- Validation: refreshed long-run Playwright scenario still reaches live combat and `gameover` with the new UI/state fields present; latest proof is `output/web-game/state-3.json` plus `output/web-game/shot-3.png`.
+- Residual risk: the new menu/pause overlays were validated through DOM/state integration and click paths, but this pass still did not run a very long boss-threshold automation to verify banner/shake behavior during an actual spawned boss.
+- 2026-03-14: Added a second polish pass focused on menu depth, game feel, and run feedback.
+- Added: header/menu sound toggle, richer menu status strip, arsenal preview cards, pause stats, and expanded game-over summary.
+- Added: boss intro banner, light camera shake on hits/events, and run counters for pickups, kills, and bosses defeated.
+- Validation: server restarted cleanly on `http://127.0.0.1:8080` after the second UI/game-feel pass.
+- Validation: Playwright menu-only run confirms the page stays in `mode:"menu"` and the new sound toggle updates `audioEnabled:false` in `output/web-game/state-0.json`.
+- Validation: Playwright long-run scenario still reaches combat/game-over after the new HUD/menu additions; see updated `output/web-game/state-3.json` and `output/web-game/shot-3.png`.
+- Residual risk: the battle/client screenshots mainly cover the arena canvas; I did not get a separate full-page screenshot of the HTML overlays because a standalone local `playwright` package is not installed in this project.
+- 2026-03-14: Added a second polish pass focused on functionality and game feel.
+- Added: sound toggle in header/menu, menu status strip, expanded pause/game-over stats, and a menu arsenal preview grid.
+- Added: camera shake, boss intro banner, richer run counters (`pickupsCollected`, `targetsDestroyed`, `bossesDefeated`), and these counters are now exposed through `render_game_to_text()`.
+- Added: game state output now includes `audioEnabled`, `gameOverReason`, pickup/kill/boss counters for more reliable automation checks.
+- Validation: `node --check game.js` still passes after the second pass.
+- Validation: new Playwright menu capture confirms `mode: menu` in `output/web-game/state-0.json`.
+- Validation: new long-run Playwright capture confirms live combat plus upgraded state output in `output/web-game/state-3.json`, including pickups/target counters and `gameOverReason`.
+- 2026-03-14: Added another gameplay/UI pass centered on streak depth and combat readability.
+- Added: `comboCount`, `comboMultiplier`, `comboTimerMs`, and derived `dangerLevel` to the run state plus `render_game_to_text()`.
+- Added: run-intel HUD stats for Combo and Danger, combo ribbon rendering in the arena, and combo chips in the active-buffs area.
+- Added: menu-level aim-assist toggle (`trackDefault`) so the next run can start with tracking on/off from the menu itself.
+- Tuning: combat score rewards now route through `rewardCombatScore()` for normal target and farm kills, so streaks can amplify scoring without touching boss rewards.
+- Visuals: pickups now have an extra halo/sparkle pass and targets have a light bobbing motion to make the arena feel less flat.
+- Validation: `node --check game.js` passes after the combo/danger pass.
+- Validation: fresh long-run Playwright capture on `http://127.0.0.1:8080` succeeded; see `output/web-game/state-0.json` and `output/web-game/state-3.json` for the richer state payload, plus `output/web-game/shot-3.png` for the updated arena visuals.
+- 2026-03-14: Added a persistence + boss-readability + menu-depth pass.
+- Added: persistent local settings for difficulty, God Mode, aim-assist default, and sound so menu choices survive reloads.
+- Added: persistent local pilot-record stats in the menu (`runs`, `bosses`, `targets`, `best combo`) to make the shell feel more like a real product instead of a one-off run launcher.
+- Added: richer boss encounter card in the menu with live pattern/intel text and stronger visual treatment for the boss preview badge.
+- Visuals: boss bullets now inherit their boss pattern and render as more specific silhouettes (`notes`, `chains`, `strings`, `spread`, `rapid`) instead of mostly generic circles.
+- Visuals: added a danger vignette so high-pressure states read faster in the arena even before the player scans HUD values.
+- Validation: `node --check game.js` passes after the persistence/menu/bullet pass.
+- Validation: long Playwright battle run using `#menu-start` again reaches boss combat and game-over with fresh proof in `output/web-game/state-0.json`, `output/web-game/state-3.json`, and `output/web-game/shot-3.png`.
+- Validation: separate Playwright reload check confirmed settings persistence by toggling menu controls, reloading, and verifying `difficulty`, `trackDefault`, and `audioEnabled` remained changed; settings were then restored to defaults (`3 / on / on`) to leave the local environment clean.
+- 2026-03-14: Added another detail + functional UI pass focused on live callouts and richer entity art.
+- Added: `combat feed` in the lower shell to surface the latest run events (`RUN LIVE`, hits, unlocks, boss alerts, shield states, skill activations, loadout swaps).
+- Added: `tactical brief` cards in the menu for live weapon intel and next-boss pattern guidance.
+- Visuals: targets now have stronger species-specific detailing (extra rings, cheek/tail/fur accents, richer Tetris tile highlights) and pickups gained orbiting particles, crate labeling, stronger highlights, and clearer lower tags.
+- Tuning: direct weapon swaps from the dock now also announce themselves through the feed so the shell and gameplay stay in sync.
+- Validation: `node --check game.js` still passes after the combat-feed/tactical-brief pass.
+- Validation: fresh long-run Playwright capture succeeded on `http://127.0.0.1:8080`; new `render_game_to_text()` output now includes `eventFeed`, and latest arena proof is in `output/web-game/state-3.json` plus `output/web-game/shot-3.png`.
+- Validation: separate full-page Playwright screenshots confirmed the new HTML shell/UI layers, including `combat feed` and `tactical brief`, in `output/web-game/menu-ui.png` and `output/web-game/battle-ui.png`.
+- 2026-03-14: Added a tactical-readability pass for the live HUD and boss identity.
+- Added: two more live `Run intel` scanners in the HUD (`Threats` and `Drop scan`) driven from real entities/bullets instead of static text.
+- Added: richer `boss pod` detail line that now surfaces the active or upcoming boss pattern directly in the arena shell.
+- Added: a denser `weapon dock` presentation with badge/meta sublabels so weapon state is understandable at a glance even before tapping.
+- Visuals: bosses now project pattern-specific telegraphs into the arena and gained extra silhouette accessories (laser visor, homing arcs, chain halo, note symbols, string keys, spread fins, etc.).
+- Validation: `node --check game.js` passes after the scanner/dock/boss-telegraph pass.
+- Validation: fresh long-run Playwright capture reached boss combat again; updated proof is in `output/web-game/state-3.json`, where `threatSummary` and `nearestPickup` are now exposed alongside the richer `eventFeed`.
+- Validation: refreshed full-page screenshots in `output/web-game/menu-ui.png` and `output/web-game/battle-ui.png` confirm the new scanner cards, richer dock, and arena boss pod detail are visible in the actual shell UI.
+- 2026-03-14: Added another menu + summary + character-detail pass.
+- Added: `Reward Codex` section in the menu so core pickups are documented as part of the product shell, not just discovered in combat.
+- Added: `Run Rank` card in the game-over overlay using a score/boss/lives/pickups/combo-based grade (`Bronze` -> `Mythic`).
+- Added: `runRank` to `render_game_to_text()` for better automation/state inspection of game-over quality tiers.
+- Visuals: the player coin-cat now gets weapon-specific accessories, so changing loadouts affects the hero silhouette as well as shot behavior.
+- Validation: `node --check game.js` still passes after the codex/rank/player-accessory pass.
+- Validation: fresh long-run Playwright capture succeeded on `http://127.0.0.1:8080`; latest state proof is in `output/web-game/state-3.json`, which now includes `runRank`.
+- Validation: full-page screenshots in `output/web-game/menu-ui.png` and `output/web-game/gameover-ui.png` confirm the new Reward Codex and Run Rank UI blocks are visible in the real DOM overlays.
+- 2026-03-14: Reworked the product shell for true phone + desktop fit and changed the encounter loop to match the new brief.
+- Gameplay: added meter scoring (`1 meter = 1 second`), local `bestMeters`, beer-only score targets, positive-only pickups (`heart`, `shield`, `super laser`, weapon crates), enemy shooter spawns, and denser geometric wall hazards. Spikes and harmful pickups are no longer spawned.
+- Gameplay: bosses now always queue a weapon drop on defeat via `pickBossWeaponDrop()` and weapon pickups now auto-equip while also upgrading the player ship silhouette.
+- UI/UX: removed the fake mobile status bar, added RU/EN toggles in header/menu, surfaced `Score / Meters / Record / Lives` in the HUD, and rebuilt the shell layout so the page stays within the viewport without body scrolling on both mobile and desktop.
+- UI/UX: mobile shell was tightened again after screenshot review because the arena initially collapsed; final mobile CSS keeps the arena visible and the bottom nav/control zone on-screen together.
+- Validation: `node --check game.js` passes after the gameplay/localization/layout pass.
+- Validation: Playwright client long-run still enters real combat and records fresh state in `output/web-game/state-2.json`.
+- Validation: custom Playwright full-page captures confirm viewport fit with no body scroll on both targets: `output/web-game/mobile-battle-full.png`, `output/web-game/desktop-battle-full.png`, `output/web-game/mobile-snapshot.json`, `output/web-game/desktop-snapshot.json`.
+- Residual risk: the guaranteed boss weapon drop is implemented in code but this pass did not run a long enough automated survival scenario to visually confirm a full boss kill and post-boss pickup on screen.
+- 2026-03-14: Restructured desktop layout and expanded hangar customization so the arena no longer renders as a squeezed mini-panel on wide screens.
+- UI/UX: moved the desktop `header` and `HUD` into the right rail, letting the arena span the full left column across the main viewport height; fresh snapshots now show a much larger desktop arena (`676x789` instead of the earlier compressed `274x320`).
+- UI/UX: added a real `Hangar` menu state via bottom navigation focus, plus a persistent `Loadout` selector that cycles the preferred starting weapon alongside ship skin and weapon finish customization.
+- Gameplay: starting runs now honor the selected preferred weapon, while keeping weapon-drops, boss-drop guarantees, and in-run switching intact; player weapons were buffed again and mini-enemy + meteor pressure increased.
+- Visuals: enemy cats received stronger variant-specific detailing and bosses gained richer texture overlays plus boss-specific eye coloring, improving silhouette readability in combat.
+- Validation: `node --check game.js` passes after the desktop/hangar/balance pass.
+- Validation: fresh Playwright desktop/mobile snapshots on `2026-03-14` confirm `bodyScrollHeight === innerHeight` and zero overflow nodes in `output/web-game/desktop-home-2026-03-14.json`, `output/web-game/desktop-battle-2026-03-14.json`, `output/web-game/mobile-home-2026-03-14.json`, and `output/web-game/mobile-battle-2026-03-14.json`.
+- 2026-03-14: Fixed a broken modal/navigation flow that made the game feel “stuck” and prevented recovery from panels.
+- Root cause: closing `Quest` could incorrectly send the game back to `menu` whenever score was still `0`, and the menu overlay then physically intercepted bottom-nav clicks, making the shell look frozen.
+- Fix: introduced explicit modal return flow with `menuReturnMode` / `questReturnMode`, so `Quest` always returns to the correct previous mode and the menu can resume the active run instead of trapping the user.
+- Fix: added top-right `X` close buttons for `menu`, `pause`, `quest`, and `game over`, plus backdrop-click close for `pause`, `quest`, and `game over`.
+- Fix: `menu-start` now becomes `RESUME RUN` when the menu was opened over an active session; `navPlay` also resumes the live run instead of unexpectedly starting over in that case.
+- Fix: reduced the menu overlay footprint so bottom navigation remains reachable while the menu is open, and the menu card now scrolls internally if needed instead of blocking the whole shell.
+- Validation: targeted Playwright interaction sweep confirmed `start -> quest -> close -> play`, `nav home -> hangar -> close X -> resume`, and `pause -> backdrop click -> resume` all work with no console/page errors.
+- 2026-03-14: Added one more modal-hardening pass after user-reported “game won't start / panel won't close” feedback.
+- Fix: the menu close `X` is now always visible; on the first screen it acts as an immediate start, and during an active run it resumes the live session.
+- Fix: backdrop-close logic for overlays was hardened and revalidated, including `pause` close on desktop and mobile.
+- Validation: direct Playwright checks now confirm `initial X -> playing`, `nav home -> hangar -> X -> resume`, `quest -> X/Esc -> playing`, and `pause -> backdrop -> playing` on localhost.
+- Validation: direct Playwright checks against the deployed Vercel URL confirm `menu-start`, `Home/Hangar`, `RESUME RUN`, `Quest`, and `Pause` flows all enter the correct modes with no console/page errors.
+- 2026-03-14: Ran another bug-polish pass after fresh complaints about startup failures, stuck panels, unreadable text, and desktop/mobile layout regressions.
+- Root cause fix: removed a real render-time bug where pickup drawing referenced `boss.eye` outside any boss scope, causing intermittent `ReferenceError: boss is not defined` in localhost and Vercel browser runs.
+- Desktop fit: rebuilt the large-screen control layout so `slider`, `BOOST`, `QUEST`, and the entire weapon dock all remain inside the viewport at `1440x900` with no body scroll.
+- Desktop fit: moved the combat controls into their own dedicated desktop row and kept the arena large, avoiding the earlier failure mode where `QUEST` sat below the window and clicks appeared “broken”.
+- Mobile fit: added a dedicated compact arena-overlay treatment so the player/boss pods remain readable instead of collapsing into vertical letter stacks; mobile viewport still stays scroll-free.
+- Menu polish: widened hangar controls and desktop menu action sizing so labels no longer break into one-letter columns.
+- Validation: `node --check game.js` passes after the runtime/layout fixes.
+- Validation: repeated Playwright client runs succeeded after each meaningful change; see `output/web-game/client-polish-4`, `output/web-game/client-polish-5`, and `output/web-game/client-polish-6`.
+- Validation: final desktop/mobile DOM checks show zero page errors, zero body scroll, and zero overflow nodes in `output/web-game/local-desktop-overflow-final.json`, `output/web-game/local-desktop-polish-check-5.json`, and `output/web-game/local-mobile-polish-check-4.json`.
+- Validation: targeted end-to-end desktop interaction sweep now passes again for `initial X -> playing`, `pause -> backdrop -> resume`, `home -> hangar -> X -> resume`, and `quest -> X -> resume`; see `output/web-game/final-flow-check.json`.
+- 2026-03-15: Implemented new product shell flow `Play / Inventory / Wallet / Token`, TON-gated premium skins, and hardened runtime null-safety after a broken UI mismatch.
+- Root cause fix: `index.html` had fewer HUD nodes than `game.js` expected; `renderCombatFeed()` tried to write to missing `#combat-feed` and crashed startup. Added defensive guards in `syncWeaponDock`, `ensureQuestList`, `renderActiveBuffs`, `renderCombatFeed`, `populateBossRoster`, and `setOverlayVisibility`.
+- Navigation fix: removed old dead listeners (`navHome/navQuest/navHangar`) and wired new tabs (`nav-play`, `nav-inventory`, `nav-wallet`, `nav-token`) so tab clicks now switch menu sections through `menuView`.
+- Wallet flow: added live handlers for top/menu wallet controls (`wallet-connect-button`, `wallet-connect-menu`, `wallet-disconnect-menu`, `wallet-refresh`, `menu-wallet-connect`) with persistent local state (`walletConnected`, `walletAddress`, `napiwasBalance`).
+- Economy: beer mug currency rewards are now emitted on target kills and explosive splash kills via `rewardBeerCurrency()` (rarity-based reward table retained).
+- State introspection: expanded `render_game_to_text()` payload with `menuView`, `beerBalance`, wallet connection fields, and token balance for automation checks.
+- Layout/UI: added/updated CSS for compact top bar (`HULL + BEER`), new inventory skin grid, wallet/token sections, beer-pour visual, and new focus modes (`focus-inventory`, `focus-wallet`, `focus-token`).
+- Layout/UI: replaced old desktop split that squeezed arena; desktop now keeps arena full-width in the main flow, with tighter HUD/controls sizing to avoid clipping.
+- Layout/UI: mobile tightening pass hides heavy live panels and rebalances top/header/control sizes so the arena keeps meaningful vertical space without body scrolling.
+- Validation: `node --check game.js` passes after the refactor.
+- Validation: Playwright client long-run passes after fixes with no runtime exception (`output/web-game/iter-wallet-nav-2/state-0.json` + `shot-0.png`).
+- Validation: tab switching checks pass and state reflects correct menu focus:
+  - `output/web-game/nav-wallet-check/state-0.json` => `"menuView":"wallet"`
+  - `output/web-game/nav-token-check/state-0.json` => `"menuView":"token"`
+  - `output/web-game/nav-inventory-check/state-0.json` => `"menuView":"inventory"`
+- Validation: TON connect action check passes through menu button and updates persistent state:
+  - `output/web-game/wallet-connect-action-check/state-0.json` => `"walletConnected":true`, `"napiwasBalance":20000`
+- Residual risk: Playwright client captures canvas-first screenshots; full-page visual proof for every new menu panel still needs an additional dedicated full-page Playwright run from an environment with direct `playwright` package resolution in-project.
+- 2026-03-15 (follow-up): corrected tab focus CSS so `inventory/wallet/token` each hide non-relevant sections (`tactical brief`, `reward codex`, and opposite tab panes), then re-ran smoke check `output/web-game/nav-token-check-2/state-0.json` successfully.
+- 2026-03-15 (ops): hardened `start-localhost.ps1` to resolve and use absolute `node.exe` path before `Start-Process`; quick host smoke check now returns HTTP `200` and clean stop via `stop-localhost.ps1`.
+- 2026-03-15 (polish): focused pass on arena visibility, overlay close reliability, and post-boss intensity feedback.
+- UI/UX fit: expanded visible battle area in both desktop and mobile by compacting top HUD/controls and raising arena minimums; desktop arena now uses `320px` visible stage height at `1440x900`, mobile uses `329px` at `390x844` in latest run.
+- Overlay hardening: removed rounded-hit dead zones for `pause/quest/gameover` overlays and added capture-phase fallback close on `.phone-shell` when tapping outside `.overlay-card`, so backdrop close no longer fails on corner taps.
+- Audio/game feel: upgraded music profile engine with per-profile tempo (`menu/battle/boss/epic/bossEpic`) so post-boss state sounds faster and more intense.
+- Combat feedback: boss defeat event now includes current speed multiplier in the status feed; run speed escalation remains `x1.25` per boss defeat with frenzy window preserved.
+- Visuals: refined meteor rendering to purple-gray textured style (closer to requested reference), and upgraded `heart` + `shield` pickup rendering with richer gradients/highlights.
+- Validation: `node --check game.js` passes after all edits.
+- Validation: custom Playwright desktop+mobile flow (`output/web-game/dev-smoke-2026-03-15/report.json`) passes with:
+  - `afterStartMode: playing`
+  - `afterPauseBackdropMode: playing`
+  - `afterQuestBackdropMode: playing`
+  - `errors: []` in both viewports
+  - `bodyScroll == inner` for both viewports (no page scrolling).
+- Validation screenshots: `output/web-game/dev-smoke-2026-03-15/desktop-battle.png` and `mobile-battle.png` confirm larger in-view arena and clean text containment.
+
+- 2026-03-15 (stability + content): fixed a hard syntax regression, shipped real soundtrack loops, connected sprite pipeline to concrete image files, and rebalanced layout/spawns for the latest user complaints.
+- Root-cause fix: repaired `game.js` syntax break in `audio.silenceMusic()` that blocked runtime startup (`missing ) after argument list`), then revalidated `node --check game.js`.
+- Gameplay balance: hostile-cap system now enforces `max 2` live enemies before first boss (`ENEMY_CAP_START=2`) and grows only after boss kills; boss HP base is now doubled again (`*4` vs original baseline).
+- UI fit: removed HUD empty-space stretch by flattening boss controls into a compact row, raised arena height (`desktop min-height 430px`, `mobile clamp(350px,46dvh,460px)`), and tightened controls without introducing page scroll.
+- Audio: generated and wired five looped WAV soundtrack tracks in `assets/audio/` (`menu/battle/epic/boss/boss-epic`) for profile-based music transitions instead of repetitive beeps.
+- Visual assets: added transparent SVG sprites for requested entities and pickups (`meteor/heart/shield/drone/raider` + weapon icon set), and hooked them into canvas + HUD icon rendering.
+- TON wallet hardening: added `tonconnect-manifest.json`, switched startup connection state to SDK-driven restore (`restoreConnection()`), and removed trust in stale persisted `walletConnected` flag.
+- Validation:
+  - `node --check game.js` passes.
+  - Playwright game loop smoke passes (`output/web-game/post-fix-smoke/*`, no runtime exceptions).
+  - Full-page desktop/mobile checks confirm no body scroll and larger arena:
+    - `output/web-game/layout-check-2026-03-15-b/desktop.json` (`arenaStage.height = 430`)
+    - `output/web-game/layout-check-2026-03-15-b/mobile.json` (`arenaStage.height = 388.23`)
+  - Targeted spawn assertion via Playwright eval shows `maxEnemiesBeforeBoss = 2`.
+  - Overlay interaction regression checks (`menu close`, `pause backdrop`, `quest close`) all return to `mode=playing` with `errorCount=0`.
+- Deployment:
+  - New Vercel preview deployed: `https://napiwas-game-from-scratch-kyzg1gfvu-daft01xxxs-projects.vercel.app`
+- 2026-03-15 (mobile short-phone fit): fixed the real small-screen failure mode where the arena collapsed on ~`375x667` phones.
+- Root cause: the general mobile layout still reserved too much height for the HUD, control card, and nav, so the remaining arena row shrank to about `260px` on short devices even though body scrolling was already gone.
+- Fix: added dedicated `max-width: 760px` + `max-height` compact breakpoints that slim the top shell, compress the HUD into a short metrics/boss strip, reduce nav/control heights, and keep the arena row at `300px+` on short phones.
+- UI cleanup: replaced broken mojibake weapon dock glyphs with stable two-letter abbreviations (`BR`, `FM`, `LZ`, etc.) so the dock no longer shows corrupted symbols on mobile.
+- Validation:
+  - `node --check game.js` passes.
+  - Playwright `375x667` check now reports `arenaHeight = 343.4`, `controlsHeight = 144`, `hudHeight = 67.6`, `bodyScroll = false`.
+  - Playwright `390x844` check still reports `arenaHeight = 437.6` with `bodyScroll = false`.
+  - Browser console messages: `0` errors / `0` warnings.
+- 2026-03-15 (joystick + visuals polish): fixed the real mobile stick control defect and cleaned up redundant movement UI.
+- Root cause: the game loop called `syncSliderFromPlayer()` every frame, and that function zeroed `stickX/stickY`, so a held stick effectively died unless the pointer kept moving; it also visually pinned the knob to the player's position instead of centering at rest.
+- Fix: joystick now recenters when idle, keeps live input while held, and gets a small response boost; desktop hides the joystick block entirely and the shell no longer shows left/right/up buttons.
+- Visual polish: arena backdrop now uses a cleaner dark gradient with subtle dust/aura layers, and boss rendering was redrawn as a sharper black/red burst silhouette with cleaner eyes and mouth.
+- Validation:
+  - `node --check game.js` passes.
+  - Playwright mobile hold test moved the player from `{x:158,y:278}` to `{x:316,y:193}` under one held pointer (`dx=158`, `dy=-85`) with no extra pointermove spam.
+  - Playwright desktop check confirms `sliderDisplay=none`, `moveLeftDisplay=none`, `moveUpDisplay=none`, `moveRightDisplay=none`, `arenaHeight=529.17`, `bodyScroll=false`.
+  - Boss screenshot refreshed in `output/desktop-boss-polish.png`; mobile shell screenshot refreshed in `output/mobile-ui-joystick-polish.png`.
+  - Browser console messages: `0` errors / `0` warnings.
+- 2026-03-15 (combat readability + smooth steering): removed the last arena clutter and added a real fire-queue upgrade.
+- Root cause: even after the earlier joystick fix, steering still felt abrupt because the ship position snapped directly from raw input deltas, and the arena renderer still painted grid/text layers that fought against readability.
+- Fix:
+  - arena canvas now renders as pure black with no grid lines;
+  - removed in-canvas item labels, boss intro banner, combo ribbon, and floating text rendering;
+  - added smoothed joystick target interpolation plus ship velocity steering (`velocityX/velocityY`) so held input produces progressive movement instead of stepwise jumps;
+  - added `volleyUpgrade` pickup with spawn weight, codex metadata, pickup handling, cadence scaling, and extra-bullet patterns across weapons;
+  - restyled the mobile control card and joystick into a darker cockpit / handbrake visual;
+  - ship skins now recolor wing panels instead of only the core hull.
+- Validation:
+  - `node --check game.js` passes.
+  - Playwright canvas pixel sample returned `mid=[0,0,0,255]` and `corner=[0,0,0,255]`, proving the arena background is solid black.
+  - Playwright deterministic joystick sample advanced player positions smoothly across six samples:
+    - `{x:198,y:332}` -> `{x:216,y:318}` -> `{x:238,y:302}` -> `{x:261,y:285}` -> `{x:284,y:268}` -> `{x:307,y:251}`.
+  - Playwright long-run spawn check found `volleyUpgrade` in the live entity list at tick `126`.
+  - Mobile and desktop screenshots confirm: no text labels inside the arena canvas, black playfield, darker cockpit controls, and updated boss silhouette.
+- 2026-03-15 (arena fairness + page-shell pass): fixed unfair passive damage, expanded arena usage, improved weapon readability, and added giant planet obstacles.
+- Root cause: the run still subtracted life when score targets touched the ship or escaped off-screen, which matched the user report of “HP just melts while standing”; separately, the inner arena frame still reserved space and the menu overlay still behaved like a centered modal card.
+- Fix:
+  - removed life loss from `target` collision and bottom escape;
+  - kept meters tied to real survival seconds instead of run-speed multiplier;
+  - enlarged the ship and made joystick release decay smoothly instead of snapping to zero;
+  - slowed and enlarged meteors, while decoupling hazard motion from post-boss speed scaling;
+  - removed the inner arena frame/border and stretched the canvas to the full available stage;
+  - turned nav content pages into full-page shell views by removing menu modal width constraints;
+  - added slow-rotating static planets that block meteors;
+  - fixed weapon-dock icon refresh so sprite badges appear after asset load.
+- Validation:
+  - `node --check game.js` passes.
+  - Playwright desktop eval: `arenaStage 936x529`, `arenaFrame 935x529`, `mode=playing`, `menuVisible=false`.
+  - Playwright mobile eval (`390x844`): `arenaStage 372x468`, `arenaFrame 372x467`, joystick `78x78`, no body scroll, movement buttons hidden.
+  - Deterministic joystick sample: `{151,344}` -> `{161,337}` -> `{202,310}` -> `{256,274}` -> `{302,230}`.
+  - Deterministic planet check: first planet spawned at `{x:213,y:92}`, remained at the same coordinates after additional time steps, and lives stayed `100 -> 100`.
+  - Updated screenshots saved to `output/web-game/mobile-battle-2026-03-15-c.png` and `output/web-game/desktop-battle-2026-03-15-c.png`.
+  - Browser console messages: `0` errors / `0` warnings.
+- 2026-03-15 (texture sharpness + co-op visibility + mobile shell cleanup): removed the planet experiment, sharpened the arena renderer, tightened the phone shell, and added a real shared lobby endpoint.
+- Root-cause fixes:
+  - blur came from a low-resolution `360x420` canvas being stretched by CSS across much larger arena frames, so even SVG-based art looked soft;
+  - co-op lobby visibility originally had no shared backend at all, so hosts existed only in one page state;
+  - the first unload hardening used `pagehide`, which closed a host lobby when switching to a second tab.
+- Fix:
+  - moved canvas rendering to device-pixel-aware backing resolution with explicit transform reset per frame;
+  - removed runtime planets, restored earlier meteor radii, and slightly reduced the ship silhouette;
+  - improved boss/meteor/ship paint passes and made weapon HUD/dock icons use larger sprite fills;
+  - moved meters to a white top-of-arena counter and changed pacing to `1 meter = 0.05 second`;
+  - removed the extra mobile control-card chrome and enlarged the top shell action buttons;
+  - added `/api/coop` plus shared `coop-store.cjs`, client polling/heartbeat, and co-op list rendering with map metadata;
+  - removed generic menu action buttons from the co-op page;
+  - added separation rules so beer/pickups/meteors do not spawn on top of each other.
+- 2026-03-16 (boss replacement + phone-first nav polish): removed the visible co-op shell surface, replaced the boss art, simplified the touch controls, and added sticker-style menu art.
+- Fix:
+  - removed `TEAM` from bottom navigation and deleted the co-op page markup while leaving backend files untouched;
+  - replaced the old boss render with a sprite-based black-star monster (`assets/sprites/boss-void.svg`) and matching menu preview art;
+  - reduced movement controls to a minimal joystick plus relevant play actions only;
+  - added button press feedback, tab-transition animation, and hid unrelated menu footer actions on wallet/token pages;
+  - enlarged beer mug targets slightly and added reference-based vector cat stickers to inventory/wallet/token surfaces.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - localhost HTTP `200`
+  - Playwright mobile snapshot/eval: no `TEAM` tab, wallet page shows only wallet actions, joystick row contains only the weapon button, no body scroll
+  - Playwright boss smoke via `window.debug_force_boss()` + screenshot `output/web-game/m10-mobile-boss.png`
+  - console messages: `0`
+  - Vercel deploy: `https://v0-napiwasgame.vercel.app`
+- 2026-03-16 (boss fidelity + icon/button pass): tightened the black-star boss closer to the supplied image and limited the icon pass to visible CTAs only.
+- Fix:
+  - replaced `assets/sprites/boss-void.svg` with a closer silhouette/face layout and reduced in-battle boss scale to avoid the earlier oversized look;
+  - kept icon treatment only on `play/start/boost` after wallet-button pseudo-icons polluted hidden menu sections in accessibility snapshots;
+  - tightened phone `menu-hero-art` and sticker spacing so the menu stays cleaner on narrow screens.
+- 2026-03-16 (phone premium fit pass): rebuilt the mobile shell around viewport fit, tighter menu pages, and a denser in-run cockpit.
+- Fix:
+  - created execution docs for this pass in `docs/plans.md`, `docs/status.md`, and `docs/test-plan.md`;
+  - compressed `Inventory / Wallet / Token` phone pages by hiding oversized top headings, shrinking section chrome, and fitting the token card into the screen without page scroll;
+  - refined the in-run mobile controls into a tighter single-row cockpit with smaller joystick, denser weapon/action buttons, and a larger arena share;
+  - repainted the arena backdrop to a cleaner premium dark-space treatment with subtle edge glows and stars instead of horizontal scanline clutter;
+  - fixed a real mobile overflow bug by constraining `.phone-shell` to `calc(100dvh - 10px)`, removing the last ~5px of body overflow on phone emulation.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - `web_game_playwright_client.js` run against localhost with screenshots in `output/web-game/iter66-client/`
+  - Playwright mobile emulation checks:
+    - `390x844` run => `bodyScroll=false`, `arenaHeight=754`, `controlsHeight=78`, screenshot `output/web-game/iter66b-mobile390-run.png`
+    - `390x844` token => `bodyScroll=false`, screenshot `output/web-game/iter66b-mobile390-token.png`
+    - `375x667` run => `bodyScroll=false`
+    - `320x568` run => `bodyScroll=false`, screenshot `output/web-game/iter66b-mobile320-run.png`
+    - `320x568` token => `bodyScroll=false`, screenshot `output/web-game/iter66b-mobile320-token.png`
+- Deployment:
+  - Production deploy: `https://napiwas-game-from-scratch-82sz34e69-daft01xxxs-projects.vercel.app`
+  - Alias updated: `https://v0-napiwasgame.vercel.app`
+  - Post-deploy smoke: `/` => `200`, `/api/coop` => `{\"lobbies\":[]}`, HTML contains `mobile-hotfix.css` and `token-story-tabs`
+- 2026-03-16 (phone premium product-shell pass): pushed the mobile redesign further toward a cleaner premium product look instead of only layout compression.
+- Fix:
+  - added a token dashboard inside `Token Info` with live `ACCESS / MUG BANK / TON` status cards plus inline `CONNECT TON / BUY NAPIWAS` actions;
+  - wired the new token CTA button to the real TON connect/sync flow and bound the dashboard to live wallet + beer state;
+  - upgraded the mobile bottom nav and cockpit surfaces with stronger minimal black/gold styling and cleaner icon emphasis;
+  - kept all updated phone layouts scroll-free while preserving the larger battle arena from the previous pass.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - `web_game_playwright_client.js` long-run smoke in `output/web-game/iter67-client/`
+  - mobile Playwright screenshots:
+    - `output/web-game/iter67-mobile390-run.png`
+    - `output/web-game/iter67-mobile390-token.png`
+    - `output/web-game/iter67-mobile390-wallet.png`
+    - `output/web-game/iter67-mobile320-token.png`
+  - viewport assertions:
+    - `390x844` run => `bodyScroll=false`, `arenaHeight=754`
+    - `390x844` token => `bodyScroll=false`
+    - `390x844` wallet => `bodyScroll=false`
+    - `320x568` token => `bodyScroll=false`
+- 2026-03-16 (wallet init hardening): removed automatic `ensureTonWalletClient()` bootstrap during page load.
+- Reason:
+  - mobile Playwright validation showed console errors from the TON SDK fetch path even when the user had not requested wallet interaction;
+  - the wallet flow already initializes lazily from explicit `CONNECT TON / SYNC TON` actions, so eager startup had no product value and only added noise/risk.
+- Validation:
+  - `node --check game.js`
+  - mobile Playwright token-page check => `bodyScroll=false`, `menuView=token`, `errors=[]`
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - localhost HTTP `200`
+  - Playwright mobile start + boss smoke screenshot: `output/web-game/m11-mobile-boss.png`
+  - console messages: `0`
+- Validation:
+  - `node --check game.js` passes.
+  - `node --check server.mjs` passes.
+  - local API smoke passes: `GET /api/coop => {"lobbies":[]}` and `POST /api/coop` persists visible lobby state.
+  - Playwright desktop eval: `canvasCss 935x628`, `canvasBacking 936x628`, `phaseDisplay=none`, meter overlay white/backgroundless.
+  - Playwright mobile eval (`390x844`): `arena 372x475`, `controlsBg=none`, `controlsBorder=0px`, `controlsShadow=none`, `bodyScroll=false`.
+  - Meter pacing check: `advanceTime(500)` produced `delta=10` meters.
+  - No-planets check: `render_game_to_text().planets = 0`.
+  - Overlap smoke on visible entities reported `overlapCount=0`.
+  - Two-client co-op check now passes: host tab created `NAPI-2914`, and the second tab rendered that lobby in the find list.
+  - Browser console messages: `0` errors / `0` warnings.
+- Residual risk:
+  - co-op storage is intentionally lightweight and in-memory only. It works across active clients on the same runtime, but it is not durable across cold starts or multi-instance hosting without a real shared store.
+- 2026-03-15 (co-op join/leave): completed the missing membership half of the co-op feature instead of only listing lobbies.
+- Root cause: the previous pass only implemented `host/list/heartbeat/close`; there was no backend `join` path, no guest heartbeat, and no `JOIN` action in the UI, so players could see rooms but could not actually enter them.
+- Fix:
+  - extended `coop-store.cjs` with guest membership tracking, member TTL cleanup, `joinLobby`, `heartbeatMember`, and `leaveLobby`;
+  - extended both `api/coop.js` and `server.mjs` with `join`, `memberHeartbeat`, and `leave` actions plus proper request validation;
+  - added `joinedLobby` client state, unified co-op polling through `syncCoopLoop()`, and made unload cleanup handle both host close and guest leave;
+  - updated the co-op list UI with actionable `JOIN / LEAVE / HOST / FULL` buttons and surfaced joined state through `#host-status` + `render_game_to_text()`.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - local API smoke: `host -> join -> memberHeartbeat -> leave`
+  - clean Playwright two-context run after server restart: host created `NAPI-9326`, guest saw `JOIN`, joined successfully, guest state became `joinedLobby: NAPI-9326`, host row became `2/3HOST`, guest row became `2/3LEAVE`, and `pageerror/console error` arrays were empty.
+- Residual risk:
+  - co-op state is still in-memory only. Join now works on a single active runtime, but cross-instance durability on Vercel still requires a real shared backend.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-j84gpv8r1-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke: alias responded `200`, `/api/coop` returned `{\"lobbies\":[]}`.
+- 2026-03-16 (boss lock + joystick simplification + sticker purge): focused pass on the latest visual/UX hard requirements.
+- Fix:
+  - removed all cat sticker visuals from markup (`index.html`) and deleted sticker assets from `assets/stickers/`;
+  - replaced boss sprite with a stricter black-star silhouette (`assets/sprites/boss-void.svg`) and simplified `drawBoss()` to sprite-first rendering without shape distortion;
+  - enforced a plain round joystick style with equal-width knob/track behavior and removed the legacy handle-tail pseudo-element;
+  - added premium button motion polish and fixed broken pseudo-icon glyph rendering (`▶` and `⚡`) in the shell.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - Playwright eval: `.menu-sticker` count is `0`; joystick reports `track borderRadius=50%`, equal knob dimensions, and no console errors;
+  - Playwright boss smoke (`debug_force_boss`) confirms boss renders with the new sprite on mobile and desktop:
+    - `output/web-game/iter-premium-mobile-boss-locked.png`
+    - `output/web-game/iter-premium-desktop-boss.png`
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-ld6swm8gh-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - alias smoke: HTTP `200`.
+- 2026-03-16 (premium UI + unique icon system): completed a full premium style/animation pass without touching core gameplay loops.
+- Visual / UX:
+  - added branded icon pack in `assets/icons` and replaced bottom-nav inline glyphs with unique SVG assets (`play/inventory/wallet/token`);
+  - upgraded header/control iconography via dedicated SVGs for language, sound, wallet, fullscreen, play, and boost actions;
+  - switched to premium type pairing (`Oxanium` + `Rajdhani`) and updated shell/card gradients, shadows, and button gloss interactions;
+  - refined active-nav and weapon-card visual states with softer glow/pulse and stronger material depth;
+  - forced bottom nav to a true 4-column layout (matching real tabs) instead of legacy 5-column spacing.
+- Icon quality:
+  - replaced all weapon sprite icons (`weapon-default/spread/laser/chainsaw/missile/paw/bottle/ice.svg`) with higher-detail custom SVG artwork used in dock/HUD/arsenal/pickups.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - Playwright mobile eval: `navCount=4`, all `nav-icon-img` loaded (`naturalWidth>0`), 4-column nav grid active.
+  - Playwright gameplay smoke (`debug_force_boss`) passes on mobile+desktop with no console errors.
+  - Visual artifacts:
+    - `output/web-game/iter47-premium-mobile-menu.png`
+    - `output/web-game/iter47-premium-mobile-battle.png`
+    - `output/web-game/iter47-premium-desktop-menu.png`
+    - `output/web-game/iter47-premium-desktop-battle.png`
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-1phkk48ks-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - alias smoke: HTTP `200`.
+- 2026-03-16 (premium iconography + motion hardening): completed another polish pass focused on authored UI icons, stronger menu transitions, and robust RU text repair.
+- Visual / UX:
+  - added new custom section icons in `assets/icons/`:
+    - `panel-record.svg`
+    - `panel-inventory.svg`
+    - `panel-wallet.svg`
+    - `panel-token.svg`
+    - `panel-arsenal.svg`
+  - wired section/title icon treatment in menu panels and action-button prefixes for inventory/wallet controls;
+  - upgraded tab-switch motion with richer keyframes (`menuCardPulsePremium`, `tabPanelInPremium`) and improved card hover depth.
+- Text stability fix:
+  - root cause: some RU strings were stored as mixed mojibake patterns not always caught by the previous sentinel-only decoder;
+  - fix: expanded `normalizeUiText()` heuristics in `game.js` to also detect UTF-8-as-CP1251 lead-pattern strings and auto-repair them safely.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright mobile + desktop smoke with no console errors.
+  - New visual artifacts:
+    - `output/web-game/iter49b-premium-mobile-inventory.png`
+    - `output/web-game/iter49b-premium-mobile-battle.png`
+    - `output/web-game/iter49c-premium-desktop-inventory.png`
+    - `output/web-game/iter49c-premium-desktop-battle.png`
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-bpvjyuz5p-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (premium controls + motion v2): shipped a second premium polish focused on combat-action iconography and tactile animation quality.
+- Visual / icon pass:
+  - added new authored action icon set:
+    - `assets/icons/action-difficulty.svg`
+    - `assets/icons/action-pause.svg`
+    - `assets/icons/action-quest.svg`
+    - `assets/icons/action-weapon.svg`
+  - wired icons into live controls (`DIFF`, `PAUSE`, `QUEST`, main weapon button) for stronger UI readability and unique branding.
+- Animation quality pass:
+  - added premium ripple/press interaction system for buttons and CTA links via delegated runtime feedback (`triggerPremiumPressFeedback`, `enablePremiumMotionFx`);
+  - upgraded active nav icon movement (`navIconFloatPremium`) and menu tab transition halo (`premiumTabHalo`) for richer transition feel;
+  - added reduced-motion fallback to keep accessibility-safe behavior.
+- Stability:
+  - no gameplay mechanics changed; all edits constrained to UI feedback, iconography, and presentation layer.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright mobile/desktop smoke + screenshots:
+    - `output/web-game/iter50-premium-mobile-inventory.png`
+    - `output/web-game/iter50-premium-mobile-battle.png`
+    - `output/web-game/iter50-premium-desktop-inventory.png`
+    - `output/web-game/iter50-premium-desktop-battle.png`
+  - browser console errors: `0`
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-8zcmbm8d0-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (premium iconography + animation v3): completed another quality pass for HUD identity and value feedback polish.
+- Unique icon pass:
+  - added authored icon set for top shell + chips:
+    - `assets/icons/top-hull.svg`
+    - `assets/icons/top-beer.svg`
+    - `assets/icons/chip-distance.svg`
+    - `assets/icons/chip-phase.svg`
+    - `assets/icons/hud-boss-timer.svg`
+  - mapped these to live HUD elements (`HULL`, `BEER`, boss timer chip, distance chip, phase chip) for stronger visual identity.
+- Animation polish:
+  - added premium value pulse system for key changing values via `setTextContent()` + `.value-anim`;
+  - added chip shimmer cycles and boss-pod ambient overlay glow;
+  - retained reduced-motion compatibility with explicit animation disable rules.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright screenshots:
+    - `output/web-game/iter51-premium-mobile-inventory.png`
+    - `output/web-game/iter51-premium-mobile-battle.png`
+    - `output/web-game/iter51-premium-desktop-inventory.png`
+    - `output/web-game/iter51-premium-desktop-battle.png`
+  - browser console errors: `0`
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-6p9a0mqk8-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (ITER-53 mobile premium + boss reference lock): delivered another focused phone-first polish and tightened boss visual fidelity to the supplied reference.
+- Visual / UX:
+  - replaced `assets/sprites/boss-void.svg` with a stricter black-star silhouette (pure black core, white eyes/teeth, blue-white edge glow) to match the attached boss image more closely;
+  - added `styles.css` `/* [ITER-53] */` mobile overrides for stronger premium material treatment on phone shell/header/HUD/controls/nav;
+  - increased in-battle phone arena allocation (`minmax(404px, 1fr)` + `arena-stage clamp(404px,55dvh,560px)`) while preserving no body scroll;
+  - upgraded phone menu card to dark premium styling with consistent card materials and clearer high-contrast action buttons.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright localhost captures:
+    - `output/web-game/iter53-mobile-menu-premium.png`
+    - `output/web-game/iter53-mobile-boss-reference-final.png`
+  - Playwright Vercel alias captures:
+    - `output/web-game/iter53-vercel-mobile-menu.png`
+    - `output/web-game/iter53-vercel-mobile-boss.png`
+  - mobile runtime probe (`390x844`): `bodyScrollHeight === innerHeight`, `bodyScrollable=false`.
+  - console messages: `0` errors.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-lk71yeg8o-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (ITER-54 phone premium hardening): completed one more dedicated mobile-only UI pass focused on hierarchy quality and short-screen resilience.
+- Visual / UX:
+  - added a new `styles.css` block `/* [ITER-54] */` with phone-first safe-area support and stronger premium shell materials;
+  - increased effective arena allocation on phones (`minmax(420px,1fr)` on standard mobile, dedicated fallback for short screens);
+  - tightened header/HUD/control proportions for thumb reach while keeping labels readable and avoiding overflow;
+  - refined joystick/control card sizing and bottom-nav ergonomics (`env(safe-area-inset-bottom)` support included);
+  - rebuilt mobile menu overlay into a denser premium sheet style (cleaner typography, higher contrast cards/buttons, custom scrollbar polish).
+- Bug fix in this pass:
+  - restored metric labels visibility on short screens by overriding old legacy mobile rule that hid `.metric-label` (`display: inline-flex !important`).
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright mobile screenshots:
+    - `output/web-game/iter54-mobile390-menu.png`
+    - `output/web-game/iter54-mobile390-battle.png`
+    - `output/web-game/iter54-mobile375-menu.png`
+    - `output/web-game/iter54-mobile375-battle-v2.png`
+  - runtime checks:
+    - `390x844` and `375x667` both report `bodyScrollable=false`;
+    - browser console errors: `0`.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-5bt74ftil-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (ITER-55 mobile premium interactions): focused pass on premium button UX, icon readability, and touch feedback quality.
+- Visual / layout:
+  - strengthened mobile action-row composition in header (`compact-actions` grid with stable button rhythm);
+  - upgraded mini action buttons to icon-first pills using authored assets (`mini-language/sfx/ton/screen`) while preserving labels;
+  - refined mobile nav buttons and nav icon plates for higher contrast and clearer active-state hierarchy;
+  - improved weapon chip icon visibility (`weapon-chip-badge`) and consistent card/button shadow layering across touch controls.
+- Interaction effects:
+  - replaced brittle text-symbol icon rendering for `PLAY/START/BOOST` with SVG icon assets (`action-play.svg`, `action-boost.svg`) via overriding mobile selectors;
+  - expanded mobile press/hover animation quality (richer transforms, glow/saturation response, stronger ripple styling);
+  - added optional haptic feedback on press in `triggerPremiumPressFeedback()` (`navigator.vibrate(7)` with throttle + reduced-motion guard).
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright screenshots:
+    - `output/web-game/iter55-mobile390-menu.png`
+    - `output/web-game/iter55-mobile390-battle.png`
+    - `output/web-game/iter55-mobile375-menu.png`
+    - `output/web-game/iter55-mobile375-battle.png`
+  - runtime probe (`375x667`): `bodyScrollable=false`, `navButtons=4`.
+  - browser console errors: `0`.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-1gfc717zk-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+
+- 2026-03-17 (ITER-71 phone tab density cleanup):
+- Root cause:
+  - focused phone pages still used stretched full-height section shells, which created a fake lower black slab and made pages feel like they were colliding with the game layer;
+  - several RU mobile CTA labels were longer than their button boxes.
+- Product/UI changes:
+  - converted `Inventory / Quests / Wallet / Token` phone views to content-height cards above the bottom nav;
+  - shortened mobile CTA labels (`TON`, `СИНХ`, `БАЛАНС`, `КУПИТЬ`, `СКИН`, `ФИНИШ`, `ЭКРАН`, etc.);
+  - removed unrelated inventory footer actions on phone so the inventory tab reads like its own clean page;
+  - hid the wallet story header on phone and compressed the holder card into a tighter two-column module.
+- Validation:
+  - `node --check game.js`
+  - Playwright mobile overflow probe at `390x844`:
+    - `inventory`: `overflowButtons=[]`, `bodyScroll=false`, `menuBottom=463`, `navTop=754`
+    - `quests`: `overflowButtons=[]`, `bodyScroll=false`, `menuBottom=504.25`, `navTop=754`
+    - `wallet`: `overflowButtons=[]`, `bodyScroll=false`, `menuBottom=694`, `navTop=754`
+    - `token`: `overflowButtons=[]`, `bodyScroll=false`, `menuBottom=576.375`, `navTop=754`
+  - screenshot review:
+    - `output/inventory-after-v2.png`
+    - `output/quests-after.png`
+    - `output/wallet-after.png`
+    - `output/token-after.png`
+  - `develop-web-game` artifact pass:
+    - `output/web-game/iter71-client/shot-0.png`
+    - `output/web-game/iter71-client/state-0.json`
+- Deployment:
+  - inspect: `https://vercel.com/daft01xxxs-projects/napiwas-game-from-scratch/CTXAdgqgPnLoccgmcK7j5nWgz7WR`
+  - production: `https://napiwas-game-from-scratch-mptzlmohu-daft01xxxs-projects.vercel.app`
+  - alias: `https://v0-napiwasgame.vercel.app`
+- 2026-03-17 (ITER-70 quests + wallet phone polish): finished the new `Quests` and `Wallet` pages as real phone-safe tabs and fixed the bottom-nav interception regression.
+- Product/UI:
+  - added first-class `Quests` bottom-nav tab with hero counters, reward pool summary, and claimable contract cards for beer, skins, and permanent weapons;
+  - rebuilt `Wallet` as a proper balance surface: large NAPIWAS hero card, beer mugs below the card, access summary, and holder progress block;
+  - localized the static chrome of `Quests` and `Wallet` in RU mode so those screens no longer mixed English labels into the main shell;
+  - enforced single-row mobile bottom nav with all 5 tabs visible on `390x844`.
+- Root cause / layout:
+  - blocked nav taps were caused by real geometry overlap, not only z-index: the menu card still extended below the nav top and intercepted taps;
+  - fixed by enabling compact menu mode for all narrow viewports, reserving a larger bottom safe area for the menu card, and hardening the mobile nav grid to 5 columns.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - `curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:8080/` -> `200`
+  - Playwright mobile checks:
+    - `Inventory -> Quests -> Wallet -> Play` clicks succeed on `390x844`
+    - `bodyScroll=false`
+    - `menuBottom=690`, `navTop=700` after safe-area fix
+    - browser console errors: `0`
+  - `develop-web-game` client artifacts:
+    - `output/web-game/iter70-client/shot-0.png`
+    - `output/web-game/iter70-client/shot-1.png`
+    - `output/web-game/iter70-client/state-0.json`
+    - `output/web-game/iter70-client/state-1.json`
+  - focused phone screenshots:
+    - `output/iter70-mobile-playwright.png`
+    - `output/iter70-wallet-mobile-playwright-v2.png`
+- TODO / next agent:
+  - if user wants another pass, polish the token page to the same RU/EN completeness level as wallet/quests;
+  - real TON connect approval still needs a human wallet interaction test on device after deploy.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-9aq9vn3ry-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+- 2026-03-16 (ITER-64C mobile viewport unblock hotfix): fixed phone UX where panels were eating the play area and refined close/nav behavior for touch.
+- Mobile UX fixes:
+  - added dedicated `mobile-hotfix.css` loaded after `styles.css` so latest phone overrides always win;
+  - enforced clean combat mode for coarse pointer devices (`body.mobile-clean-play`): hidden top cards in battle, full-height arena, compact joystick/action controls overlaid above nav;
+  - kept bottom navigation visible and clickable with hard z-index/inset alignment against menu overlay;
+  - converted close button to icon-only cross (no visible text), anchored on the right, fixed in menu view, with safe top padding to avoid text overlap;
+  - removed framed icon plates around key image/icon elements on phones.
+- Performance fixes:
+  - switched canvas context init to `2d` with `{ alpha: false, desynchronized: true }` fallback;
+  - reduced phone render pixel ratio cap (`1.18`, `1.0` on low-power hint) in `resizeArenaFrame`;
+  - stopped forcing `imageSmoothingQuality='high'` every frame and now respect low-lag mobile mode;
+  - added low-lag CSS branch (`body.mobile-low-lag`) to disable heavy visual effects on weak phones.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright mobile coarse-pointer captures:
+    - `output/web-game/iter64c-mobile390-run-coarse.png`
+    - `output/web-game/iter64c-mobile390-menu-coarse.png`
+    - `output/web-game/iter64c-mobile375-run-coarse.png`
+    - `output/web-game/iter64c-mobile320-run-coarse.png`
+    - `output/web-game/iter64c-mobile320-menu-coarse.png`
+  - runtime probes:
+    - `390x844` menu mode: close button `position=fixed`, `fontSize=0`, menu bottom aligned with nav top;
+    - `320x568` run mode: `bodyOverflow=hidden`, `htmlOverflow=hidden`, `maxScrollable=0`.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-3j49556wr-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - alias HTML contains `mobile-hotfix.css`: `true`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (ITER-65 mobile premium redesign): delivered a new mobile-focused UI pass with stronger visual identity, better control ergonomics, and an interactive token info experience.
+- Design / UX:
+  - rebuilt mobile override layer in `mobile-hotfix.css` as a new premium minimalist system (dark cockpit palette + warm amber accents);
+  - improved in-run readability with a cleaner arena-first composition and compact top chips (`meters` + `phase`) instead of bulky cards;
+  - tightened phone controls into a thumb-safe cluster (round joystick + primary weapon + two actions) and stabilized bottom nav spacing/height;
+  - reduced mobile menu clutter by flattening heavy card frames and converting skin inventory to horizontal scroll cards.
+- Game viewport / background:
+  - upgraded arena rendering with a richer but minimal cosmic backdrop in `drawArenaBackdrop()`:
+    - layered gradient space tones;
+    - subtle animated nebula glows;
+    - lightweight star twinkle field;
+    - soft vignette for focus.
+- Interactive token page:
+  - redesigned `Token Info` content with an interactive tab system:
+    - `OVERVIEW`, `ECONOMY`, `UTILITY` panels;
+    - active tab switching logic in `game.js`;
+    - `COPY` button for contract address (clipboard + feedback event).
+- Engineering changes:
+  - updated `index.html` with new token info structure and icon-only close button labels wrapped in `visually-hidden`;
+  - extended `game.js` UI bindings and state:
+    - `tokenInfoPane` state;
+    - `normalizeTokenInfoPane`, `setTokenInfoPane`, `copyTokenContract`;
+    - mobile class toggle `mobile-premium-v2` in `syncUI`;
+  - kept existing low-lag safeguards and no-scroll constraints for phone mode.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright mobile checks (coarse-pointer emulation):
+    - `output/web-game/iter65-mobile390-run.png`
+    - `output/web-game/iter65-mobile390-token.png`
+    - `output/web-game/iter65-mobile390-token-economy.png`
+    - `output/web-game/iter65-mobile375-run.png`
+    - `output/web-game/iter65-mobile320-run.png`
+    - `output/web-game/iter65-mobile320-token-top.png`
+  - runtime probes:
+    - `390x844`: `maxScrollable=0`, `mobile-clean-play` active;
+    - `320x568`: menu bottom aligns above nav (`menuBottom=498`, `navTop=500`);
+    - console errors: `0`.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-lffi62egh-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - alias HTML contains `mobile-hotfix.css`: `true`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (ITER-59 premium mobile UI pass): focused phone-first redesign polish for layout hierarchy, icon quality, and touch feedback.
+- Mobile layout / hierarchy:
+  - added a final mobile override layer to rebalance shell spacing and card radii, keep arena dominant, and reduce UI noise in battle view;
+  - refined control deck into tighter joystick + primary/secondary action zones plus a horizontal weapon dock for cleaner thumb flow;
+  - hid in-arena side overlays on phone to free visible gameplay area while keeping top HUD data intact.
+- Iconography and visual quality:
+  - replaced core icon assets with higher-fidelity premium SVG variants:
+    - mini controls: `mini-language.svg`, `mini-sfx.svg`, `mini-ton.svg`, `mini-screen.svg`
+    - bottom nav: `nav-play.svg`, `nav-inventory.svg`, `nav-wallet.svg`, `nav-token.svg`
+    - action glyphs: `action-play.svg`, `action-boost.svg`
+  - improved mobile icon rendering/legibility using stronger filters and contrast on button/icon surfaces.
+- Interaction polish:
+  - upgraded touch press micro-feedback (deeper active transform, brighter press response, richer ripple wave);
+  - strengthened hover states for fine-pointer devices and added premium reveal animation on menu card open.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright captures:
+    - `output/web-game/iter59-mobile390-menu.png`
+    - `output/web-game/iter59-mobile390-run.png`
+    - `output/web-game/iter59-mobile375-run.png`
+  - runtime probe (`375x667`): `bodyScrollable=false`, `bodyOverflow=hidden`, `htmlOverflow=hidden`
+  - browser console errors: `0`.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-4ko2qpu6s-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (ITER-61 premium mobile finish): completed another phone-first polish focused on premium visual hierarchy, icon fidelity, and tighter button ergonomics.
+- UI/UX:
+  - added final mobile layer for typography consistency (`Oxanium/Rajdhani`) and premium shell/card treatment;
+  - improved control ergonomics by balancing joystick + weapon + dual action row for better thumb reach;
+  - refined button readability and overflow handling on narrow phones (up to `320px`) to prevent label wrapping/clipping;
+  - strengthened hover/press micro-interactions and CTA sheen behavior for a more premium tactile feel.
+- Icon pass:
+  - upgraded action icon assets:
+    - `assets/icons/action-difficulty.svg`
+    - `assets/icons/action-pause.svg`
+    - `assets/icons/action-quest.svg`
+    - `assets/icons/action-weapon.svg`
+  - upgraded metric icon assets:
+    - `assets/icons/metric-score.svg`
+    - `assets/icons/metric-meters.svg`
+    - `assets/icons/metric-record.svg`
+    - `assets/icons/metric-lives.svg`
+- Interaction hardening:
+  - added throttled menu-close request path (`requestMenuCloseOverlay`) and pointer-up binding for more reliable touch close behavior.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright captures:
+    - `output/web-game/iter61-mobile390-menu.png`
+    - `output/web-game/iter61-mobile390-run.png`
+    - `output/web-game/iter61-mobile375-run.png`
+    - `output/web-game/iter61-mobile320-run-v2.png`
+  - runtime probe (`320x568`): `bodyScrollable=false`, `bodyOverflow=hidden`, `htmlOverflow=hidden`
+  - browser console errors: `0`.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-qqf43mkft-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-qvzm1j9yt-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (ITER-63 premium mobile finish v4): completed another targeted premium pass for phone UI, icon detail, and tactile interactions.
+- Mobile UI / interaction:
+  - refined command rhythm and spacing across top controls, HUD chips, arena chips, cockpit controls, and bottom nav;
+  - upgraded press/hover tactility with stronger active transforms, bloom overlays, and refined icon plate styling;
+  - preserved no-scroll one-screen mobile layout while tightening typography for narrow widths.
+- Icon quality:
+  - upgraded premium support icon set:
+    - `assets/icons/top-hull.svg`
+    - `assets/icons/top-beer.svg`
+    - `assets/icons/chip-distance.svg`
+    - `assets/icons/chip-phase.svg`
+    - `assets/icons/hud-boss-timer.svg`
+  - kept action/metric/nav icon upgrades from previous iterations.
+- Robustness:
+  - extended menu close reliability with extra `pointerdown` handling routed through throttled `requestMenuCloseOverlay()`.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright captures:
+    - `output/web-game/iter63-mobile390-menu.png`
+    - `output/web-game/iter63-mobile390-run.png`
+    - `output/web-game/iter63-mobile375-run.png`
+    - `output/web-game/iter63-mobile320-run.png`
+  - runtime probe (`320x568`): `bodyScrollable=false`, `bodyOverflow=hidden`, `htmlOverflow=hidden`
+  - browser console errors: `0`.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-2qrqjy7ur-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (ITER-62 premium mobile polish v3): completed another focused phone UI pass for visual quality, icon fidelity, and button interaction polish.
+- Mobile design polish:
+  - refined shell/card depth and edge treatment for stronger premium hierarchy on phone;
+  - improved chip readability and control panel separation (HUD/arena/controls/nav) while preserving full no-scroll layout;
+  - increased tactile interaction quality with richer press bloom and stronger active states for core touch controls.
+- Icon upgrades:
+  - updated premium HUD/support icons:
+    - `assets/icons/top-hull.svg`
+    - `assets/icons/top-beer.svg`
+    - `assets/icons/chip-distance.svg`
+    - `assets/icons/chip-phase.svg`
+    - `assets/icons/hud-boss-timer.svg`
+  - retained previous premium action/metric/nav icon upgrades from ITER-59..61.
+- Interaction hardening:
+  - improved menu close reliability on touch by adding a throttled `requestMenuCloseOverlay()` path on `pointerdown`, `pointerup`, and `click` handlers.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright captures:
+    - `output/web-game/iter62-mobile390-menu.png`
+    - `output/web-game/iter62-mobile390-run.png`
+    - `output/web-game/iter62-mobile375-run.png`
+    - `output/web-game/iter62-mobile320-run.png`
+  - runtime probe (`320x568`): `bodyScrollable=false`, `bodyOverflow=hidden`, `htmlOverflow=hidden`
+  - browser console errors: `0`.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-qurb2bltc-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (ITER-60 premium mobile UI v2): another dedicated phone-first refinement for premium look-and-feel, button hierarchy, icon quality, and touch feedback.
+- Layout / button hierarchy:
+  - upgraded top action composition to a 6-column mobile command row with a wider premium `PLAY` CTA and animated sweep;
+  - tightened HUD chip readability (icon framing, stronger value typography, balanced spacing) and made pill controls more consistent;
+  - refined cockpit controls (round joystick block, stronger action button depth, cleaner horizontal weapon dock cards);
+  - improved bottom nav readability with clearer active-state emphasis and tighter label overflow handling.
+- Icon quality pass:
+  - replaced metric icon set with richer premium SVG assets:
+    - `assets/icons/metric-score.svg`
+    - `assets/icons/metric-meters.svg`
+    - `assets/icons/metric-record.svg`
+    - `assets/icons/metric-lives.svg`
+  - preserved previous premium icon updates for mini/nav/action glyphs from ITER-59.
+- Interaction polish:
+  - added richer touch feedback layers (`:active` scale/brightness + radial press bloom) for all primary mobile controls;
+  - strengthened fine-pointer hover behavior and maintained responsive transition timing.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright captures:
+    - `output/web-game/iter60-mobile390-menu.png`
+    - `output/web-game/iter60-mobile390-run.png`
+    - `output/web-game/iter60-mobile375-run.png`
+  - runtime probe (`375x667`): `bodyScrollable=false`, `bodyOverflow=hidden`, `htmlOverflow=hidden`
+  - browser console errors: `0`.
+- 2026-03-16 (ITER-57 mobile premium controls v2): delivered another phone-only premium pass focused on button composition, icon legibility, and stronger touch microinteractions.
+- Visual / layout:
+  - rebalanced mobile command deck hierarchy (`header/hud/arena/controls/nav`) and increased arena minimum in phone mode;
+  - upgraded top action row to a 6-column command layout (`4 mini controls + wide play CTA`) for clearer thumb targeting;
+  - added premium shell sweep effect in header and improved HUD strip/card material styling;
+  - refined nav tiles with active top-indicator, better icon plates, and stronger active contrast.
+- Buttons / icons / effects:
+  - enhanced press state depth for all core touch controls (`mini-action`, `cta`, `pill`, `weapon`, `action`, `nav`, `weapon-chip`);
+  - increased ripple impact and retained haptic tap feedback path from previous pass;
+  - improved weapon chip badge readability and button texture consistency in mobile mode.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright captures:
+    - `output/web-game/iter57-mobile390-menu.png`
+    - `output/web-game/iter57-mobile390-battle.png`
+    - `output/web-game/iter57-mobile375-menu.png`
+    - `output/web-game/iter57-mobile375-battle.png`
+  - runtime probes:
+    - `390x844`: `bodyScrollable=false`
+    - `375x667`: `bodyScrollable=false`, `navButtons=4`
+  - browser console errors: `0`.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-8ssej5pgq-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+- 2026-03-16 (ITER-56 mobile premium shell + controls): another dedicated phone-only premium pass focused on button ergonomics, icon consistency, and stronger interaction micro-feedback.
+- Visual / UX:
+  - tightened mobile action-strip composition in header and balanced icon/button rhythm for one-hand use;
+  - upgraded mini action buttons to icon-first premium pills with custom SVG assets for language/sfx/wallet/screen;
+  - strengthened nav tile visual hierarchy and active-state readability (improved icon plates + contrast);
+  - improved weapon chip badge readability and consistent premium card/button material depth.
+- Interaction:
+  - extended touch-first press styling on mobile controls (`mini-action`, `cta`, `pill`, `weapon`, `action`, `nav`, `weapon-chip`) with richer transform/glow response;
+  - strengthened ripple styling for tap feedback while keeping reduced-motion safety.
+- Validation:
+  - `node --check game.js`
+  - `node --check server.mjs`
+  - `node --check api/coop.js`
+  - Playwright artifacts:
+    - `output/web-game/iter55-mobile390-menu-v2.png`
+    - `output/web-game/iter55-mobile390-battle.png`
+    - `output/web-game/iter55-mobile375-menu.png`
+    - `output/web-game/iter55-mobile375-battle.png`
+  - runtime probes:
+    - `390x844`: `bodyScrollable=false`
+    - `375x667`: `bodyScrollable=false`, `navButtons=4`
+  - browser console errors: `0`.
+- Deployment:
+  - production deployment: `https://napiwas-game-from-scratch-1gfc717zk-daft01xxxs-projects.vercel.app`
+  - production alias: `https://v0-napiwasgame.vercel.app`
+  - post-deploy smoke:
+    - alias HTTP status: `200`
+    - `GET /api/coop`: `{"lobbies":[]}`
+
+- 2026-03-21: Tightened the final flat-black theme and mobile performance path. Bumped stylesheet cache-busters to ?v=20260321-3, forced pseudo-glow removal in 	heme-final.css, and lowered mobile canvas pixel ratio cap to 1.15/1.0 for coarse-pointer devices. Pending: mobile visual smoke check and fresh Vercel prod deploy.
+
+- 2026-03-21: Finalized deployment-safe cache busting to ?v=20260321-8 and pinned the document title to �������� regardless of UI language so browser/app headers match the requested name on Vercel too.
+
+- 2026-03-21: Deployed the flat-black build to Vercel production and alias 0-napiwasgame.vercel.app. Prod smoke-check on ?v=20260321-8 verified title �������� plus no visible ackground-image, ackdrop-filter, or ox-shadow artifacts in the active mobile viewport.
+
+- 2026-03-21: Changed browser title to Napiwas game and added mobile wallet layout hardening for connected-state content: stacked balance block, wrapping address/kicker, safer action buttons, and single-column fallback below 380px.
+
+- 2026-03-22: Added wallet live-activity rendering from analytics events plus lightweight polling for Wallet / Quests / Shop, so live counters and actions now refresh without manual reload.
+
+- 2026-03-22: Fixed a real mobile Quests defect where the upper Daily / PvP cards intercepted taps on contract reward buttons. Root cause was the phone quest tab mixing grid row allocation with internal board scrolling; the contract board collapsed to 0px while the upper cards sat on top. Fix: force the phone quest tab back to normal document flow and let the full section scroll as one column. Validation: Playwright mobile flow now successfully claims a ready quest reward and the resulting questClaim event appears in the wallet live activity feed.
+
+- 2026-03-22: Published current build to Vercel production.
+  - inspect: https://vercel.com/daft01xxxs-projects/napiwas-game-from-scratch/E69vyeK6WpW92x1mBASVyvAgTGi7
+  - production: https://napiwas-game-from-scratch-od38epubo-daft01xxxs-projects.vercel.app
+  - alias: https://v0-napiwasgame.vercel.app

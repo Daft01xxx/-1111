@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="wpBody" x1="18" y1="54" x2="76" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8b6afe"/>
+      <stop offset="1" stop-color="#5940b9"/>
+    </linearGradient>
+  </defs>
+  <rect x="18" y="56" width="56" height="22" rx="8" fill="url(#wpBody)"/>
+  <rect x="26" y="78" width="20" height="24" rx="8" fill="#f49abe"/>
+  <circle cx="86" cy="68" r="17" fill="#ffe0ed"/>
+  <circle cx="78" cy="57" r="5" fill="#ff7aa6"/>
+  <circle cx="94" cy="57" r="5" fill="#ff7aa6"/>
+  <circle cx="74" cy="67" r="4.6" fill="#ff7aa6"/>
+  <circle cx="98" cy="67" r="4.6" fill="#ff7aa6"/>
+  <ellipse cx="86" cy="72" rx="7.5" ry="6.8" fill="#ff637f"/>
+  <circle cx="55" cy="67" r="4.2" fill="#fff8ea"/>
+</svg>

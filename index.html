@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Napiwas game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260323-1" />
+    <link rel="stylesheet" href="./mobile-hotfix.css?v=20260323-1" />
+    <link rel="stylesheet" href="./mobile-final.css?v=20260323-1" />
+    <link rel="stylesheet" href="./theme-final.css?v=20260323-1" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="phone-shell">
+        <section class="content-column">
+          <section class="header-card compact-top">
+            <div class="top-runline">
+              <div class="top-hull">
+                <span>HULL</span>
+                <div class="top-hull-track">
+                  <div id="top-health-fill" class="top-hull-fill"></div>
+                </div>
+                <strong id="top-health-value" class="value-anim">3 / 3</strong>
+              </div>
+              <div class="top-beer-balance">
+                <span>BEER</span>
+                <strong id="beer-balance-value" class="value-anim">0</strong>
+              </div>
+            </div>
+            <div class="header-actions compact-actions">
+              <button id="language-button" class="mini-action-button" type="button" aria-label="Toggle language">RU</button>
+              <button id="sound-button" class="mini-action-button" type="button" aria-label="Toggle sound">SFX</button>
+              <button id="wallet-connect-button" class="mini-action-button" type="button" aria-label="Connect TON wallet">TON</button>
+              <button id="fullscreen-button" class="mini-action-button" type="button" aria-label="Toggle fullscreen">FULL</button>
+              <button id="play-button" class="cta-button" type="button" data-i18n="playCta">PLAY</button>
+            </div>
+            <p id="header-subtitle">Battle-ready survival shooter</p>
+          </section>
+
+          <section class="hud-card">
+            <div class="hud-metrics">
+              <div class="metric-chip">
+                <div class="metric-head">
+                  <img class="metric-icon" src="./assets/icons/metric-score.svg" alt="" />
+                  <span class="metric-label" data-i18n="scoreLabel">Score</span>
+                </div>
+                <strong id="score-value">0</strong>
+              </div>
+              <div class="metric-chip">
+                <div class="metric-head">
+                  <img class="metric-icon" src="./assets/icons/metric-meters.svg" alt="" />
+                  <span class="metric-label" data-i18n="metersLabel">Meters</span>
+                </div>
+                <strong id="meters-value">0</strong>
+              </div>
+              <div class="metric-chip mint">
+                <div class="metric-head">
+                  <img class="metric-icon" src="./assets/icons/metric-record.svg" alt="" />
+                  <span class="metric-label" data-i18n="recordLabel">Record</span>
+                </div>
+                <strong id="meters-record-value" class="value-anim">0</strong>
+              </div>
+              <div class="metric-chip">
+                <div class="metric-head">
+                  <img class="metric-icon" src="./assets/icons/metric-lives.svg" alt="" />
+                  <span class="metric-label" data-i18n="livesLabel">Lives</span>
+                </div>
+                <strong id="lives-value" class="value-anim">3</strong>
+              </div>
+            </div>
+
+            <div class="boss-strip">
+              <div class="boss-strip-main">
+                <div class="boss-title-row">
+                  <strong id="boss-name">Next Boss: Nyan Cat</strong>
+                  <span id="boss-mode" class="boss-mode">READY</span>
+                </div>
+                <div class="boss-progress-track">
+                  <div id="boss-progress-fill" class="boss-progress-fill"></div>
+                </div>
+              </div>
+              <div class="hud-actions">
+                <span id="boss-timer-pill" class="pill-button mint static">BOSS ETA 60s</span>
+                <button id="difficulty-button" class="pill-button" type="button">DIFF 3</button>
+                <button id="pause-button" class="pill-button dark" type="button" data-i18n="pauseButton">PAUSE</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="arena-shell">
+            <div class="arena-header-row">
+              <span class="arena-chip" id="arena-distance-chip">0 M</span>
+              <span class="arena-chip" id="phase-chip">BATTLE READY</span>
+            </div>
+
+            <div id="arena-stage" class="arena-stage">
+              <div id="arena-frame" class="arena-frame">
+                <canvas id="game-canvas" width="360" height="420" aria-label="NaPiwas Battle Arena"></canvas>
+                <div class="arena-overlay left">
+                  <div class="player-pod">
+                    <div class="player-pod-top">
+                      <span class="boss-pod-label" data-i18n="hullLabel">Hull</span>
+                      <strong id="player-health-text" class="value-anim">3 / 3</strong>
+                    </div>
+                    <div class="player-health-track">
+                      <div id="player-health-fill" class="player-health-fill"></div>
+                    </div>
+                    <div class="weapon-hud">
+                      <div id="weapon-icon" class="weapon-icon">BE</div>
+                      <div class="weapon-hud-copy">
+                        <span class="boss-pod-label" data-i18n="weaponLabel">Weapon</span>
+                        <strong id="weapon-hud-name">BEER</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="arena-overlay right">
+                  <div class="boss-pod">
+                    <span class="boss-pod-label" data-i18n="bossLabel">Boss</span>
+                    <strong id="boss-pod-state" class="value-anim">SAFE</strong>
+                    <span id="boss-pod-hp" class="value-anim">Next @ 500</span>
+                    <span id="boss-pod-pattern" class="boss-pod-pattern">stand by</span>
+                    <span id="boss-pod-timer" class="boss-pod-timer">ETA 60s</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="controls-card">
+            <div class="slider-block">
+              <div class="slider-label-row">
+                <span data-i18n="joystickLabel">Joystick</span>
+                <span id="slider-readout">X0 Y0</span>
+              </div>
+              <div id="slider-track" class="slider-track">
+                <div id="slider-fill" class="slider-fill"></div>
+                <div id="slider-knob" class="slider-knob"></div>
+              </div>
+            </div>
+
+            <div class="movement-row">
+              <button id="move-left" class="move-button" type="button" aria-label="Move left">◀</button>
+              <button id="move-up" class="move-button" type="button" aria-label="Move up">▲</button>
+              <button id="move-right" class="move-button" type="button" aria-label="Move right">▶</button>
+              <button id="weapon-button" class="weapon-button" type="button">BEER</button>
+            </div>
+
+            <div class="actions-row">
+              <button id="boost-button" class="action-button mint" type="button" data-i18n="boostButton">BOOST</button>
+              <button id="quest-button" class="action-button" type="button" data-i18n="questButton">QUEST</button>
+            </div>
+
+            <div id="weapon-dock" class="weapon-dock"></div>
+          </section>
+
+          <nav class="bottom-nav">
+            <button id="nav-play" class="nav-button active" type="button">
+              <img class="nav-icon nav-icon-img" src="./assets/icons/nav-play.svg" alt="" />
+              <span>PLAY</span>
+            </button>
+            <button id="nav-inventory" class="nav-button" type="button">
+              <img class="nav-icon nav-icon-img" src="./assets/icons/nav-inventory.svg" alt="" />
+              <span>INVENTORY</span>
+            </button>
+            <button id="nav-quests" class="nav-button" type="button">
+              <img class="nav-icon nav-icon-img" src="./assets/icons/nav-quest.svg" alt="" />
+              <span>QUESTS</span>
+            </button>
+            <button id="nav-wallet" class="nav-button" type="button">
+              <img class="nav-icon nav-icon-img" src="./assets/icons/nav-wallet.svg" alt="" />
+              <span>WALLET</span>
+            </button>
+            <button id="nav-shop" class="nav-button" type="button">
+              <img class="nav-icon nav-icon-img" src="./assets/icons/nav-shop.svg" alt="" />
+              <span>SHOP</span>
+            </button>
+          </nav>
+        </section>
+
+        <section id="menu-overlay" class="overlay-screen visible">
+          <div id="menu-card" class="overlay-card overlay-card-menu">
+            <button id="menu-close" class="overlay-close" type="button" aria-label="Close menu"><span class="visually-hidden">Close menu</span></button>
+            <span class="eyebrow">NaPiwas</span>
+            <h2 data-i18n="battleArenaTitle">Battle Arena</h2>
+            <p data-i18n="battleArenaBody">Survival shooter. Move, dodge, collect, unlock weapons and burn down boss phases.</p>
+            <div class="menu-hero">
+              <div class="menu-hero-copy">
+                <span class="hero-kicker" data-i18n="menuHeroKicker">Premium casual shooter</span>
+                <div class="feature-pills">
+                  <span class="feature-pill" data-i18n="bossRushFeature">Boss rush</span>
+                  <span class="feature-pill" data-i18n="weaponUnlocksFeature">Weapon unlocks</span>
+                  <span class="feature-pill">8 Skins</span>
+                </div>
+                <div class="menu-status-strip">
+                  <div class="status-tile">
+                    <span data-i18n="dangerTierLabel">Danger tier</span>
+                    <strong id="menu-difficulty-note">Arcade pressure</strong>
+                  </div>
+                  <div class="status-tile">
+                    <span data-i18n="shipSkinLabel">Ship skin</span>
+                    <strong id="menu-skin-preview">CLASSIC</strong>
+                  </div>
+                  <div class="status-tile">
+                    <span data-i18n="audioLabel">Audio</span>
+                    <strong id="menu-sound-value">ON</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="menu-hero-art">
+                <div class="hero-boss-badge">
+                  <span class="hero-boss-eyebrow" data-i18n="bossLineupLabel">Boss line-up</span>
+                  <strong id="menu-boss-preview">Nyan Cat</strong>
+                  <span id="menu-boss-pattern" class="hero-boss-detail">SPREAD | 500 TO GO</span>
+                </div>
+                <div class="hero-art-stack" aria-hidden="true">
+                  <img class="hero-boss-art" src="./assets/sprites/boss-void.svg" alt="" />
+                </div>
+              </div>
+            </div>
+            <div id="menu-overview-grid" class="menu-grid">
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="highScoreLabel">High score</span>
+                <strong id="high-score-value">0</strong>
+              </div>
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="difficultyLabel">Difficulty</span>
+                <strong id="menu-difficulty-value">3</strong>
+              </div>
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="shipSkinLabel">Ship skin</span>
+                <strong id="ship-skin-value">CLASSIC</strong>
+              </div>
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="weaponFinishLabel">Weapon finish</span>
+                <strong id="weapon-finish-value">BRASS</strong>
+              </div>
+            </div>
+            <div id="pilot-record-section" class="menu-section">
+              <div class="section-row">
+                <span class="panel-title" data-i18n="pilotRecordTitle">Pilot record</span>
+                <span class="panel-meta" data-i18n="storedLocallyLabel">Stored locally</span>
+              </div>
+              <div class="menu-grid compact-grid pilot-record-grid">
+                <div class="menu-cell">
+                  <span class="menu-label" data-i18n="runsLabel">Runs</span>
+                  <strong id="meta-runs-value">0</strong>
+                </div>
+                <div class="menu-cell">
+                  <span class="menu-label" data-i18n="bossesLabel">Bosses</span>
+                  <strong id="meta-bosses-value">0</strong>
+                </div>
+                <div class="menu-cell">
+                  <span class="menu-label" data-i18n="targetsLabel">Targets</span>
+                  <strong id="meta-targets-value">0</strong>
+                </div>
+                <div class="menu-cell">
+                  <span class="menu-label" data-i18n="bestComboLabel">Best combo</span>
+                  <strong id="meta-combo-value">x1.0</strong>
+                </div>
+                <div class="menu-cell">
+                  <span class="menu-label" data-i18n="bestMetersLabel">Best meters</span>
+                  <strong id="meta-meters-value">0</strong>
+                </div>
+              </div>
+            </div>
+            <div class="menu-section hangar-section" id="inventory-section">
+              <div class="section-row">
+                <span class="panel-title">Inventory</span>
+                <span class="panel-meta">Skins, loadout and premium access</span>
+              </div>
+              <div class="inventory-hero-panel">
+                <article class="inventory-hero-card accent">
+                  <span>ACTIVE SKIN</span>
+                  <strong id="inventory-hero-skin">CLASSIC</strong>
+                  <small>Current hull finish</small>
+                </article>
+                <article class="inventory-hero-card">
+                  <span>PRIMARY</span>
+                  <strong id="inventory-hero-weapon">BEER</strong>
+                  <small>Main weapon</small>
+                </article>
+                <article class="inventory-hero-card">
+                  <span>FINISH</span>
+                  <strong id="inventory-hero-finish">BRASS</strong>
+                  <small>Weapon tone</small>
+                </article>
+              </div>
+              <div class="menu-grid compact-grid hangar-grid">
+                <div class="menu-cell">
+                  <span class="menu-label" data-i18n="weaponLabel">Weapon</span>
+                  <strong id="hangar-weapon-value">BEER</strong>
+                </div>
+                <div class="menu-cell">
+                  <span class="menu-label" data-i18n="weaponFinishLabel">Weapon finish</span>
+                  <strong id="hangar-finish-value">BRASS</strong>
+                </div>
+                <div class="menu-cell">
+                  <span class="menu-label" data-i18n="godModeLabel">God mode</span>
+                  <strong id="god-mode-value">OFF</strong>
+                </div>
+                <div class="menu-cell">
+                  <span class="menu-label" data-i18n="controlsLabel">Controls</span>
+                  <strong>A/D/Q</strong>
+                </div>
+              </div>
+              <div class="hangar-actions">
+                <button id="menu-loadout" class="ghost-button" type="button">LOADOUT</button>
+                <button id="menu-skin" class="ghost-button" type="button">SHIP SKIN</button>
+                <button id="menu-finish" class="ghost-button" type="button">WEAPON FINISH</button>
+                <button id="menu-god-mode" class="ghost-button" type="button">GOD MODE</button>
+              </div>
+              <div class="section-row compact-row">
+                <span class="panel-title">Skin Inventory</span>
+                <span class="panel-meta">Premium skins need TON + 20000 NAPIWAS</span>
+              </div>
+              <div id="skin-inventory-grid" class="skin-inventory-grid"></div>
+            </div>
+            <div class="menu-section quests-section" id="quests-section">
+              <div class="section-row">
+                <span id="quests-panel-title" class="panel-title">Contracts</span>
+                <span id="quest-board-meta" class="panel-meta">0 READY</span>
+              </div>
+            <div class="quest-hero-grid">
+              <article class="quest-hero-card accent">
+                <span id="quests-claimed-label">CLAIMED</span>
+                <strong id="quests-claimed-value">0</strong>
+                <small id="quests-claimed-note">Rewards secured</small>
+                </article>
+                <article class="quest-hero-card">
+                  <span id="quests-ready-label">READY NOW</span>
+                  <strong id="quests-ready-value">0</strong>
+                  <small id="quests-ready-note">Claimable contracts</small>
+                </article>
+                <article class="quest-hero-card">
+                  <span id="quests-pool-label">REWARD POOL</span>
+                <strong id="quests-pool-value">2W / 2S / 580</strong>
+                <small id="quests-pool-note">Weapons, skins, beer</small>
+              </article>
+            </div>
+            <div class="quest-ops-grid">
+              <article class="quest-side-card">
+                <div class="section-row compact-row">
+                  <span id="daily-panel-title" class="panel-title">Daily Pour</span>
+                  <span id="daily-status" class="panel-meta">READY</span>
+                </div>
+                <div class="menu-grid compact-grid daily-grid">
+                  <div class="menu-cell">
+                    <span id="daily-streak-label" class="menu-label">Streak</span>
+                    <strong id="daily-streak-value">0</strong>
+                  </div>
+                  <div class="menu-cell">
+                    <span id="daily-reward-label" class="menu-label">Today</span>
+                    <strong id="daily-reward-value">+0</strong>
+                  </div>
+                  <div class="menu-cell">
+                    <span id="daily-last-label" class="menu-label">Last</span>
+                    <strong id="daily-last-claim">Never</strong>
+                  </div>
+                </div>
+                <div class="quest-actions-row">
+                  <button id="daily-claim-button" class="quest-claim-button ready" type="button">CHECK IN</button>
+                  <div class="partner-links-inline">
+                    <a id="daily-dex-link" class="ghost-button compact-link" href="https://dexscreener.com" target="_blank" rel="noopener noreferrer">DEX</a>
+                    <a id="daily-gecko-link" class="ghost-button compact-link" href="https://www.geckoterminal.com" target="_blank" rel="noopener noreferrer">GECKO</a>
+                    <a id="daily-buy-link" class="ghost-button compact-link" href="https://t.me/devpool_trading_bot?start=token_EQDOCUp_pDBvOmGRyEDE2bnCl2cjGmAWjPsTWRt_veSsfGSn" target="_blank" rel="noopener noreferrer">BUY</a>
+                  </div>
+                </div>
+              </article>
+              <article class="quest-side-card">
+                <div class="section-row compact-row">
+                  <span id="challenge-panel-title" class="panel-title">PvP Bets</span>
+                  <span id="challenge-status" class="panel-meta">OPEN BOARD</span>
+                </div>
+                <div class="challenge-cta-grid">
+                  <button id="create-score-challenge" class="ghost-button" type="button">SCORE DUEL</button>
+                  <button id="create-boss-challenge" class="ghost-button" type="button">BOSS DUEL</button>
+                </div>
+                <div id="challenge-active-note" class="challenge-active-note">No live duel</div>
+                <div id="challenge-list" class="challenge-list"></div>
+              </article>
+            </div>
+              <div id="quest-board" class="quest-board"></div>
+            </div>
+            <div class="menu-section wallet-section" id="wallet-section">
+              <div class="section-row">
+                <span id="wallet-panel-title" class="panel-title">TON Wallet</span>
+                <span id="wallet-status" class="panel-meta">DISCONNECTED</span>
+              </div>
+              <div class="wallet-showcase">
+                <article class="wallet-balance-hero">
+                  <div class="wallet-balance-top">
+                    <span id="wallet-balance-kicker" class="wallet-balance-kicker">CONNECTED TON WALLET</span>
+                    <button id="wallet-copy-address" class="wallet-copy-button" type="button">COPY</button>
+                  </div>
+                  <div class="wallet-balance-stack">
+                    <strong id="wallet-token-balance" class="wallet-balance-value">0</strong>
+                    <span class="wallet-balance-symbol">NAPIWAS</span>
+                  </div>
+                  <p id="wallet-address" class="wallet-address-hero">Not connected</p>
+                </article>
+                <div class="wallet-beer-inline">
+                  <span id="wallet-beer-label">Beer mugs</span>
+                  <strong id="wallet-beer-balance">0</strong>
+                </div>
+              </div>
+              <div class="menu-grid compact-grid wallet-summary-grid">
+                <div class="menu-cell">
+                  <span id="wallet-access-label" class="menu-label">Access</span>
+                  <strong id="wallet-access-state">LOCKED</strong>
+                </div>
+                <div class="menu-cell">
+                  <span id="wallet-need-label" class="menu-label">Need</span>
+                  <strong id="wallet-access-gap">20000</strong>
+                </div>
+              </div>
+              <div class="wallet-actions">
+                <button id="wallet-connect-menu" class="ghost-button" type="button">CONNECT TON</button>
+                <button id="wallet-disconnect-menu" class="ghost-button" type="button">DISCONNECT</button>
+                <button id="wallet-refresh" class="ghost-button" type="button">SYNC BALANCE</button>
+                <a id="buy-token-link" class="ghost-button buy-token-link" href="https://t.me/devpool_trading_bot?start=token_EQDOCUp_pDBvOmGRyEDE2bnCl2cjGmAWjPsTWRt_veSsfGSn" target="_blank" rel="noopener noreferrer">BUY NAPIWAS</a>
+              </div>
+              <div class="wallet-story-panel">
+                <div class="wallet-story-head">
+                  <span id="wallet-holder-route-label">Holder route</span>
+                  <strong id="wallet-holder-state">LOCKED</strong>
+                </div>
+                <div class="wallet-story-layout">
+                  <div id="wallet-holder-progress-ring" class="holder-progress-ring" aria-hidden="true">
+                    <div class="holder-progress-ring-core">
+                      <span>ACCESS</span>
+                      <strong id="wallet-holder-progress-value">0%</strong>
+                      <small id="wallet-holder-progress-note">0 / 20000</small>
+                    </div>
+                  </div>
+                  <div class="wallet-story-copy-block">
+                    <p id="wallet-access-copy">Connect TON and hold 20000 NAPIWAS to unlock premium skins.</p>
+                    <div class="wallet-story-grid">
+                      <div class="wallet-story-chip">
+                        <span id="wallet-mug-bank-label">MUG BANK</span>
+                        <strong id="wallet-story-beer">0</strong>
+                      </div>
+                      <div class="wallet-story-chip">
+                        <span id="wallet-realtime-label">REAL TIME</span>
+                        <strong id="wallet-sync-note">TON READY</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="section-row compact-row">
+                <span id="wallet-bonus-title" class="panel-title">Holder bonuses</span>
+                <span id="wallet-bonus-meta" class="panel-meta">NAPIWAS multiplier</span>
+              </div>
+              <div class="menu-grid compact-grid wallet-bonus-grid">
+                <div class="menu-cell">
+                  <span id="wallet-bonus-tier-label" class="menu-label">Tier</span>
+                  <strong id="wallet-bonus-tier">BASE</strong>
+                </div>
+                <div class="menu-cell">
+                  <span id="wallet-boss-bonus-label" class="menu-label">Boss</span>
+                  <strong id="wallet-boss-bonus">x1.00</strong>
+                </div>
+                <div class="menu-cell">
+                  <span id="wallet-score-bonus-label" class="menu-label">Milestone</span>
+                  <strong id="wallet-score-bonus">x1.00</strong>
+                </div>
+              </div>
+              <div class="section-row compact-row">
+                <span id="leaderboard-title" class="panel-title">Leaderboard</span>
+                <span id="leaderboard-meta" class="panel-meta">Top pilots</span>
+              </div>
+              <div id="leaderboard-list" class="leaderboard-list"></div>
+              <div class="section-row compact-row">
+                <span id="live-panel-title" class="panel-title">Live ops</span>
+                <span id="live-panel-meta" class="panel-meta">Realtime</span>
+              </div>
+              <div class="menu-grid compact-grid live-ops-grid">
+                <div class="menu-cell">
+                  <span id="live-online-label" class="menu-label">Online</span>
+                  <strong id="live-online-value">0</strong>
+                </div>
+                <div class="menu-cell">
+                  <span id="live-runs-label" class="menu-label">Runs</span>
+                  <strong id="live-runs-value">0</strong>
+                </div>
+                <div class="menu-cell">
+                  <span id="live-boss-kills-label" class="menu-label">Boss kills</span>
+                  <strong id="live-boss-kills-value">0</strong>
+                </div>
+                <div class="menu-cell">
+                  <span id="live-wallet-links-label" class="menu-label">Wallet links</span>
+                  <strong id="live-wallet-links-value">0</strong>
+                </div>
+              </div>
+              <div class="section-row compact-row">
+                <span id="live-activity-title" class="panel-title">Activity feed</span>
+                <span id="live-activity-meta" class="panel-meta">Recent player actions</span>
+              </div>
+              <div id="live-activity-list" class="live-activity-list"></div>
+              <div class="section-row compact-row">
+                <span id="partner-panel-title" class="panel-title">Partners</span>
+                <span id="partner-panel-meta" class="panel-meta">Promo board</span>
+              </div>
+              <div id="partner-grid" class="partner-grid"></div>
+            </div>
+            <div class="menu-section shop-section" id="shop-section">
+              <div class="section-row">
+                <span class="panel-title">Shop</span>
+                <span id="shop-balance-meta" class="panel-meta">Beer mugs: 0</span>
+              </div>
+              <div id="shop-skin-grid" class="shop-skin-grid"></div>
+              <div class="section-row compact-row">
+                <span id="music-panel-title" class="panel-title">Jukebox</span>
+                <span id="music-panel-meta" class="panel-meta">Unlockable tracks</span>
+              </div>
+              <div id="music-track-list" class="music-track-list"></div>
+              <div class="music-admin-panel">
+                <div class="section-row compact-row">
+                  <span id="music-admin-title" class="panel-title">Admin tools</span>
+                  <span id="music-admin-meta" class="panel-meta">Add tracks and partners</span>
+                </div>
+                <div class="music-admin-grid">
+                  <input id="admin-track-name" class="admin-input" type="text" placeholder="Track title" />
+                  <input id="admin-track-url" class="admin-input" type="url" placeholder="https://..." />
+                  <button id="admin-add-track" class="ghost-button" type="button">ADD TRACK</button>
+                  <input id="admin-partner-name" class="admin-input" type="text" placeholder="Partner name" />
+                  <input id="admin-partner-url" class="admin-input" type="url" placeholder="https://..." />
+                  <button id="admin-add-partner" class="ghost-button" type="button">ADD PARTNER</button>
+                </div>
+              </div>
+            </div>
+            <div class="menu-section arsenal-section">
+              <div class="section-row">
+                <span class="panel-title" data-i18n="arsenalFloorTitle">Arsenal floor</span>
+                <span class="panel-meta" data-i18n="dropToUnlockLabel">Drop to unlock</span>
+              </div>
+              <div id="menu-arsenal" class="arsenal-preview"></div>
+            </div>
+            <div class="boss-roster" id="boss-roster"></div>
+            <div class="overlay-actions">
+              <button id="menu-start" class="cta-button large" type="button" data-i18n="startRunButton">START RUN</button>
+              <button id="menu-language" class="ghost-button" type="button">RUSSIAN</button>
+              <button id="menu-difficulty" class="ghost-button" type="button">CHANGE DIFFICULTY</button>
+              <button id="menu-sound" class="ghost-button" type="button">TOGGLE SOUND</button>
+              <button id="menu-wallet-connect" class="ghost-button" type="button">CONNECT TON WALLET</button>
+              <button id="menu-fullscreen" class="ghost-button" type="button">TOGGLE FULLSCREEN</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="pause-overlay" class="overlay-screen">
+          <div class="overlay-card">
+            <button id="pause-close" class="overlay-close" type="button" aria-label="Close pause"><span class="visually-hidden">Close pause</span></button>
+            <span class="eyebrow" data-i18n="pausedEyebrow">Paused</span>
+            <h2 data-i18n="runFrozenTitle">Run frozen</h2>
+            <p data-i18n="pauseBody">Take a breath, then jump straight back into the arena.</p>
+            <div class="menu-grid compact-grid">
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="scoreLabel">Score</span>
+                <strong id="pause-score">0</strong>
+              </div>
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="metersLabel">Meters</span>
+                <strong id="pause-level">1</strong>
+              </div>
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="livesLabel">Lives</span>
+                <strong id="pause-lives">3</strong>
+              </div>
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="threatLabel">Threat</span>
+                <strong id="pause-boss">SAFE</strong>
+              </div>
+            </div>
+            <div class="overlay-actions">
+              <button id="resume-button" class="cta-button large" type="button" data-i18n="resumeButton">RESUME</button>
+              <button id="pause-home" class="ghost-button" type="button" data-i18n="exitToMenuButton">EXIT TO MENU</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="quest-overlay" class="overlay-screen">
+          <div class="overlay-card">
+            <button id="quest-close-top" class="overlay-close" type="button" aria-label="Close quest"><span class="visually-hidden">Close quest</span></button>
+            <span class="eyebrow" data-i18n="questButton">Quest</span>
+            <h2 data-i18n="runNotesTitle">Run Notes</h2>
+            <ul class="quest-list" id="quest-list"></ul>
+            <div class="overlay-actions">
+              <button id="quest-close" class="ghost-button" type="button" data-i18n="closeButton">CLOSE</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="gameover-overlay" class="overlay-screen">
+          <div class="overlay-card">
+            <button id="gameover-close" class="overlay-close" type="button" aria-label="Close game over"><span class="visually-hidden">Close game over</span></button>
+            <span class="eyebrow" data-i18n="gameOverEyebrow">Game Over</span>
+            <h2 data-i18n="runCompleteTitle">Run complete</h2>
+            <p id="gameover-summary">You got clipped in the arena.</p>
+            <div id="gameover-rank-card" class="gameover-rank-card">
+              <span class="gameover-rank-label" data-i18n="runRankLabel">Run rank</span>
+              <strong id="gameover-rank">BRONZE</strong>
+              <span id="gameover-rank-note" class="gameover-rank-note">First clear lane.</span>
+            </div>
+            <div class="menu-grid">
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="finalScoreLabel">Final score</span>
+                <strong id="gameover-score">0</strong>
+              </div>
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="metersLabel">Meters</span>
+                <strong id="gameover-meters">0</strong>
+              </div>
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="highScoreLabel">High score</span>
+                <strong id="gameover-high-score">0</strong>
+              </div>
+              <div class="menu-cell">
+                <span class="menu-label" data-i18n="bestMetersLabel">Best meters</span>
+                <strong id="gameover-best-meters">0</strong>
+              </div>
+            </div>
+            <div class="overlay-actions">
+              <button id="retry-button" class="cta-button large" type="button" data-i18n="tryAgainButton">TRY AGAIN</button>
+              <button id="gameover-home" class="ghost-button" type="button" data-i18n="backToMenuButton">BACK TO MENU</button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./game.js?v=20260323-1"></script>
+  </body>
+</html>

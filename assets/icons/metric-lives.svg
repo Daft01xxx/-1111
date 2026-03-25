@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="ml-shell" x1="5" y1="4" x2="26" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffb0bf"/>
+      <stop offset="1" stop-color="#ff5a78"/>
+    </linearGradient>
+    <radialGradient id="ml-core" cx="40%" cy="28%" r="68%">
+      <stop offset="0" stop-color="#ffd1dd"/>
+      <stop offset="0.55" stop-color="#ff8aa4"/>
+      <stop offset="1" stop-color="#ff4e70"/>
+    </radialGradient>
+  </defs>
+  <circle cx="16" cy="16" r="14" fill="#131926"/>
+  <circle cx="16" cy="16" r="13" fill="none" stroke="url(#ml-shell)" stroke-width="1.4" opacity=".84"/>
+  <path d="M16 25.8 7.8 17.2A5.2 5.2 0 1 1 16 10.9a5.2 5.2 0 1 1 8.2 6.3Z" fill="url(#ml-core)" stroke="#ff6f8c" stroke-width="1"/>
+  <ellipse cx="12.5" cy="11.7" rx="3" ry="1.8" fill="#ffdce6" opacity=".78"/>
+</svg>

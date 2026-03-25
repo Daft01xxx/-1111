@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-hidden="true">
+  <defs>
+    <radialGradient id="tokenGlow" cx="45%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#fff2cb"/>
+      <stop offset="52%" stop-color="#ffd05e"/>
+      <stop offset="100%" stop-color="#f28a1a"/>
+    </radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="24" fill="url(#tokenGlow)"/>
+  <circle cx="32" cy="32" r="18" fill="none" stroke="#fff3d2" stroke-width="2.6"/>
+  <path d="M23 41V23h6l10 12V23h4v18h-5L27 28v13z" fill="#332117"/>
+  <circle cx="47" cy="20" r="5.5" fill="#79d4b3"/>
+  <path d="M45 20h4" stroke="#22443a" stroke-width="2" stroke-linecap="round"/>
+  <path d="M47 18v4" stroke="#22443a" stroke-width="2" stroke-linecap="round"/>
+</svg>

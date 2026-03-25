@@ -1,0 +1,1494 @@
+/* [ITER-99] Final global palette lock loaded last */
+:root {
+  --theme-black: #000000;
+  --theme-white: #ffffff;
+  --theme-cream: #f2e6d5;
+  --theme-orange: #f28a1a;
+  --theme-cream-dim: rgba(242, 230, 213, 0.72);
+  --theme-cream-line: rgba(242, 230, 213, 0.28);
+  --theme-black-soft: rgba(0, 0, 0, 0.72);
+}
+
+html,
+body {
+  background: var(--theme-black) !important;
+  color: var(--theme-cream) !important;
+}
+
+body,
+.app-shell,
+.phone-shell,
+.content-column,
+.arena-shell,
+.arena-stage,
+.arena-frame,
+#game-canvas {
+  background: var(--theme-black) !important;
+}
+
+.phone-shell,
+.header-card,
+.hud-card,
+.controls-card,
+.bottom-nav,
+.overlay-card,
+.overlay-card-menu {
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.header-card,
+.hud-card,
+.overlay-card,
+.overlay-card-menu,
+.menu-section,
+.menu-cell,
+.inventory-hero-card,
+.wallet-card,
+.quest-card,
+.shop-skin-card,
+.skin-tile,
+.weapon-chip,
+.metric-chip,
+.top-beer-balance,
+.top-hull-track,
+.boss-strip-main,
+.boss-progress-track,
+.player-health-track,
+.arena-chip,
+.slider-block,
+.slider-track,
+.bottom-nav,
+.nav-button,
+.pill-button,
+.ghost-button,
+.mini-action-button,
+.move-button,
+.action-button {
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.header-card,
+.hud-card,
+.overlay-card,
+.overlay-card-menu {
+  background: var(--theme-black) !important;
+  border-color: var(--theme-cream-line) !important;
+}
+
+.menu-section,
+.menu-cell,
+.inventory-hero-card,
+.wallet-card,
+.quest-card,
+.shop-skin-card,
+.skin-tile,
+.weapon-chip,
+.metric-chip,
+.top-beer-balance,
+.boss-strip-main,
+.boss-progress-track,
+.player-health-track,
+.arena-chip,
+.slider-track,
+.pill-button,
+.ghost-button,
+.mini-action-button,
+.move-button,
+.action-button,
+.nav-button {
+  background-color: var(--theme-black) !important;
+  border-color: var(--theme-cream-line) !important;
+  color: var(--theme-cream) !important;
+}
+
+.metric-chip.mint,
+.top-hull-fill,
+.boss-progress-fill,
+.player-health-fill,
+.pill-button.mint,
+.pill-button.static,
+.weapon-button,
+.action-button.mint,
+.cta-button,
+.shop-buy-button:enabled,
+.quest-claim-button.ready,
+.nav-button.active,
+.weapon-chip.active,
+.skin-tile.active,
+[aria-selected="true"] {
+  background: var(--theme-orange) !important;
+  background-image: none !important;
+  border-color: var(--theme-orange) !important;
+  color: var(--theme-black) !important;
+}
+
+.nav-button.active span,
+.weapon-chip.active *,
+.cta-button *,
+.weapon-button *,
+.pill-button.mint *,
+.pill-button.static * {
+  color: var(--theme-black) !important;
+}
+
+.top-hull-track {
+  background: rgba(242, 230, 213, 0.08) !important;
+}
+
+.top-hull-fill {
+  background: var(--theme-orange) !important;
+}
+
+.boss-mode,
+.feature-pill,
+.menu-label,
+.metric-label,
+.panel-meta,
+.skin-meta,
+.wallet-copy,
+.quest-copy,
+.shop-note {
+  color: var(--theme-cream-dim) !important;
+}
+
+h1,
+h2,
+h3,
+strong,
+b,
+.panel-title,
+.eyebrow,
+.boss-strip-main strong,
+.weapon-hud-name,
+.boss-pod-label,
+.boss-pod strong {
+  color: var(--theme-white) !important;
+}
+
+.arena-header-row,
+.arena-shell,
+.arena-chip {
+  color: var(--theme-cream) !important;
+}
+
+.slider-block {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.slider-track {
+  background: rgba(0, 0, 0, 0.68) !important;
+}
+
+.slider-knob {
+  background: var(--theme-white) !important;
+  background-image: none !important;
+  border-color: rgba(242, 230, 213, 0.55) !important;
+  box-shadow: none !important;
+}
+
+.bottom-nav {
+  background: var(--theme-black) !important;
+  border-top-color: var(--theme-cream-line) !important;
+}
+
+.nav-button {
+  background: var(--theme-black) !important;
+  color: var(--theme-cream) !important;
+}
+
+.nav-button .nav-icon-img {
+  filter: grayscale(1) brightness(1.55) contrast(1.1) !important;
+}
+
+.cta-button {
+  color: var(--theme-black) !important;
+}
+
+#menu-overlay,
+#pause-overlay,
+#quest-overlay,
+#gameover-overlay,
+#inventory-section,
+#quests-section,
+#wallet-section,
+#shop-section {
+  background: var(--theme-black) !important;
+  background-image: none !important;
+}
+
+.phone-shell,
+.content-column,
+.controls-card,
+.weapon-dock,
+.arena-overlay,
+.boss-pod,
+.player-pod {
+  border-color: var(--theme-cream-line) !important;
+}
+
+.controls-card,
+.weapon-dock,
+.arena-overlay,
+.boss-pod,
+.player-pod {
+  background: var(--theme-black) !important;
+  background-image: none !important;
+}
+
+.top-runline span,
+.top-beer-balance span,
+.top-hull span,
+.overlay-card p,
+.overlay-card-menu p {
+  color: var(--theme-cream-dim) !important;
+}
+
+.weapon-chip-badge {
+  background: rgba(242, 230, 213, 0.08) !important;
+  color: var(--theme-cream) !important;
+  border-color: var(--theme-cream-line) !important;
+  box-shadow: none !important;
+}
+
+.premium-badge,
+.quest-badge {
+  color: var(--theme-orange) !important;
+  background: rgba(242, 138, 26, 0.14) !important;
+  border-color: rgba(242, 138, 26, 0.3) !important;
+}
+
+.overlay-close {
+  border-color: var(--theme-cream-line) !important;
+  background: var(--theme-black) !important;
+  box-shadow: none !important;
+}
+
+.overlay-close::before,
+.overlay-close::after {
+  background: var(--theme-white) !important;
+}
+
+.phone-shell::before,
+.phone-shell::after,
+.bottom-nav::before,
+.bottom-nav::after,
+.header-card::before,
+.header-card::after,
+.hud-card::before,
+.hud-card::after,
+.nav-button::before,
+.nav-button::after,
+.ghost-button::after,
+.weapon-chip::after,
+.metric-chip::after,
+.boss-pod::before,
+.overlay-card-menu::before,
+.overlay-card-menu::after,
+.overlay-card-menu.tab-transition::before,
+#phase-chip::after,
+#arena-distance-chip::after,
+.slider-knob::after,
+.premium-ripple-wave {
+  display: none !important;
+  content: none !important;
+}
+
+.menu-grid,
+.menu-hero,
+.menu-hero-art,
+.menu-status-strip,
+.menu-status-chip,
+.inventory-hero-panel,
+.wallet-showcase,
+.wallet-balance-hero,
+.wallet-summary-grid > *,
+.wallet-actions,
+.wallet-story-panel,
+.wallet-story-grid,
+.wallet-story-chip,
+.wallet-beer-inline,
+.quest-board,
+.quest-contract,
+.quest-hero-grid,
+.quest-reward-chip,
+.quest-progress-track,
+.shop-skin-grid,
+.arsenal-floor-grid,
+.arsenal-card,
+.boss-roster,
+.boss-roster-card,
+.weapon-hud,
+.weapon-icon,
+.slider-fill,
+.arena-chip {
+  background: var(--theme-black) !important;
+  background-image: none !important;
+  border-color: var(--theme-cream-line) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.weapon-button {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+body.mobile-clean-play .arena-chip,
+body.mobile-premium-v2 .arena-chip {
+  background: var(--theme-black) !important;
+  background-image: none !important;
+  border-color: var(--theme-cream-line) !important;
+  color: var(--theme-cream) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.skin-dot,
+.cta-button,
+.weapon-button {
+  box-shadow: none !important;
+}
+
+.quest-progress-fill,
+.boss-progress-fill,
+.player-health-fill {
+  background: var(--theme-orange) !important;
+  background-image: none !important;
+}
+
+.bottom-nav {
+  isolation: auto !important;
+}
+
+@media (max-width: 760px), (pointer: coarse) {
+  body,
+  .phone-shell,
+  .header-card,
+  .hud-card,
+  .controls-card,
+  .bottom-nav,
+  .overlay-card,
+  .overlay-card-menu,
+  .menu-section,
+  .quest-contract,
+  .wallet-balance-hero,
+  .wallet-story-panel,
+  .shop-skin-card,
+  .weapon-chip,
+  .nav-button,
+  .ghost-button,
+  .mini-action-button,
+  .action-button,
+  .pill-button,
+  .slider-track,
+  .slider-fill,
+  .weapon-icon {
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+  }
+
+  .nav-button,
+  .ghost-button,
+  .mini-action-button,
+  .action-button,
+  .pill-button,
+  .weapon-chip,
+  .cta-button {
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, opacity 120ms ease !important;
+    transform: none !important;
+  }
+
+  .nav-button:active,
+  .ghost-button:active,
+  .mini-action-button:active,
+  .action-button:active,
+  .pill-button:active,
+  .weapon-chip:active,
+  .cta-button:active {
+    transform: none !important;
+    opacity: 0.82 !important;
+  }
+}
+
+/* [ITER-100] Gameplay systems UI pass: daily, PvP, leaderboard, partners, music, and mobile weapon dock */
+*,
+*::before,
+*::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  outline: none;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  box-shadow: 0 0 0 1px rgba(242, 230, 213, 0.24), 0 0 0 3px rgba(242, 138, 26, 0.28) !important;
+  border-color: rgba(242, 138, 26, 0.72) !important;
+}
+
+.quest-ops-grid,
+.wallet-bonus-grid,
+.live-ops-grid,
+.music-admin-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.quest-ops-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.quest-side-card,
+.leaderboard-row,
+.challenge-card,
+.partner-card,
+.music-track-card,
+.music-admin-panel {
+  position: relative;
+  border: 1px solid rgba(242, 230, 213, 0.14);
+  background: linear-gradient(180deg, rgba(8, 8, 8, 0.96), rgba(0, 0, 0, 0.98)) !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.38);
+}
+
+.quest-side-card,
+.music-admin-panel {
+  border-radius: 22px;
+  padding: 16px;
+}
+
+.daily-grid {
+  margin-top: 10px;
+}
+
+.quest-actions-row,
+.partner-links-inline,
+.challenge-cta-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.quest-actions-row {
+  margin-top: 12px;
+}
+
+.partner-links-inline,
+.challenge-cta-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.challenge-cta-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 10px;
+}
+
+.challenge-active-note {
+  margin-top: 12px;
+  color: rgba(242, 230, 213, 0.72);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.challenge-list,
+.leaderboard-list,
+.live-activity-list,
+.partner-grid,
+.music-track-list {
+  display: grid;
+  gap: 10px;
+}
+
+.challenge-list,
+.leaderboard-list,
+.live-activity-list,
+.music-track-list {
+  margin-top: 12px;
+}
+
+.live-activity-list {
+  max-height: 228px;
+  overflow-y: auto;
+  padding-right: 2px;
+  overscroll-behavior: contain;
+}
+
+.challenge-empty {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(242, 230, 213, 0.18);
+  border-radius: 18px;
+  color: rgba(242, 230, 213, 0.62);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.live-activity-empty,
+.live-activity-row {
+  border-radius: 18px;
+  border: 1px solid rgba(242, 230, 213, 0.14);
+  background: linear-gradient(180deg, rgba(8, 8, 8, 0.96), rgba(0, 0, 0, 0.98)) !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+  padding: 14px 16px;
+}
+
+.live-activity-empty {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  color: rgba(242, 230, 213, 0.62);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.challenge-card,
+.leaderboard-row,
+.partner-card,
+.music-track-card {
+  border-radius: 18px;
+  padding: 14px 16px;
+}
+
+.challenge-card-head,
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.challenge-card p {
+  margin: 10px 0 12px;
+  color: rgba(242, 230, 213, 0.7);
+  line-height: 1.45;
+}
+
+.challenge-card-status,
+.leaderboard-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 138, 26, 0.26);
+  background: rgba(242, 138, 26, 0.12);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.leaderboard-row-main,
+.leaderboard-row-score {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.live-activity-row {
+  display: grid;
+  gap: 8px;
+}
+
+.live-activity-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.live-activity-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 138, 26, 0.26);
+  background: rgba(242, 138, 26, 0.12);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.live-activity-age,
+.live-activity-detail {
+  color: rgba(242, 230, 213, 0.68);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.live-activity-alias {
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.live-activity-detail {
+  margin: 0;
+}
+
+.leaderboard-row-main {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+}
+
+.leaderboard-alias,
+.leaderboard-row-score strong,
+.partner-card strong,
+.music-track-card strong {
+  color: #ffffff !important;
+}
+
+.leaderboard-wallet,
+.leaderboard-row-score span,
+.partner-card span,
+.music-track-card span {
+  color: rgba(242, 230, 213, 0.66);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.partner-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.partner-card {
+  display: grid;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.music-track-card {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  border-color: rgba(242, 230, 213, 0.16);
+}
+
+.music-track-card.active {
+  border-color: rgba(242, 138, 26, 0.58) !important;
+  box-shadow: 0 0 0 1px rgba(242, 138, 26, 0.18), 0 18px 36px rgba(108, 54, 5, 0.28);
+}
+
+.music-track-card.locked {
+  opacity: 0.56;
+}
+
+.music-admin-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+.admin-input {
+  min-width: 0;
+  min-height: 46px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(242, 230, 213, 0.16);
+  background: rgba(0, 0, 0, 0.92);
+  color: #ffffff;
+}
+
+.admin-input::placeholder {
+  color: rgba(242, 230, 213, 0.42);
+}
+
+.compact-link {
+  min-height: 40px;
+  justify-content: center;
+}
+
+.boss-roster-note {
+  color: rgba(242, 230, 213, 0.6);
+  line-height: 1.45;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ghost-button:hover,
+  .action-button:hover,
+  .move-button:hover,
+  .nav-button:hover,
+  .quest-claim-button:hover,
+  .shop-buy-button:hover,
+  .music-track-card:hover,
+  .partner-card:hover,
+  .compact-link:hover {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-color: #ffffff !important;
+    box-shadow: 0 14px 28px rgba(255, 255, 255, 0.08), 0 10px 24px rgba(0, 0, 0, 0.34) !important;
+  }
+
+  .ghost-button:hover *,
+  .action-button:hover *,
+  .move-button:hover *,
+  .nav-button:hover *,
+  .quest-claim-button:hover *,
+  .shop-buy-button:hover *,
+  .music-track-card:hover *,
+  .partner-card:hover *,
+  .compact-link:hover * {
+    color: #000000 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .quest-ops-grid,
+  .partner-grid,
+  .music-admin-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .partner-links-inline {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .challenge-card-head,
+  .leaderboard-row,
+  .live-activity-head {
+    align-items: flex-start;
+  }
+
+  .leaderboard-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .live-activity-list {
+    max-height: 196px;
+  }
+
+  body.mobile-clean-play .controls-card {
+    grid-template-areas:
+      "dock dock"
+      "stick primary"
+      "stick secondary" !important;
+  }
+
+  body.mobile-clean-play .slider-block {
+    grid-area: stick !important;
+  }
+
+  body.mobile-clean-play #weapon-dock,
+  body.mobile-clean-play .weapon-dock {
+    display: grid !important;
+    grid-area: dock !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: minmax(82px, 1fr) !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0 0 4px !important;
+    border: 0 !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+  }
+
+  body.mobile-clean-play .weapon-chip {
+    min-height: 40px !important;
+    padding: 8px 10px !important;
+    border-radius: 15px !important;
+    background: rgba(0, 0, 0, 0.78) !important;
+    border: 1px solid rgba(242, 230, 213, 0.18) !important;
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  body.mobile-clean-play .weapon-chip strong {
+    font-size: 10px !important;
+  }
+
+  body.mobile-clean-play .weapon-chip-badge,
+  body.mobile-clean-play .weapon-chip-meta {
+    font-size: 8px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="wallet"] > #wallet-section {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .wallet-section .section-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: start !important;
+    gap: 6px 10px !important;
+  }
+
+  .wallet-section .panel-title,
+  .wallet-section .panel-meta,
+  .wallet-balance-kicker,
+  .wallet-balance-symbol,
+  .wallet-address-hero,
+  .wallet-story-copy-block p,
+  .wallet-story-chip strong,
+  .wallet-summary-grid strong {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+
+  .wallet-showcase {
+    gap: 12px !important;
+  }
+
+  .wallet-balance-hero {
+    display: grid !important;
+    gap: 10px !important;
+    padding: 14px !important;
+  }
+
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="wallet"] .wallet-balance-hero {
+    display: grid !important;
+    gap: 10px !important;
+    padding: 14px !important;
+  }
+
+  .wallet-balance-top {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: start !important;
+    gap: 8px !important;
+    margin-bottom: 0 !important;
+  }
+
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="wallet"] .wallet-balance-top {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: start !important;
+    gap: 8px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .wallet-balance-stack {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-content: start !important;
+    align-items: start !important;
+    gap: 4px !important;
+  }
+
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="wallet"] .wallet-balance-stack {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-content: start !important;
+    align-items: start !important;
+    gap: 4px !important;
+  }
+
+  .wallet-balance-kicker {
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .wallet-copy-button {
+    min-width: 0 !important;
+    min-height: 34px !important;
+    padding: 0 12px !important;
+    justify-self: end !important;
+    align-self: start !important;
+    font-size: 10px !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  .wallet-balance-value {
+    font-size: clamp(24px, 9vw, 40px) !important;
+    line-height: 0.95 !important;
+  }
+
+  .wallet-balance-symbol {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .wallet-address-hero {
+    margin-top: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+  }
+
+  .wallet-beer-inline {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: start !important;
+    gap: 8px !important;
+    padding-inline: 0 !important;
+  }
+
+  .wallet-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .wallet-summary-grid .menu-cell {
+    min-width: 0 !important;
+  }
+
+  .wallet-summary-grid strong {
+    font-size: 17px !important;
+    line-height: 1.05 !important;
+  }
+
+  .wallet-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="wallet"] .wallet-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .wallet-actions .ghost-button,
+  .wallet-actions .buy-token-link {
+    min-width: 0 !important;
+    min-height: 40px !important;
+    padding: 0 10px !important;
+    font-size: 10px !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .wallet-story-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="wallet"] .wallet-story-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .holder-progress-ring {
+    justify-self: start !important;
+  }
+
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="wallet"] .holder-progress-ring {
+    justify-self: start !important;
+  }
+
+  .wallet-story-copy-block {
+    min-width: 0 !important;
+  }
+
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="wallet"] .wallet-story-copy-block {
+    min-width: 0 !important;
+    display: grid !important;
+    gap: 10px !important;
+  }
+
+  .wallet-story-copy-block p {
+    margin: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  .wallet-story-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="wallet"] .wallet-story-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .wallet-story-chip {
+    min-width: 0 !important;
+    padding: 10px !important;
+  }
+
+  .wallet-story-chip strong {
+    font-size: 15px !important;
+    line-height: 1.1 !important;
+  }
+}
+
+@media (max-width: 380px) {
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="wallet"] .wallet-balance-top {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .wallet-balance-top {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .wallet-copy-button {
+    justify-self: stretch !important;
+    width: 100% !important;
+  }
+
+  .wallet-story-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="wallet"] .wallet-story-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* [ITER-100] Final mobile overlay cleanup loaded after legacy hotfix layers */
+body.mobile-fullscreen-tabs .overlay-card-menu[data-view],
+body.mobile-fullscreen-tabs .overlay-card-menu[data-view] > .menu-section,
+body.mobile-menu-open .overlay-card-menu,
+body.mobile-menu-open .overlay-card-menu > .menu-section,
+body.mobile-menu-open #wallet-section,
+body.mobile-menu-open #inventory-section,
+body.mobile-menu-open #quests-section,
+body.mobile-menu-open #shop-section {
+  background: #000000 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.mobile-menu-open #menu-overlay .overlay-close,
+body.mobile-fullscreen-tabs #menu-overlay .overlay-close,
+body.mobile-menu-open .weapon-chip,
+body.mobile-menu-open .weapon-chip.active,
+body.mobile-fullscreen-tabs .wallet-balance-hero,
+body.mobile-menu-open .wallet-balance-hero {
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* [ITER-101] Premium interface polish without reintroducing heavy scene gradients */
+:root {
+  --ui-panel-bg: #050505;
+  --ui-panel-bg-strong: #090909;
+  --ui-panel-stroke: rgba(242, 230, 213, 0.18);
+  --ui-panel-stroke-strong: rgba(242, 138, 26, 0.42);
+  --ui-panel-inset: rgba(255, 255, 255, 0.05);
+  --ui-gold-ring: rgba(255, 213, 133, 0.56);
+  --ui-gold-glow: rgba(242, 138, 26, 0.2);
+  --ui-hover-fill: #f4efe7;
+  --ui-hover-text: #060606;
+}
+
+button,
+a,
+[role="button"],
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+button:focus,
+a:focus,
+[role="button"]:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none !important;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none !important;
+  border-color: rgba(242, 138, 26, 0.74) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 0 3px rgba(242, 138, 26, 0.36) !important;
+}
+
+.header-card,
+.hud-card,
+.controls-card,
+.overlay-card,
+.overlay-card-menu,
+.menu-section,
+.menu-cell,
+.inventory-hero-card,
+.quest-hero-card,
+.quest-contract,
+.wallet-balance-hero,
+.wallet-story-panel,
+.wallet-story-chip,
+.wallet-beer-inline,
+.shop-skin-card,
+.skin-tile,
+.weapon-chip,
+.ghost-button,
+.nav-button,
+.mini-action-button,
+.action-button,
+.pill-button,
+.cta-button,
+.shop-buy-button,
+.overlay-close,
+.boss-strip-main,
+.player-health-track,
+.boss-progress-track,
+.weapon-hud,
+.weapon-icon {
+  background: var(--ui-panel-bg) !important;
+  border-color: var(--ui-panel-stroke) !important;
+  box-shadow:
+    inset 0 1px 0 var(--ui-panel-inset),
+    0 10px 22px rgba(0, 0, 0, 0.22) !important;
+}
+
+.overlay-card-menu,
+.menu-section,
+.quest-contract,
+.wallet-balance-hero,
+.wallet-story-panel,
+.shop-skin-card,
+.skin-tile {
+  border-color: rgba(242, 230, 213, 0.16) !important;
+}
+
+.ghost-button,
+.nav-button,
+.mini-action-button,
+.action-button,
+.pill-button,
+.shop-buy-button,
+.weapon-chip,
+.cta-button,
+.overlay-close {
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease !important;
+}
+
+.ghost-button:active,
+.nav-button:active,
+.mini-action-button:active,
+.action-button:active,
+.pill-button:active,
+.shop-buy-button:active,
+.weapon-chip:active,
+.cta-button:active,
+.overlay-close:active {
+  transform: none !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.48) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ghost-button:hover,
+  .nav-button:hover:not(.active),
+  .mini-action-button:hover,
+  .action-button:hover,
+  .pill-button:hover,
+  .shop-buy-button:hover:not(:disabled),
+  .weapon-chip:hover:not(.active),
+  .skin-tile:hover:not(.active),
+  .overlay-close:hover {
+    background: var(--ui-hover-fill) !important;
+    color: var(--ui-hover-text) !important;
+    border-color: rgba(255, 255, 255, 0.92) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.56),
+      0 14px 24px rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .ghost-button:hover *,
+  .nav-button:hover:not(.active) *,
+  .mini-action-button:hover *,
+  .action-button:hover *,
+  .pill-button:hover *,
+  .shop-buy-button:hover:not(:disabled) *,
+  .weapon-chip:hover:not(.active) *,
+  .skin-tile:hover:not(.active) *,
+  .overlay-close:hover * {
+    color: var(--ui-hover-text) !important;
+  }
+
+  .nav-button:hover:not(.active) .nav-icon-img,
+  .ghost-button:hover .nav-icon-img,
+  .nav-button.active .nav-icon-img {
+    filter: brightness(0.08) contrast(1.18) !important;
+  }
+}
+
+.nav-button.active,
+.weapon-chip.active,
+.cta-button,
+.shop-buy-button:enabled {
+  border-color: rgba(242, 138, 26, 0.76) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 24px rgba(242, 138, 26, 0.16) !important;
+}
+
+.skin-tile.selected-skin,
+.shop-skin-card.selected-skin-card {
+  background: var(--ui-panel-bg-strong) !important;
+  color: var(--theme-white) !important;
+  border-color: var(--ui-gold-ring) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 213, 133, 0.18),
+    0 16px 30px var(--ui-gold-glow) !important;
+}
+
+.skin-tile.selected-skin *,
+.shop-skin-card.selected-skin-card * {
+  color: var(--theme-white) !important;
+}
+
+.skin-tile.selected-skin .skin-meta,
+.shop-skin-card.selected-skin-card .shop-skin-meta {
+  color: rgba(255, 227, 170, 0.88) !important;
+}
+
+.skin-tile.selected-skin .skin-ship-preview,
+.shop-skin-card.selected-skin-card .shop-skin-preview {
+  border-color: rgba(255, 222, 157, 0.72) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 18px rgba(255, 207, 120, 0.12),
+    0 0 28px rgba(242, 138, 26, 0.22) !important;
+}
+
+.skin-dot,
+.shop-skin-core {
+  display: none !important;
+}
+
+.skin-tile {
+  min-height: 92px !important;
+  padding: 12px !important;
+}
+
+.skin-tile-top {
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.skin-tile-top strong,
+.shop-skin-name {
+  letter-spacing: 0.08em !important;
+}
+
+.shop-skin-card {
+  padding: 12px !important;
+}
+
+.shop-skin-preview {
+  width: 64px !important;
+  height: 52px !important;
+  border-radius: 18px !important;
+  place-items: center !important;
+}
+
+.skin-ship-preview {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  pointer-events: none;
+  filter: drop-shadow(0 0 12px var(--ship-preview-glow));
+}
+
+.skin-ship-preview.compact {
+  width: 36px;
+  height: 28px;
+}
+
+.skin-ship-preview.large {
+  width: 54px;
+  height: 42px;
+}
+
+.skin-ship-body,
+.skin-ship-cockpit,
+.skin-ship-wing,
+.skin-ship-engine,
+.skin-ship-flame {
+  position: absolute;
+  display: block;
+}
+
+.skin-ship-body {
+  left: 50%;
+  top: 2px;
+  width: 34%;
+  height: 68%;
+  transform: translateX(-50%);
+  background: var(--ship-preview-hull);
+  clip-path: polygon(50% 0%, 100% 24%, 82% 100%, 18% 100%, 0% 24%);
+  border-radius: 10px;
+}
+
+.skin-ship-cockpit {
+  left: 50%;
+  top: 22%;
+  width: 18%;
+  height: 20%;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 42% 42%;
+  background: var(--ship-preview-face);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22);
+}
+
+.skin-ship-wing {
+  top: 36%;
+  width: 34%;
+  height: 32%;
+  background: var(--ship-preview-accent);
+}
+
+.skin-ship-wing.left {
+  left: 1px;
+  clip-path: polygon(0 58%, 100% 0, 78% 100%, 0 82%);
+}
+
+.skin-ship-wing.right {
+  right: 1px;
+  clip-path: polygon(100% 58%, 0 0, 22% 100%, 100% 82%);
+}
+
+.skin-ship-engine {
+  left: 50%;
+  bottom: 6px;
+  width: 20%;
+  height: 20%;
+  transform: translateX(-50%);
+  border-radius: 0 0 8px 8px;
+  background: var(--ship-preview-accent);
+}
+
+.skin-ship-flame {
+  left: 50%;
+  bottom: -1px;
+  width: 16%;
+  height: 18%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, var(--theme-orange) 100%);
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+  opacity: 0.92;
+}
+
+.skin-ship-preview.large .skin-ship-body {
+  top: 4px;
+  height: 72%;
+}
+
+.skin-ship-preview.large .skin-ship-cockpit {
+  width: 20%;
+  height: 22%;
+}
+
+body.mobile-menu-open .overlay-card-menu,
+body.mobile-fullscreen-tabs .overlay-card-menu[data-view] {
+  background: #000000 !important;
+}
+
+body .skin-tile.selected-skin,
+body.mobile-menu-open .skin-tile.selected-skin,
+body .shop-skin-card.selected-skin-card,
+body.mobile-menu-open .shop-skin-card.selected-skin-card {
+  background: #090909 !important;
+  background-color: #090909 !important;
+  background-image: none !important;
+  border-color: rgba(255, 213, 133, 0.62) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 213, 133, 0.18),
+    0 16px 30px rgba(242, 138, 26, 0.2) !important;
+}
+
+/* [ITER-101] Final mobile control override loaded at true EOF */
+@media (max-width: 760px) {
+  body.mobile-menu-open #menu-overlay,
+  body.mobile-menu-open #menu-overlay.visible {
+    inset: 0 0 calc(var(--mobile-nav-safe-height) + env(safe-area-inset-bottom, 0px) + 8px) 0 !important;
+    z-index: 60 !important;
+    pointer-events: none !important;
+  }
+
+  body.mobile-menu-open #menu-overlay .overlay-card-menu,
+  body.mobile-menu-open #menu-overlay .overlay-close {
+    pointer-events: auto !important;
+  }
+
+  body.mobile-menu-open .bottom-nav {
+    z-index: 120 !important;
+  }
+
+  body.mobile-clean-play .controls-card {
+    grid-template-areas:
+      "dock dock"
+      "stick primary"
+      "stick secondary" !important;
+    grid-template-rows: auto auto auto !important;
+  }
+
+  body.mobile-clean-play .slider-block {
+    grid-area: stick !important;
+  }
+
+  body.mobile-clean-play .weapon-dock {
+    display: grid !important;
+    grid-area: dock !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: minmax(82px, 1fr) !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0 0 4px !important;
+    border: 0 !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+  }
+}
+
+/* [ITER-102] Mobile quests layout: reserve a dedicated row for the contract board */
+@media (max-width: 760px) {
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="quests"] > #quests-section {
+    display: block !important;
+  }
+
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="quests"] .quest-ops-grid {
+    margin-bottom: 0 !important;
+  }
+
+  body.mobile-fullscreen-tabs .overlay-card-menu[data-view="quests"] .quest-board {
+    display: grid !important;
+    overflow: visible !important;
+    max-height: none !important;
+    margin-top: 12px !important;
+  }
+}

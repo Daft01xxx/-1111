@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120">
+  <defs>
+    <linearGradient id="droneBody" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d9d9de"/>
+      <stop offset=".58" stop-color="#9899a3"/>
+      <stop offset="1" stop-color="#61626d"/>
+    </linearGradient>
+  </defs>
+  <path d="M20 74 28 34h106l6 43-18 15H39z" fill="url(#droneBody)"/>
+  <path d="M57 54h22v16H57zM88 54h22v16H88z" fill="#f0f0f4"/>
+  <path d="m28 86-22 8 16-22zM42 85l-18 20 1-23zM113 85l19 20-2-23zM128 84l25 9-16-23z" fill="#8a8b95"/>
+  <path d="m32 28 8-12 10 12zM62 26l9-13 10 13zM95 25l10-14 10 14z" fill="#e7e7ec"/>
+  <path d="M85 78q-4 5-9 0M65 74h12" stroke="#22222a" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M85 60h24" stroke="#2b2c34" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="94" cy="60" r="2.6" fill="#ff6f7d"/>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="wiBody" x1="16" y1="52" x2="76" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#bde9ff"/>
+      <stop offset="1" stop-color="#4b9cd2"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="56" width="60" height="22" rx="9" fill="url(#wiBody)"/>
+  <rect x="28" y="78" width="20" height="24" rx="8" fill="#2c6f99"/>
+  <g transform="translate(90 67)" stroke="#e8f8ff" stroke-width="3.8" stroke-linecap="round">
+    <path d="M0-17V17M-15-8.5 15 8.5M-15 8.5 15-8.5"/>
+    <circle cx="0" cy="0" r="4.8" fill="#9ad8ff"/>
+  </g>
+  <circle cx="56" cy="67" r="4.5" fill="#fff8ea"/>
+</svg>

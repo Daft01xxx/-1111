@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="cp-ring" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#b2f2db"/>
+      <stop offset="100%" stop-color="#57b18f"/>
+    </linearGradient>
+    <linearGradient id="cp-star" x1="20" y1="14" x2="44" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f6fffb"/>
+      <stop offset="100%" stop-color="#d5fff1"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="24" fill="#131926"/>
+  <circle cx="32" cy="32" r="21" fill="none" stroke="url(#cp-ring)" stroke-width="2.8"/>
+  <path d="M32 13l5.8 11.8L50.8 27l-9.4 9.2 2.2 12.9-11.6-6.5-11.6 6.5 2.2-12.9L13.2 27l13-2.2z" fill="url(#cp-star)" stroke="#9fecd0" stroke-width="1"/>
+  <circle cx="32" cy="32" r="4" fill="#58b193"/>
+</svg>

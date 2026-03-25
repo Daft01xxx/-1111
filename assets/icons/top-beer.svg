@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="tb-glass" x1="12" y1="10" x2="46" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffefcb"/>
+      <stop offset="100%" stop-color="#f4b047"/>
+    </linearGradient>
+    <linearGradient id="tb-fill" x1="16" y1="24" x2="42" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffd96f"/>
+      <stop offset="100%" stop-color="#f28a1a"/>
+    </linearGradient>
+  </defs>
+  <rect x="10.5" y="10.5" width="36" height="43" rx="9" fill="#131926"/>
+  <rect x="12.5" y="12.5" width="32" height="39" rx="8" fill="url(#tb-glass)" stroke="#f4be66" stroke-width="1.3"/>
+  <path d="M16 26h25v22H16z" fill="url(#tb-fill)"/>
+  <path d="M46 20h6c3.9 0 7 3.1 7 7v10c0 3.9-3.1 7-7 7h-6v-5h4.7c1.2 0 2.3-1 2.3-2.2V28.2c0-1.2-1-2.2-2.3-2.2H46z" fill="#f0bf66"/>
+  <path d="M14.8 16.4c2.2-4.7 5-5.5 8.6-3 2-3.5 5.7-3.6 8.6 0 2.8-3 6.4-2.6 9.6 3z" fill="#fff8e9"/>
+  <circle cx="22" cy="18" r="2.1" fill="#fff"/>
+  <circle cx="30" cy="16.5" r="2.5" fill="#fff"/>
+  <circle cx="36.8" cy="18" r="2.1" fill="#fff"/>
+</svg>

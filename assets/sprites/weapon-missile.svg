@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="wmBody" x1="12" y1="50" x2="80" y2="84" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4d8dea"/>
+      <stop offset="1" stop-color="#2d5ca8"/>
+    </linearGradient>
+    <linearGradient id="wmNose" x1="78" y1="58" x2="118" y2="74" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffc56f"/>
+      <stop offset="1" stop-color="#ff7a45"/>
+    </linearGradient>
+  </defs>
+  <rect x="14" y="52" width="66" height="26" rx="10" fill="url(#wmBody)"/>
+  <rect x="26" y="78" width="20" height="24" rx="8" fill="#f49abe"/>
+  <path d="M78 58h22l18 7-18 7H78z" fill="url(#wmNose)"/>
+  <path d="M110 65 98 54v22z" fill="#ff5e7a"/>
+  <path d="M94 65h24" stroke="#ffe085" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="56" cy="65" r="6" fill="#86d1f2"/>
+  <path d="M38 58h12" stroke="#d6ecff" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>
+</svg>
