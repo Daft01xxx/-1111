@@ -1,0 +1,261 @@
+{
+  "url": "http://127.0.0.1:8080",
+  "viewport": {
+    "width": 430,
+    "height": 932
+  },
+  "errors": [
+    {
+      "type": "pageerror",
+      "text": "ReferenceError: boss is not defined"
+    }
+  ],
+  "menuState": {
+    "mode": "menu",
+    "bodyScrollHeight": 932,
+    "innerHeight": 932,
+    "overflowNodes": [],
+    "menuCloseRect": {
+      "x": 368,
+      "y": 30,
+      "width": 32,
+      "height": 32,
+      "top": 30,
+      "right": 400,
+      "bottom": 62,
+      "left": 368
+    },
+    "menuStartText": "START RUN"
+  },
+  "battleState": {
+    "state": {
+      "coordinateSystem": {
+        "origin": "top-left",
+        "x": "right",
+        "y": "down"
+      },
+      "mode": "playing",
+      "phase": "normal",
+      "language": "en",
+      "score": 2,
+      "meters": 2,
+      "bestMeters": 0,
+      "level": 1,
+      "lives": 3,
+      "weapon": "standard",
+      "difficulty": 3,
+      "godMode": false,
+      "slider": 50,
+      "player": {
+        "x": 158,
+        "y": 362,
+        "width": 44,
+        "height": 50
+      },
+      "boss": null,
+      "nextBossScore": 500,
+      "entities": [
+        {
+          "kind": "raiderCat",
+          "category": "enemy",
+          "x": 26,
+          "y": 185
+        },
+        {
+          "kind": "beerNeon",
+          "category": "target",
+          "x": 58,
+          "y": 42
+        }
+      ],
+      "bullets": {
+        "player": 4,
+        "enemy": 1
+      },
+      "unlockedWeapons": [
+        "standard"
+      ],
+      "activeBuffs": [],
+      "skills": {
+        "magnet": 0,
+        "reflect": 0,
+        "double": 0,
+        "slowmo": 0,
+        "guardian": 0,
+        "kraken": 0
+      },
+      "audioEnabled": true,
+      "bossEta": "63s",
+      "shipSkin": "classic",
+      "weaponFinish": "brass",
+      "preferredWeapon": "standard",
+      "metaStats": {
+        "runs": 0,
+        "bossesDefeated": 0,
+        "targetsDestroyed": 0,
+        "pickupsCollected": 0,
+        "bestCombo": 1,
+        "bestMeters": 0
+      },
+      "eventFeed": [
+        "RUN LIVE:Auto-fire online. Read the lane."
+      ],
+      "pickupsCollected": 0,
+      "targetsDestroyed": 0,
+      "bossesDefeated": 0,
+      "comboCount": 0,
+      "comboMultiplier": 1,
+      "comboTimerMs": 0,
+      "dangerLevel": 15,
+      "threatSummary": {
+        "total": 3,
+        "detail": "3 live"
+      },
+      "nearestPickup": {
+        "label": "NONE",
+        "detail": "clear"
+      },
+      "runRank": {
+        "label": "BRONZE",
+        "note": "First clear lane. Keep the rhythm going.",
+        "color": "#caa57b"
+      },
+      "gameOverReason": ""
+    },
+    "hudTexts": [
+      "Score",
+      "2",
+      "Meters",
+      "2",
+      "Record",
+      "0",
+      "Lives",
+      "3",
+      "Next Boss: Nyan Cat",
+      "READY",
+      "BOSS 63s",
+      "Active buffs",
+      "BASE LOADOUT",
+      "NO LIVE BUFFS",
+      "Run intel",
+      "NORMAL FLOW",
+      "Unlocked",
+      "1 / 8",
+      "Weapon",
+      "BEER",
+      "Level",
+      "1",
+      "Next boss",
+      "498 PTS"
+    ],
+    "bodyScrollHeight": 932,
+    "innerHeight": 932,
+    "overflowNodes": []
+  },
+  "afterPauseClose": {
+    "coordinateSystem": {
+      "origin": "top-left",
+      "x": "right",
+      "y": "down"
+    },
+    "mode": "playing",
+    "phase": "normal",
+    "language": "en",
+    "score": 2,
+    "meters": 2,
+    "bestMeters": 0,
+    "level": 1,
+    "lives": 3,
+    "weapon": "standard",
+    "difficulty": 3,
+    "godMode": false,
+    "slider": 50,
+    "player": {
+      "x": 158,
+      "y": 362,
+      "width": 44,
+      "height": 50
+    },
+    "boss": null,
+    "nextBossScore": 500,
+    "entities": [
+      {
+        "kind": "raiderCat",
+        "category": "enemy",
+        "x": 26,
+        "y": 211
+      },
+      {
+        "kind": "beerNeon",
+        "category": "target",
+        "x": 55,
+        "y": 60
+      },
+      {
+        "kind": "weaponChainsaw",
+        "category": "pickup",
+        "x": 191,
+        "y": -19
+      },
+      {
+        "kind": "beerLite",
+        "category": "target",
+        "x": 258,
+        "y": -18
+      }
+    ],
+    "bullets": {
+      "player": 4,
+      "enemy": 1
+    },
+    "unlockedWeapons": [
+      "standard"
+    ],
+    "activeBuffs": [],
+    "skills": {
+      "magnet": 0,
+      "reflect": 0,
+      "double": 0,
+      "slowmo": 0,
+      "guardian": 0,
+      "kraken": 0
+    },
+    "audioEnabled": true,
+    "bossEta": "63s",
+    "shipSkin": "classic",
+    "weaponFinish": "brass",
+    "preferredWeapon": "standard",
+    "metaStats": {
+      "runs": 0,
+      "bossesDefeated": 0,
+      "targetsDestroyed": 0,
+      "pickupsCollected": 0,
+      "bestCombo": 1,
+      "bestMeters": 0
+    },
+    "eventFeed": [
+      "RUN LIVE:Auto-fire online. Read the lane."
+    ],
+    "pickupsCollected": 0,
+    "targetsDestroyed": 0,
+    "bossesDefeated": 0,
+    "comboCount": 0,
+    "comboMultiplier": 1,
+    "comboTimerMs": 0,
+    "dangerLevel": 23,
+    "threatSummary": {
+      "total": 4,
+      "detail": "4 live"
+    },
+    "nearestPickup": {
+      "label": "CHAIN",
+      "detail": "406 px"
+    },
+    "runRank": {
+      "label": "BRONZE",
+      "note": "First clear lane. Keep the rhythm going.",
+      "color": "#caa57b"
+    },
+    "gameOverReason": ""
+  }
+}

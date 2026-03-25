@@ -1,0 +1,12 @@
+{
+  "innerWidth": 1600,
+  "innerHeight": 980,
+  "bodyScrollHeight": 980,
+  "docScrollHeight": 980,
+  "activeNav": "nav-home",
+  "arenaFrame": {
+    "width": 676,
+    "height": 789
+  },
+  "overflowNodes": []
+}

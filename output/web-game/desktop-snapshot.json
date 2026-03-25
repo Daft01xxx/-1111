@@ -1,0 +1,114 @@
+{
+  "scrollHeight": 900,
+  "innerHeight": 900,
+  "state": {
+    "coordinateSystem": {
+      "origin": "top-left",
+      "x": "right",
+      "y": "down"
+    },
+    "mode": "playing",
+    "phase": "normal",
+    "language": "en",
+    "score": 4,
+    "meters": 4,
+    "bestMeters": 0,
+    "level": 1,
+    "lives": 3,
+    "weapon": "standard",
+    "difficulty": 3,
+    "godMode": false,
+    "slider": 50,
+    "player": {
+      "x": 158,
+      "y": 362,
+      "width": 44,
+      "height": 50
+    },
+    "boss": null,
+    "nextBossScore": 500,
+    "entities": [
+      {
+        "kind": "beerDark",
+        "category": "target",
+        "x": 247,
+        "y": 386
+      },
+      {
+        "kind": "beerMega",
+        "category": "target",
+        "x": 232,
+        "y": 307
+      },
+      {
+        "kind": "beerLite",
+        "category": "target",
+        "x": 52,
+        "y": 229
+      },
+      {
+        "kind": "wallLeft",
+        "category": "hazard",
+        "x": 27,
+        "y": 76
+      },
+      {
+        "kind": "droneCat",
+        "category": "enemy",
+        "x": 272,
+        "y": 13
+      }
+    ],
+    "bullets": {
+      "player": 4,
+      "enemy": 0
+    },
+    "unlockedWeapons": [
+      "standard"
+    ],
+    "activeBuffs": [],
+    "skills": {
+      "magnet": 0,
+      "reflect": 0,
+      "double": 0,
+      "slowmo": 0,
+      "guardian": 0,
+      "kraken": 0
+    },
+    "trackEnabled": true,
+    "trackDefault": true,
+    "audioEnabled": true,
+    "metaStats": {
+      "runs": 0,
+      "bossesDefeated": 0,
+      "targetsDestroyed": 0,
+      "pickupsCollected": 0,
+      "bestCombo": 1,
+      "bestMeters": 0
+    },
+    "eventFeed": [
+      "RUN LIVE:Auto-fire online. Read the lane."
+    ],
+    "pickupsCollected": 0,
+    "targetsDestroyed": 0,
+    "bossesDefeated": 0,
+    "comboCount": 0,
+    "comboMultiplier": 1,
+    "comboTimerMs": 0,
+    "dangerLevel": 16,
+    "threatSummary": {
+      "total": 5,
+      "detail": "5 live"
+    },
+    "nearestPickup": {
+      "label": "NONE",
+      "detail": "clear"
+    },
+    "runRank": {
+      "label": "BRONZE",
+      "note": "First clear lane. Keep the rhythm going.",
+      "color": "#caa57b"
+    },
+    "gameOverReason": ""
+  }
+}

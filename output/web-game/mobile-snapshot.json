@@ -1,0 +1,108 @@
+{
+  "scrollHeight": 844,
+  "innerHeight": 844,
+  "state": {
+    "coordinateSystem": {
+      "origin": "top-left",
+      "x": "right",
+      "y": "down"
+    },
+    "mode": "playing",
+    "phase": "normal",
+    "language": "ru",
+    "score": 64,
+    "meters": 4,
+    "bestMeters": 0,
+    "level": 1,
+    "lives": 3,
+    "weapon": "standard",
+    "difficulty": 3,
+    "godMode": false,
+    "slider": 50,
+    "player": {
+      "x": 158,
+      "y": 362,
+      "width": 44,
+      "height": 50
+    },
+    "boss": null,
+    "nextBossScore": 500,
+    "entities": [
+      {
+        "kind": "blockWide",
+        "category": "hazard",
+        "x": 237,
+        "y": 334
+      },
+      {
+        "kind": "diamondWall",
+        "category": "hazard",
+        "x": 309,
+        "y": 203
+      },
+      {
+        "kind": "tower",
+        "category": "hazard",
+        "x": 35,
+        "y": 123
+      },
+      {
+        "kind": "beerNeon",
+        "category": "target",
+        "x": 282,
+        "y": -2
+      }
+    ],
+    "bullets": {
+      "player": 4,
+      "enemy": 0
+    },
+    "unlockedWeapons": [
+      "standard"
+    ],
+    "activeBuffs": [],
+    "skills": {
+      "magnet": 0,
+      "reflect": 0,
+      "double": 0,
+      "slowmo": 0,
+      "guardian": 0,
+      "kraken": 0
+    },
+    "trackEnabled": true,
+    "trackDefault": true,
+    "audioEnabled": true,
+    "metaStats": {
+      "runs": 0,
+      "bossesDefeated": 0,
+      "targetsDestroyed": 0,
+      "pickupsCollected": 0,
+      "bestCombo": 1,
+      "bestMeters": 0
+    },
+    "eventFeed": [
+      "РАН:Авто-огонь активен. Читай линию."
+    ],
+    "pickupsCollected": 0,
+    "targetsDestroyed": 1,
+    "bossesDefeated": 0,
+    "comboCount": 0,
+    "comboMultiplier": 1,
+    "comboTimerMs": 0,
+    "dangerLevel": 12,
+    "threatSummary": {
+      "total": 4,
+      "detail": "4 live"
+    },
+    "nearestPickup": {
+      "label": "НЕТ",
+      "detail": "чисто"
+    },
+    "runRank": {
+      "label": "БРОНЗА",
+      "note": "Первый чистый ритм. Держи темп.",
+      "color": "#caa57b"
+    },
+    "gameOverReason": ""
+  }
+}
