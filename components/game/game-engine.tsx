@@ -34,7 +34,7 @@ interface Player extends Entity {
 
 export function GameEngine() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const gameLoopRef = useRef<number>()
+  const gameLoopRef = useRef<number | null>(null)
   const lastTimeRef = useRef<number>(0)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   
@@ -460,7 +460,7 @@ export function GameEngine() {
   // Game loop
   useEffect(() => {
     if (!isPlaying || isPaused || gameOver) {
-      if (gameLoopRef.current) {
+      if (gameLoopRef.current !== null) {
         cancelAnimationFrame(gameLoopRef.current)
       }
       return
@@ -600,7 +600,7 @@ export function GameEngine() {
     gameLoopRef.current = requestAnimationFrame(gameLoop)
     
     return () => {
-      if (gameLoopRef.current) {
+      if (gameLoopRef.current !== null) {
         cancelAnimationFrame(gameLoopRef.current)
       }
     }

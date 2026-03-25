@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatNumber, getMultiplierTier } from '@/lib/utils'
+import { formatNumber } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { Trophy, Medal, Crown, ArrowLeft, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
@@ -18,7 +18,26 @@ interface LeaderboardEntry {
   users: {
     wallet_address: string
     username: string | null
-  }
+  } | null
+}
+
+interface LeaderboardRow {
+  id: string
+  score: number
+  level: number
+  bosses_defeated: number
+  multiplier: number
+  created_at: string
+  users:
+    | {
+        wallet_address: string
+        username: string | null
+      }
+    | Array<{
+        wallet_address: string
+        username: string | null
+      }>
+    | null
 }
 
 export default function LeaderboardPage() {
@@ -61,7 +80,12 @@ export default function LeaderboardPage() {
     const { data, error } = await query
 
     if (!error && data) {
-      setEntries(data as LeaderboardEntry[])
+      const normalizedEntries = (data as LeaderboardRow[]).map((entry) => ({
+        ...entry,
+        users: Array.isArray(entry.users) ? (entry.users[0] ?? null) : entry.users,
+      }))
+
+      setEntries(normalizedEntries)
     }
     setLoading(false)
   }
@@ -155,7 +179,6 @@ export default function LeaderboardPage() {
         ) : (
           entries.map((entry, index) => {
             const rank = index + 1
-            const tier = getMultiplierTier(0) // Would need actual balance
             const isCurrentUser = walletAddress === entry.users?.wallet_address
             const displayName = entry.users?.username || 
               (entry.users?.wallet_address 
