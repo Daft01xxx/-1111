@@ -97,8 +97,10 @@ interface GameState {
   checkLevelUp: () => boolean
   
   setWallet: (address: string | null, balance: number) => void
+  setMultiplier: (multiplier: number) => void
   
   startGame: () => void
+  resetGame: () => void
   pauseGame: () => void
   resumeGame: () => void
   endGame: () => void
@@ -499,6 +501,7 @@ export const useGameStore = create<GameState>()(
         
         set({ walletAddress: address, napiwasBalance: balance, multiplier })
       },
+      setMultiplier: (multiplier) => set({ multiplier }),
       
       startGame: () => set({ 
         isPlaying: true, 
@@ -515,6 +518,22 @@ export const useGameStore = create<GameState>()(
         hasSpeedBoost: false,
         hasTripleShot: false,
       }),
+      resetGame: () => set((state) => ({
+        score: 0,
+        health: state.maxHealth,
+        meters: 0,
+        isPlaying: false,
+        isPaused: false,
+        gameOver: false,
+        currentWeaponIndex: 0,
+        lastBossTime: 0,
+        droppedWeapons: [],
+        powerUps: defaultPowerUps.map((powerUp) => ({ ...powerUp, active: false, timeLeft: 0 })),
+        hasShield: false,
+        hasDoubleShot: false,
+        hasSpeedBoost: false,
+        hasTripleShot: false,
+      })),
       
       pauseGame: () => set({ isPaused: true }),
       resumeGame: () => set({ isPaused: false }),

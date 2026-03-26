@@ -5,8 +5,60 @@ import { motion } from 'framer-motion'
 import { Skull, Lock, Check, ArrowLeft, Heart, Swords, Star } from 'lucide-react'
 import Link from 'next/link'
 
+const BOSS_ROSTER = [
+  {
+    id: 'vodka_king',
+    name: 'Vodka King',
+    nameRu: 'Водочный Король',
+    description: 'A brutal bottle tyrant who floods the arena with freezing bursts.',
+    maxHealth: 300,
+    damage: 20,
+    points: 500,
+  },
+  {
+    id: 'whiskey_wizard',
+    name: 'Whiskey Wizard',
+    nameRu: 'Виски Маг',
+    description: 'Throws amber fireballs and punishes greedy positioning.',
+    maxHealth: 420,
+    damage: 26,
+    points: 800,
+  },
+  {
+    id: 'wine_witch',
+    name: 'Wine Witch',
+    nameRu: 'Винная Ведьма',
+    description: 'Casts spiral volleys and traps careless pilots in cursed arcs.',
+    maxHealth: 560,
+    damage: 34,
+    points: 1200,
+  },
+  {
+    id: 'tequila_titan',
+    name: 'Tequila Titan',
+    nameRu: 'Текила Титан',
+    description: 'A heavy bruiser with wide cone blasts and punishing rushes.',
+    maxHealth: 760,
+    damage: 42,
+    points: 1700,
+  },
+  {
+    id: 'absinthe_overlord',
+    name: 'Absinthe Overlord',
+    nameRu: 'Повелитель Абсента',
+    description: 'Final ruler of the anti-beer alliance. Dense patterns, brutal damage.',
+    maxHealth: 1000,
+    damage: 55,
+    points: 2500,
+  },
+] as const
+
 export default function BossesPage() {
-  const { bosses, bossesDefeated } = useGameStore()
+  const { bossesDefeated } = useGameStore()
+  const bosses = BOSS_ROSTER.map((boss, index) => ({
+    ...boss,
+    defeated: index < bossesDefeated,
+  }))
 
   return (
     <div className="min-h-screen bg-dark-950">

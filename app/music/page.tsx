@@ -17,12 +17,13 @@ interface MusicTrack {
 }
 
 export default function MusicPage() {
-  const { highScore, musicVolume, setMusicVolume, currentTrack, setCurrentTrack } = useGameStore()
+  const { highScore, musicVolume, setMusicVolume } = useGameStore()
   const [tracks, setTracks] = useState<MusicTrack[]>([])
   const [loading, setLoading] = useState(true)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [currentTrack, setCurrentTrack] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
