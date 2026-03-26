@@ -76,7 +76,7 @@ export function GameEngine() {
       const h = window.innerHeight
       setSize({ w, h })
       playerRef.current.x = w / 2 - 30
-      playerRef.current.y = h - 220 // Higher position - above controls
+      playerRef.current.y = h - 280 // Much higher position - well above weapon panel and controls
     }
     resize()
     window.addEventListener('resize', resize)
