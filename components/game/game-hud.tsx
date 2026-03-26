@@ -11,7 +11,7 @@ export function GameHUD() {
     health,
     maxHealth,
     level,
-    experience,
+    meters,
     multiplier,
     napiwasBalance,
     powerUps,
@@ -20,7 +20,7 @@ export function GameHUD() {
   } = useGameStore()
 
   const healthPercent = (health / maxHealth) * 100
-  const expPercent = (experience / (level * 100)) * 100
+  const expPercent = Math.min((meters / 10000) * 100, 100)
   const tier = getMultiplierTier(napiwasBalance)
 
   const activePowerUps = powerUps.filter(p => p.active)
