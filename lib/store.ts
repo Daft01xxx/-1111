@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+// NAPIWAS Token Contract Address
+export const NAPIWAS_CONTRACT = 'EQDOCUp_pDBvOmGRyEDE2bnCl2cjGmAWjPsTWRt_veSsfGSn'
+
 export interface PowerUp {
   id: string
   name: string
@@ -11,32 +14,20 @@ export interface PowerUp {
   timeLeft: number
 }
 
-export interface Boss {
+export interface Weapon {
   id: string
   name: string
   nameRu: string
   description: string
   descriptionRu: string
-  health: number
-  maxHealth: number
-  damage: number
-  points: number
-  image: string
-  defeated: boolean
-  metersToAppear: number
-}
-
-export interface Weapon {
-  id: string
-  name: string
-  nameRu: string
   damage: number
   fireRate: number
   projectileSpeed: number
   projectileCount: number
   unlocked: boolean
-  selected: boolean
   price: number
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
+  color: string
 }
 
 export interface Skin {
@@ -44,17 +35,11 @@ export interface Skin {
   name: string
   nameRu: string
   description: string
+  descriptionRu: string
   unlocked: boolean
   price: number
   color: string
-}
-
-export interface MusicTrack {
-  id: string
-  name: string
-  unlocked: boolean
-  requiredLevel: number
-  url: string
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
 }
 
 interface GameState {
@@ -67,7 +52,7 @@ interface GameState {
   meters: number
   totalMeters: number
   
-  // Wallet
+  // Wallet - uses NAPIWAS tokens as currency
   walletAddress: string | null
   napiwasBalance: number
   multiplier: number
@@ -89,266 +74,337 @@ interface GameState {
   currentWeaponIndex: number
   skins: Skin[]
   currentSkinId: string
-  coins: number
+  coins: number // In-game earned coins for small purchases
+  droppedWeapons: string[] // Weapons dropped from enemies this run
   
-  // Bosses
-  bosses: Boss[]
-  currentBossIndex: number
+  // Boss tracking
   bossesDefeated: number
-  activeBoss: Boss | null
+  lastBossTime: number
   
   // Audio
   musicVolume: number
   sfxVolume: number
-  currentTrack: string | null
-  unlockedTracks: string[]
   
   // Settings
   theme: 'dark' | 'light'
   language: 'en' | 'ru'
   
   // Actions
-  setScore: (score: number) => void
   addScore: (points: number) => void
   addMeters: (meters: number) => void
-  setHealth: (health: number) => void
   takeDamage: (damage: number) => void
   heal: (amount: number) => void
   checkLevelUp: () => boolean
   
   setWallet: (address: string | null, balance: number) => void
-  setMultiplier: (multiplier: number) => void
   
   startGame: () => void
   pauseGame: () => void
   resumeGame: () => void
   endGame: () => void
-  resetGame: () => void
   
   activatePowerUp: (powerUpId: string) => void
-  deactivatePowerUp: (powerUpId: string) => void
   updatePowerUpTimers: (deltaTime: number) => void
   
   selectWeapon: (index: number) => void
   unlockWeapon: (weaponId: string) => void
   purchaseWeapon: (weaponId: string) => boolean
+  dropWeapon: (weaponId: string) => boolean
   
   selectSkin: (skinId: string) => void
   purchaseSkin: (skinId: string) => boolean
   
-  defeatBoss: (bossId: string) => void
-  setCurrentBoss: (index: number) => void
-  spawnBoss: () => Boss | null
-  clearActiveBoss: () => void
+  defeatBoss: () => void
+  setLastBossTime: (time: number) => void
   
   setMusicVolume: (volume: number) => void
   setSfxVolume: (volume: number) => void
-  setCurrentTrack: (track: string | null) => void
-  unlockTrack: (trackId: string) => void
-  
   setTheme: (theme: 'dark' | 'light') => void
   setLanguage: (language: 'en' | 'ru') => void
-  
   addCoins: (amount: number) => void
 }
 
+// 10 Unique Weapons with varied stats
 const defaultWeapons: Weapon[] = [
   {
-    id: 'foam_cannon',
-    name: 'Foam Cannon',
-    nameRu: 'Пенная Пушка',
+    id: 'yarn_ball',
+    name: 'Yarn Ball',
+    nameRu: 'Клубок Ниток',
+    description: 'Basic cat weapon. Reliable and cute!',
+    descriptionRu: 'Базовое кошачье оружие. Надежное и милое!',
     damage: 10,
     fireRate: 5,
-    projectileSpeed: 400,
+    projectileSpeed: 600,
     projectileCount: 1,
     unlocked: true,
-    selected: true,
     price: 0,
+    rarity: 'common',
+    color: '#FF6B6B',
   },
   {
-    id: 'hop_blaster',
-    name: 'Hop Blaster',
-    nameRu: 'Хмельной Бластер',
-    damage: 15,
-    fireRate: 4,
-    projectileSpeed: 500,
+    id: 'fish_bone',
+    name: 'Fish Bone',
+    nameRu: 'Рыбная Кость',
+    description: 'Sharp fish bones. Double the trouble!',
+    descriptionRu: 'Острые рыбные кости. Двойные неприятности!',
+    damage: 8,
+    fireRate: 6,
+    projectileSpeed: 700,
     projectileCount: 2,
     unlocked: false,
-    selected: false,
     price: 500,
+    rarity: 'common',
+    color: '#E8E8E8',
   },
   {
-    id: 'malt_missile',
-    name: 'Malt Missile',
-    nameRu: 'Солодовая Ракета',
-    damage: 30,
-    fireRate: 2,
-    projectileSpeed: 300,
-    projectileCount: 1,
-    unlocked: false,
-    selected: false,
-    price: 1000,
-  },
-  {
-    id: 'barley_beam',
-    name: 'Barley Beam',
-    nameRu: 'Ячменный Луч',
+    id: 'milk_splash',
+    name: 'Milk Splash',
+    nameRu: 'Молочный Всплеск',
+    description: 'Rapid fire milk drops!',
+    descriptionRu: 'Скорострельные капли молока!',
     damage: 5,
-    fireRate: 15,
+    fireRate: 12,
     projectileSpeed: 800,
     projectileCount: 1,
     unlocked: false,
-    selected: false,
-    price: 1500,
+    price: 1000,
+    rarity: 'uncommon',
+    color: '#FEFEFE',
   },
   {
-    id: 'lager_laser',
-    name: 'Lager Laser',
-    nameRu: 'Лагерный Лазер',
-    damage: 25,
-    fireRate: 3,
-    projectileSpeed: 600,
+    id: 'catnip_bomb',
+    name: 'Catnip Bomb',
+    nameRu: 'Кошачья Мятная Бомба',
+    description: 'Explosive catnip! High damage, slow fire.',
+    descriptionRu: 'Взрывная кошачья мята! Высокий урон, медленный огонь.',
+    damage: 35,
+    fireRate: 2,
+    projectileSpeed: 400,
+    projectileCount: 1,
+    unlocked: false,
+    price: 2000,
+    rarity: 'uncommon',
+    color: '#90EE90',
+  },
+  {
+    id: 'whisker_laser',
+    name: 'Whisker Laser',
+    nameRu: 'Усиный Лазер',
+    description: 'Pew pew! Fast laser beams from whiskers.',
+    descriptionRu: 'Пиу пиу! Быстрые лазерные лучи из усов.',
+    damage: 15,
+    fireRate: 8,
+    projectileSpeed: 1000,
+    projectileCount: 1,
+    unlocked: false,
+    price: 3500,
+    rarity: 'rare',
+    color: '#FF1493',
+  },
+  {
+    id: 'paw_punch',
+    name: 'Paw Punch',
+    nameRu: 'Удар Лапой',
+    description: 'Triple paw strike! Wide coverage.',
+    descriptionRu: 'Тройной удар лапой! Широкое покрытие.',
+    damage: 12,
+    fireRate: 5,
+    projectileSpeed: 650,
     projectileCount: 3,
     unlocked: false,
-    selected: false,
-    price: 2500,
+    price: 5000,
+    rarity: 'rare',
+    color: '#FFA500',
+  },
+  {
+    id: 'fur_tornado',
+    name: 'Fur Tornado',
+    nameRu: 'Меховое Торнадо',
+    description: 'Spinning fur attack! Hits everything.',
+    descriptionRu: 'Вращающаяся меховая атака! Бьет всё вокруг.',
+    damage: 8,
+    fireRate: 10,
+    projectileSpeed: 500,
+    projectileCount: 5,
+    unlocked: false,
+    price: 8000,
+    rarity: 'epic',
+    color: '#DEB887',
+  },
+  {
+    id: 'golden_scratch',
+    name: 'Golden Scratch',
+    nameRu: 'Золотая Царапина',
+    description: 'Legendary golden claws! Massive damage.',
+    descriptionRu: 'Легендарные золотые когти! Массивный урон.',
+    damage: 50,
+    fireRate: 3,
+    projectileSpeed: 750,
+    projectileCount: 2,
+    unlocked: false,
+    price: 15000,
+    rarity: 'epic',
+    color: '#FFD700',
+  },
+  {
+    id: 'nine_lives',
+    name: 'Nine Lives',
+    nameRu: 'Девять Жизней',
+    description: 'Mystical attack! Nine projectiles of doom.',
+    descriptionRu: 'Мистическая атака! Девять снарядов судьбы.',
+    damage: 20,
+    fireRate: 4,
+    projectileSpeed: 600,
+    projectileCount: 9,
+    unlocked: false,
+    price: 30000,
+    rarity: 'legendary',
+    color: '#9400D3',
+  },
+  {
+    id: 'napiwas_beam',
+    name: 'NAPIWAS Beam',
+    nameRu: 'Луч NAPIWAS',
+    description: 'ULTIMATE! The power of NAPIWAS token!',
+    descriptionRu: 'УЛЬТИМАТИВНОЕ! Сила токена NAPIWAS!',
+    damage: 100,
+    fireRate: 2,
+    projectileSpeed: 1200,
+    projectileCount: 3,
+    unlocked: false,
+    price: 100000,
+    rarity: 'legendary',
+    color: '#F97316',
   },
 ]
 
+// 10 Unique Cat Skins with varied prices
 const defaultSkins: Skin[] = [
   {
     id: 'orange_cat',
-    name: 'Orange Cat',
-    nameRu: 'Рыжий Кот',
-    description: 'Classic orange tabby cat',
+    name: 'Orange Tabby',
+    nameRu: 'Рыжий Котик',
+    description: 'Classic orange tabby cat. The original NAPIWAS hero!',
+    descriptionRu: 'Классический рыжий котик. Оригинальный герой NAPIWAS!',
     unlocked: true,
     price: 0,
     color: '#F97316',
+    rarity: 'common',
+  },
+  {
+    id: 'gray_cat',
+    name: 'Gray Kitty',
+    nameRu: 'Серый Котёнок',
+    description: 'Sleek gray fur with silver highlights.',
+    descriptionRu: 'Гладкая серая шерсть с серебряными бликами.',
+    unlocked: false,
+    price: 200,
+    color: '#6B7280',
+    rarity: 'common',
   },
   {
     id: 'black_cat',
     name: 'Shadow Cat',
-    nameRu: 'Тёмный Кот',
-    description: 'Sleek black cat with golden eyes',
+    nameRu: 'Теневой Кот',
+    description: 'Mysterious black cat with golden eyes.',
+    descriptionRu: 'Загадочный черный кот с золотыми глазами.',
     unlocked: false,
-    price: 300,
+    price: 500,
     color: '#1F2937',
+    rarity: 'common',
   },
   {
     id: 'white_cat',
-    name: 'Snow Cat',
-    nameRu: 'Снежный Кот',
-    description: 'Pure white fluffy cat',
+    name: 'Snow Paw',
+    nameRu: 'Снежная Лапка',
+    description: 'Pure white fluffy cat. So soft!',
+    descriptionRu: 'Чисто белый пушистый кот. Такой мягкий!',
     unlocked: false,
-    price: 500,
+    price: 1000,
     color: '#F9FAFB',
+    rarity: 'uncommon',
   },
   {
-    id: 'golden_cat',
-    name: 'Golden Cat',
-    nameRu: 'Золотой Кот',
-    description: 'Legendary golden cat',
+    id: 'calico_cat',
+    name: 'Calico Queen',
+    nameRu: 'Трехцветная Королева',
+    description: 'Beautiful calico pattern. Rare and majestic!',
+    descriptionRu: 'Красивый трехцветный окрас. Редкий и величественный!',
     unlocked: false,
-    price: 2000,
+    price: 2500,
     color: '#F59E0B',
+    rarity: 'uncommon',
   },
   {
-    id: 'neon_cat',
-    name: 'Neon Cat',
-    nameRu: 'Неоновый Кот',
-    description: 'Cyberpunk neon cat',
+    id: 'siamese_cat',
+    name: 'Siamese Prince',
+    nameRu: 'Сиамский Принц',
+    description: 'Elegant Siamese with blue eyes.',
+    descriptionRu: 'Элегантный сиамский с голубыми глазами.',
     unlocked: false,
-    price: 3000,
-    color: '#06B6D4',
-  },
-]
-
-const defaultBosses: Boss[] = [
-  {
-    id: 'beer_baron',
-    name: 'Beer Baron',
-    nameRu: 'Пивной Барон',
-    description: 'A giant evil cat ruling the beer empire. Throws massive beer mugs!',
-    descriptionRu: 'Гигантский злой кот, правящий пивной империей. Кидает огромные кружки пива!',
-    health: 500,
-    maxHealth: 500,
-    damage: 20,
-    points: 1000,
-    image: '/images/boss1.jpg',
-    defeated: false,
-    metersToAppear: 10000,
+    price: 5000,
+    color: '#D4A574',
+    rarity: 'rare',
   },
   {
-    id: 'foam_fury',
-    name: 'Foam Fury',
-    nameRu: 'Пенная Ярость',
-    description: 'A furious cat covered in magical foam. Creates foam tornados!',
-    descriptionRu: 'Яростный кот, покрытый магической пеной. Создаёт пенные торнадо!',
-    health: 750,
-    maxHealth: 750,
-    damage: 25,
-    points: 2000,
-    image: '/images/boss2.jpg',
-    defeated: false,
-    metersToAppear: 25000,
+    id: 'ginger_ninja',
+    name: 'Ginger Ninja',
+    nameRu: 'Рыжий Ниндзя',
+    description: 'Silent and deadly! Ninja style.',
+    descriptionRu: 'Тихий и смертоносный! Стиль ниндзя.',
+    unlocked: false,
+    price: 10000,
+    color: '#DC2626',
+    rarity: 'rare',
   },
   {
-    id: 'hop_hunter',
-    name: 'Hop Hunter',
-    nameRu: 'Хмельной Охотник',
-    description: 'A stealthy cat that hunts with hop projectiles. Fast and deadly!',
-    descriptionRu: 'Скрытный кот, охотящийся хмельными снарядами. Быстрый и смертоносный!',
-    health: 1000,
-    maxHealth: 1000,
-    damage: 30,
-    points: 3000,
-    image: '/images/boss3.jpg',
-    defeated: false,
-    metersToAppear: 50000,
+    id: 'cosmic_cat',
+    name: 'Cosmic Cat',
+    nameRu: 'Космический Кот',
+    description: 'From the stars! Galaxy fur pattern.',
+    descriptionRu: 'Из звезд! Галактический узор шерсти.',
+    unlocked: false,
+    price: 25000,
+    color: '#8B5CF6',
+    rarity: 'epic',
   },
   {
-    id: 'malt_master',
-    name: 'Malt Master',
-    nameRu: 'Солодовый Мастер',
-    description: 'Ancient cat wizard who controls malt magic. Summons malt minions!',
-    descriptionRu: 'Древний кот-волшебник, управляющий солодовой магией. Призывает солодовых миньонов!',
-    health: 1500,
-    maxHealth: 1500,
-    damage: 40,
-    points: 5000,
-    image: '/images/boss4.jpg',
-    defeated: false,
-    metersToAppear: 80000,
+    id: 'golden_emperor',
+    name: 'Golden Emperor',
+    nameRu: 'Золотой Император',
+    description: 'Legendary golden fur. True royalty!',
+    descriptionRu: 'Легендарная золотая шерсть. Истинная королевская особа!',
+    unlocked: false,
+    price: 50000,
+    color: '#FFD700',
+    rarity: 'epic',
   },
   {
-    id: 'napiwas_emperor',
-    name: 'NAPIWAS Emperor',
-    nameRu: 'Император NAPIWAS',
-    description: 'The ultimate boss! A godlike cat emperor with all powers combined!',
-    descriptionRu: 'Финальный босс! Богоподобный император-кот с объединёнными силами!',
-    health: 2500,
-    maxHealth: 2500,
-    damage: 50,
-    points: 10000,
-    image: '/images/boss5.jpg',
-    defeated: false,
-    metersToAppear: 100000,
+    id: 'napiwas_legend',
+    name: 'NAPIWAS Legend',
+    nameRu: 'Легенда NAPIWAS',
+    description: 'ULTIMATE! The legendary NAPIWAS cat!',
+    descriptionRu: 'УЛЬТИМАТИВНЫЙ! Легендарный кот NAPIWAS!',
+    unlocked: false,
+    price: 150000,
+    color: '#F97316',
+    rarity: 'legendary',
   },
 ]
 
 const defaultPowerUps: PowerUp[] = [
-  { id: 'shield', name: 'Cat Shield', nameRu: 'Кошачий Щит', icon: '🛡️', duration: 10, active: false, timeLeft: 0 },
-  { id: 'double_shot', name: 'Double Shot', nameRu: 'Двойной Выстрел', icon: '🎯', duration: 15, active: false, timeLeft: 0 },
-  { id: 'speed_boost', name: 'Speed Boost', nameRu: 'Ускорение', icon: '⚡', duration: 8, active: false, timeLeft: 0 },
-  { id: 'triple_shot', name: 'Triple Shot', nameRu: 'Тройной Выстрел', icon: '🔥', duration: 12, active: false, timeLeft: 0 },
+  { id: 'shield', name: 'Cat Shield', nameRu: 'Кошачий Щит', icon: 'shield', duration: 10, active: false, timeLeft: 0 },
+  { id: 'double_shot', name: 'Double Shot', nameRu: 'Двойной Выстрел', icon: 'target', duration: 15, active: false, timeLeft: 0 },
+  { id: 'speed_boost', name: 'Speed Boost', nameRu: 'Ускорение', icon: 'zap', duration: 8, active: false, timeLeft: 0 },
+  { id: 'triple_shot', name: 'Triple Shot', nameRu: 'Тройной Выстрел', icon: 'flame', duration: 12, active: false, timeLeft: 0 },
 ]
 
 const METERS_PER_LEVEL = 10000
+const BOSS_INTERVAL_MS = 60000 // 60 seconds = 1 minute
 
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
-      // Initial state
       score: 0,
       highScore: 0,
       health: 100,
@@ -376,22 +432,17 @@ export const useGameStore = create<GameState>()(
       skins: [...defaultSkins],
       currentSkinId: 'orange_cat',
       coins: 0,
+      droppedWeapons: [],
       
-      bosses: [...defaultBosses],
-      currentBossIndex: 0,
       bossesDefeated: 0,
-      activeBoss: null,
+      lastBossTime: 0,
       
       musicVolume: 0.5,
       sfxVolume: 0.7,
-      currentTrack: null,
-      unlockedTracks: ['default'],
       
       theme: 'dark',
       language: 'ru',
       
-      // Actions
-      setScore: (score) => set({ score, highScore: Math.max(score, get().highScore) }),
       addScore: (points) => {
         const multipliedPoints = Math.floor(points * get().multiplier)
         const newScore = get().score + multipliedPoints
@@ -410,12 +461,12 @@ export const useGameStore = create<GameState>()(
         if (state.meters >= METERS_PER_LEVEL) {
           const newLevel = state.level + 1
           const newMeters = state.meters - METERS_PER_LEVEL
-          const bonusCoins = newLevel * 50
+          const bonusCoins = newLevel * 100
           set({ 
             level: newLevel, 
             meters: newMeters,
             maxHealth: state.maxHealth + 10,
-            health: Math.min(state.health + 10, state.maxHealth + 10),
+            health: Math.min(state.health + 20, state.maxHealth + 10),
             coins: state.coins + bonusCoins,
           })
           return true
@@ -423,7 +474,6 @@ export const useGameStore = create<GameState>()(
         return false
       },
       
-      setHealth: (health) => set({ health: Math.min(health, get().maxHealth) }),
       takeDamage: (damage) => {
         const state = get()
         if (state.hasShield) return
@@ -434,10 +484,21 @@ export const useGameStore = create<GameState>()(
           set({ health: newHealth })
         }
       },
+      
       heal: (amount) => set((state) => ({ health: Math.min(state.health + amount, state.maxHealth) })),
       
-      setWallet: (address, balance) => set({ walletAddress: address, napiwasBalance: balance }),
-      setMultiplier: (multiplier) => set({ multiplier }),
+      setWallet: (address, balance) => {
+        // Calculate multiplier based on NAPIWAS balance
+        let multiplier = 1.0
+        if (balance >= 1000000) multiplier = 2.0
+        else if (balance >= 500000) multiplier = 1.75
+        else if (balance >= 100000) multiplier = 1.5
+        else if (balance >= 50000) multiplier = 1.35
+        else if (balance >= 10000) multiplier = 1.2
+        else if (balance >= 1000) multiplier = 1.1
+        
+        set({ walletAddress: address, napiwasBalance: balance, multiplier })
+      },
       
       startGame: () => set({ 
         isPlaying: true, 
@@ -446,34 +507,23 @@ export const useGameStore = create<GameState>()(
         score: 0,
         meters: 0,
         health: get().maxHealth,
-        activeBoss: null,
+        lastBossTime: Date.now(),
+        droppedWeapons: [],
         powerUps: defaultPowerUps.map(p => ({ ...p, active: false, timeLeft: 0 })),
         hasShield: false,
         hasDoubleShot: false,
         hasSpeedBoost: false,
         hasTripleShot: false,
       }),
+      
       pauseGame: () => set({ isPaused: true }),
       resumeGame: () => set({ isPaused: false }),
+      
       endGame: () => {
         const state = get()
         const earnedCoins = Math.floor(state.score / 10)
         set({ isPlaying: false, gameOver: true, coins: state.coins + earnedCoins })
       },
-      resetGame: () => set({ 
-        score: 0,
-        meters: 0,
-        health: get().maxHealth,
-        isPlaying: false, 
-        isPaused: false, 
-        gameOver: false,
-        activeBoss: null,
-        powerUps: defaultPowerUps.map(p => ({ ...p, active: false, timeLeft: 0 })),
-        hasShield: false,
-        hasDoubleShot: false,
-        hasSpeedBoost: false,
-        hasTripleShot: false,
-      }),
       
       activatePowerUp: (powerUpId) => {
         const powerUps = get().powerUps.map(p => 
@@ -489,37 +539,34 @@ export const useGameStore = create<GameState>()(
         set(updates)
       },
       
-      deactivatePowerUp: (powerUpId) => {
-        const powerUps = get().powerUps.map(p => 
-          p.id === powerUpId ? { ...p, active: false, timeLeft: 0 } : p
-        )
-        const updates: Partial<GameState> = { powerUps }
-        
-        if (powerUpId === 'shield') updates.hasShield = false
-        if (powerUpId === 'double_shot') updates.hasDoubleShot = false
-        if (powerUpId === 'speed_boost') updates.hasSpeedBoost = false
-        if (powerUpId === 'triple_shot') updates.hasTripleShot = false
-        
-        set(updates)
-      },
-      
       updatePowerUpTimers: (deltaTime) => {
         const state = get()
+        let hasShield = state.hasShield
+        let hasDoubleShot = state.hasDoubleShot
+        let hasSpeedBoost = state.hasSpeedBoost
+        let hasTripleShot = state.hasTripleShot
+        
         const powerUps = state.powerUps.map(p => {
           if (!p.active) return p
           const newTimeLeft = p.timeLeft - deltaTime
           if (newTimeLeft <= 0) {
-            setTimeout(() => get().deactivatePowerUp(p.id), 0)
-            return { ...p, timeLeft: 0 }
+            if (p.id === 'shield') hasShield = false
+            if (p.id === 'double_shot') hasDoubleShot = false
+            if (p.id === 'speed_boost') hasSpeedBoost = false
+            if (p.id === 'triple_shot') hasTripleShot = false
+            return { ...p, active: false, timeLeft: 0 }
           }
           return { ...p, timeLeft: newTimeLeft }
         })
-        set({ powerUps })
+        
+        set({ powerUps, hasShield, hasDoubleShot, hasSpeedBoost, hasTripleShot })
       },
       
       selectWeapon: (index) => {
-        const weapons = get().weapons.map((w, i) => ({ ...w, selected: i === index }))
-        set({ weapons, currentWeaponIndex: index })
+        const weapons = get().weapons
+        if (index >= 0 && index < weapons.length && weapons[index].unlocked) {
+          set({ currentWeaponIndex: index })
+        }
       },
       
       unlockWeapon: (weaponId) => {
@@ -532,75 +579,73 @@ export const useGameStore = create<GameState>()(
       purchaseWeapon: (weaponId) => {
         const state = get()
         const weapon = state.weapons.find(w => w.id === weaponId)
-        if (!weapon || weapon.unlocked || state.coins < weapon.price) return false
+        if (!weapon || weapon.unlocked) return false
+        
+        // Check NAPIWAS balance from wallet
+        if (state.napiwasBalance < weapon.price) return false
         
         const weapons = state.weapons.map(w => 
           w.id === weaponId ? { ...w, unlocked: true } : w
         )
-        set({ weapons, coins: state.coins - weapon.price })
+        set({ weapons, napiwasBalance: state.napiwasBalance - weapon.price })
         return true
       },
       
-      selectSkin: (skinId) => set({ currentSkinId: skinId }),
+      dropWeapon: (weaponId) => {
+        const state = get()
+        // Don't drop if already dropped this run or already unlocked
+        if (state.droppedWeapons.includes(weaponId)) return false
+        const weapon = state.weapons.find(w => w.id === weaponId)
+        if (!weapon || weapon.unlocked) return false
+        
+        const weapons = state.weapons.map(w => 
+          w.id === weaponId ? { ...w, unlocked: true } : w
+        )
+        set({ 
+          weapons, 
+          droppedWeapons: [...state.droppedWeapons, weaponId]
+        })
+        return true
+      },
+      
+      selectSkin: (skinId) => {
+        const skin = get().skins.find(s => s.id === skinId)
+        if (skin?.unlocked) {
+          set({ currentSkinId: skinId })
+        }
+      },
       
       purchaseSkin: (skinId) => {
         const state = get()
         const skin = state.skins.find(s => s.id === skinId)
-        if (!skin || skin.unlocked || state.coins < skin.price) return false
+        if (!skin || skin.unlocked) return false
+        
+        // Check NAPIWAS balance from wallet
+        if (state.napiwasBalance < skin.price) return false
         
         const skins = state.skins.map(s => 
           s.id === skinId ? { ...s, unlocked: true } : s
         )
-        set({ skins, coins: state.coins - skin.price })
+        set({ skins, napiwasBalance: state.napiwasBalance - skin.price })
         return true
       },
       
-      defeatBoss: (bossId) => {
+      defeatBoss: () => {
         const state = get()
-        const bosses = state.bosses.map(b => 
-          b.id === bossId ? { ...b, defeated: true } : b
-        )
-        const boss = state.bosses.find(b => b.id === bossId)
-        const bossesDefeated = bosses.filter(b => b.defeated).length
-        
-        if (boss) {
-          set({ 
-            bosses, 
-            bossesDefeated, 
-            activeBoss: null,
-            coins: state.coins + boss.points,
-          })
-        }
+        const bonusCoins = 500 + state.bossesDefeated * 100
+        set({ 
+          bossesDefeated: state.bossesDefeated + 1,
+          coins: state.coins + bonusCoins,
+          lastBossTime: Date.now()
+        })
       },
       
-      setCurrentBoss: (index) => set({ currentBossIndex: index }),
-      
-      spawnBoss: () => {
-        const state = get()
-        const nextBoss = state.bosses.find(b => !b.defeated && state.totalMeters >= b.metersToAppear)
-        if (nextBoss && !state.activeBoss) {
-          const bossInstance = { ...nextBoss, health: nextBoss.maxHealth }
-          set({ activeBoss: bossInstance })
-          return bossInstance
-        }
-        return null
-      },
-      
-      clearActiveBoss: () => set({ activeBoss: null }),
+      setLastBossTime: (time) => set({ lastBossTime: time }),
       
       setMusicVolume: (volume) => set({ musicVolume: volume }),
       setSfxVolume: (volume) => set({ sfxVolume: volume }),
-      setCurrentTrack: (track) => set({ currentTrack: track }),
-      unlockTrack: (trackId) => {
-        const state = get()
-        if (!state.unlockedTracks.includes(trackId)) {
-          set({ unlockedTracks: [...state.unlockedTracks, trackId] })
-        }
-      },
-      
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => set({ language }),
-      
       addCoins: (amount) => set((state) => ({ coins: state.coins + amount })),
     }),
     {
@@ -612,11 +657,9 @@ export const useGameStore = create<GameState>()(
         weapons: state.weapons,
         skins: state.skins,
         currentSkinId: state.currentSkinId,
-        bosses: state.bosses,
         bossesDefeated: state.bossesDefeated,
         musicVolume: state.musicVolume,
         sfxVolume: state.sfxVolume,
-        unlockedTracks: state.unlockedTracks,
         theme: state.theme,
         language: state.language,
         coins: state.coins,
@@ -625,7 +668,6 @@ export const useGameStore = create<GameState>()(
   )
 )
 
-// Translations
 export const translations = {
   en: {
     play: 'Play',
@@ -644,11 +686,6 @@ export const translations = {
     meters: 'Meters',
     coins: 'Coins',
     multiplier: 'Multiplier',
-    settings: 'Settings',
-    theme: 'Theme',
-    language: 'Language',
-    dark: 'Dark',
-    light: 'Light',
   },
   ru: {
     play: 'Играть',
@@ -667,10 +704,5 @@ export const translations = {
     meters: 'Метры',
     coins: 'Монеты',
     multiplier: 'Множитель',
-    settings: 'Настройки',
-    theme: 'Тема',
-    language: 'Язык',
-    dark: 'Тёмная',
-    light: 'Светлая',
   },
 }

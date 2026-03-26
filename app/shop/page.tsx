@@ -1,17 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { useGameStore } from '@/lib/store'
+import { useGameStore, NAPIWAS_CONTRACT } from '@/lib/store'
 import { formatNumber } from '@/lib/utils'
-import { ArrowLeft, ShoppingBag, Cat, Zap, Check, Lock, Sparkles } from 'lucide-react'
+import { ArrowLeft, ShoppingBag, Cat, Zap, Check, Lock, Sparkles, Coins } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ShopPage() {
   const [tab, setTab] = useState<'skins' | 'weapons'>('skins')
   const { 
-    coins, skins, weapons, currentSkinId,
+    napiwasBalance, skins, weapons, currentSkinId, currentWeaponIndex,
     purchaseSkin, purchaseWeapon, selectSkin, selectWeapon,
-    theme, language
+    theme, language, walletAddress
   } = useGameStore()
 
   const t = {
@@ -26,17 +26,35 @@ export default function ShopPage() {
     damage: language === 'ru' ? 'Урон' : 'DMG',
     rate: language === 'ru' ? 'Скор.' : 'Rate',
     projectiles: language === 'ru' ? 'Снаряды' : 'Proj',
-    earnCoins: language === 'ru' ? 'Зарабатывай монеты играя и побеждая боссов!' : 'Earn coins by playing and defeating bosses!',
-    coins: language === 'ru' ? 'монет' : 'coins',
+    connectWallet: language === 'ru' ? 'Подключите кошелек для покупок' : 'Connect wallet to purchase',
+    napiwasInfo: language === 'ru' ? 'Покупки за токены NAPIWAS' : 'Purchase with NAPIWAS tokens',
+  }
+
+  const rarityLabels: Record<string, { en: string; ru: string }> = {
+    common: { en: 'Common', ru: 'Обычный' },
+    uncommon: { en: 'Uncommon', ru: 'Необычный' },
+    rare: { en: 'Rare', ru: 'Редкий' },
+    epic: { en: 'Epic', ru: 'Эпический' },
+    legendary: { en: 'Legendary', ru: 'Легендарный' },
+  }
+
+  const rarityColors: Record<string, string> = {
+    common: '#6B7280',
+    uncommon: '#22C55E',
+    rare: '#3B82F6',
+    epic: '#A855F7',
+    legendary: '#F59E0B',
   }
 
   const handlePurchaseSkin = (skinId: string) => {
+    if (!walletAddress) return
     if (purchaseSkin(skinId)) {
       selectSkin(skinId)
     }
   }
 
   const handlePurchaseWeapon = (weaponId: string, index: number) => {
+    if (!walletAddress) return
     if (purchaseWeapon(weaponId)) {
       selectWeapon(index)
     }
@@ -68,8 +86,8 @@ export default function ShopPage() {
           <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl ${
             isDark ? 'bg-[#1a1a1a]' : 'bg-[#f0f0f0]'
           }`}>
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span className="font-bold text-amber-500">{formatNumber(coins)}</span>
+            <Coins className="w-4 h-4 text-amber-500" />
+            <span className="font-bold text-amber-500">{formatNumber(napiwasBalance)}</span>
           </div>
         </div>
 
@@ -84,7 +102,7 @@ export default function ShopPage() {
             }`}
           >
             <Cat className="w-4 h-4" />
-            {t.skins}
+            {t.skins} ({skins.filter(s => s.unlocked).length}/{skins.length})
           </button>
           <button
             onClick={() => setTab('weapons')}
@@ -95,27 +113,28 @@ export default function ShopPage() {
             }`}
           >
             <Zap className="w-4 h-4" />
-            {t.weapons}
+            {t.weapons} ({weapons.filter(w => w.unlocked).length}/{weapons.length})
           </button>
         </div>
       </header>
 
-      <div className="p-4 space-y-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className="p-4 space-y-3 pb-24">
         {tab === 'skins' ? (
           <>
             {skins.map((skin, index) => {
               const isSelected = currentSkinId === skin.id
-              const canAfford = coins >= skin.price
+              const canAfford = napiwasBalance >= skin.price
 
               return (
                 <div
                   key={skin.id}
-                  className={`p-4 rounded-2xl border transition-all ${
+                  className={`p-4 rounded-2xl border-2 transition-all ${
                     isSelected
                       ? 'border-amber-500 ring-2 ring-amber-500/30'
                       : isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5e5]'
                   }`}
                   style={{ 
+                    borderColor: isSelected ? '#F59E0B' : skin.unlocked ? rarityColors[skin.rarity] + '40' : undefined,
                     animationDelay: `${index * 50}ms`,
                     animation: 'fadeInUp 0.3s ease forwards',
                     opacity: 0
@@ -124,7 +143,7 @@ export default function ShopPage() {
                   <div className="flex items-center gap-4">
                     {/* Preview */}
                     <div 
-                      className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0"
+                      className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 relative"
                       style={{ backgroundColor: skin.color + '20' }}
                     >
                       <div 
@@ -134,6 +153,13 @@ export default function ShopPage() {
                           boxShadow: `0 4px 15px ${skin.color}40`
                         }}
                       />
+                      {/* Rarity badge */}
+                      <span 
+                        className="absolute -top-1 -right-1 text-[9px] px-1.5 py-0.5 rounded-full font-bold text-white"
+                        style={{ backgroundColor: rarityColors[skin.rarity] }}
+                      >
+                        {language === 'ru' ? rarityLabels[skin.rarity].ru.slice(0, 3) : rarityLabels[skin.rarity].en.slice(0, 3)}
+                      </span>
                     </div>
 
                     {/* Info */}
@@ -148,8 +174,8 @@ export default function ShopPage() {
                           </span>
                         )}
                       </div>
-                      <p className={`text-sm mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {skin.description}
+                      <p className={`text-xs mt-0.5 line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {language === 'ru' ? skin.descriptionRu : skin.description}
                       </p>
                     </div>
 
@@ -171,22 +197,22 @@ export default function ShopPage() {
                       ) : (
                         <button
                           onClick={() => handlePurchaseSkin(skin.id)}
-                          disabled={!canAfford}
+                          disabled={!canAfford || !walletAddress}
                           className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 active:scale-95 transition-transform ${
-                            canAfford
+                            canAfford && walletAddress
                               ? 'bg-amber-500 text-black'
                               : isDark ? 'bg-[#222] text-gray-600' : 'bg-[#e5e5e5] text-gray-400'
                           }`}
                         >
-                          {canAfford ? (
+                          {canAfford && walletAddress ? (
                             <>
-                              <Sparkles className="w-4 h-4" />
-                              {skin.price}
+                              <Coins className="w-4 h-4" />
+                              {formatNumber(skin.price)}
                             </>
                           ) : (
                             <>
                               <Lock className="w-4 h-4" />
-                              {skin.price}
+                              {formatNumber(skin.price)}
                             </>
                           )}
                         </button>
@@ -200,18 +226,19 @@ export default function ShopPage() {
         ) : (
           <>
             {weapons.map((weapon, index) => {
-              const isSelected = weapon.selected
-              const canAfford = coins >= weapon.price
+              const isSelected = currentWeaponIndex === index
+              const canAfford = napiwasBalance >= weapon.price
 
               return (
                 <div
                   key={weapon.id}
-                  className={`p-4 rounded-2xl border transition-all ${
+                  className={`p-4 rounded-2xl border-2 transition-all ${
                     isSelected
                       ? 'border-amber-500 ring-2 ring-amber-500/30'
                       : isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5e5]'
                   }`}
                   style={{ 
+                    borderColor: isSelected ? '#F59E0B' : weapon.unlocked ? rarityColors[weapon.rarity] + '40' : undefined,
                     animationDelay: `${index * 50}ms`,
                     animation: 'fadeInUp 0.3s ease forwards',
                     opacity: 0
@@ -219,8 +246,24 @@ export default function ShopPage() {
                 >
                   <div className="flex items-center gap-4">
                     {/* Icon */}
-                    <div className="w-16 h-16 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                      <Zap className="w-8 h-8 text-amber-500" />
+                    <div 
+                      className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 relative"
+                      style={{ backgroundColor: weapon.color + '20' }}
+                    >
+                      <div 
+                        className="w-8 h-8 rounded-full"
+                        style={{ 
+                          backgroundColor: weapon.color,
+                          boxShadow: `0 4px 15px ${weapon.color}40`
+                        }}
+                      />
+                      {/* Rarity badge */}
+                      <span 
+                        className="absolute -top-1 -right-1 text-[9px] px-1.5 py-0.5 rounded-full font-bold text-white"
+                        style={{ backgroundColor: rarityColors[weapon.rarity] }}
+                      >
+                        {language === 'ru' ? rarityLabels[weapon.rarity].ru.slice(0, 3) : rarityLabels[weapon.rarity].en.slice(0, 3)}
+                      </span>
                     </div>
 
                     {/* Info */}
@@ -229,16 +272,19 @@ export default function ShopPage() {
                         <h3 className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>
                           {language === 'ru' ? weapon.nameRu : weapon.name}
                         </h3>
-                        {isSelected && (
+                        {isSelected && weapon.unlocked && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 font-medium">
                             {t.active}
                           </span>
                         )}
                       </div>
+                      <p className={`text-xs mt-0.5 line-clamp-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {language === 'ru' ? weapon.descriptionRu : weapon.description}
+                      </p>
                       <div className={`flex gap-3 text-xs mt-1 flex-wrap ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        <span>{t.damage}: <strong>{weapon.damage}</strong></span>
-                        <span>{t.rate}: <strong>{weapon.fireRate}/s</strong></span>
-                        <span>{t.projectiles}: <strong>{weapon.projectileCount}</strong></span>
+                        <span className="text-red-400">{t.damage}: <strong>{weapon.damage}</strong></span>
+                        <span className="text-blue-400">{t.rate}: <strong>{weapon.fireRate}/s</strong></span>
+                        <span className="text-green-400">{t.projectiles}: <strong>{weapon.projectileCount}</strong></span>
                       </div>
                     </div>
 
@@ -260,22 +306,22 @@ export default function ShopPage() {
                       ) : (
                         <button
                           onClick={() => handlePurchaseWeapon(weapon.id, index)}
-                          disabled={!canAfford}
+                          disabled={!canAfford || !walletAddress}
                           className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 active:scale-95 transition-transform ${
-                            canAfford
+                            canAfford && walletAddress
                               ? 'bg-amber-500 text-black'
                               : isDark ? 'bg-[#222] text-gray-600' : 'bg-[#e5e5e5] text-gray-400'
                           }`}
                         >
-                          {canAfford ? (
+                          {canAfford && walletAddress ? (
                             <>
-                              <Sparkles className="w-4 h-4" />
-                              {weapon.price}
+                              <Coins className="w-4 h-4" />
+                              {formatNumber(weapon.price)}
                             </>
                           ) : (
                             <>
                               <Lock className="w-4 h-4" />
-                              {weapon.price}
+                              {formatNumber(weapon.price)}
                             </>
                           )}
                         </button>
@@ -287,27 +333,23 @@ export default function ShopPage() {
             })}
           </>
         )}
+      </div>
 
-        {/* Info Card */}
-        <div className={`p-4 rounded-2xl text-center ${
-          isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
-        }`}>
-          <p className={`text-sm ${isDark ? 'text-amber-200' : 'text-amber-700'}`}>
-            {t.earnCoins}
-          </p>
-        </div>
+      {/* Footer */}
+      <div className={`fixed bottom-0 left-0 right-0 p-4 border-t ${
+        isDark ? 'bg-[#0a0a0b] border-[#222]' : 'bg-white border-[#e5e5e5]'
+      }`}>
+        <p className={`text-xs text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+          {!walletAddress ? t.connectWallet : t.napiwasInfo}
+          <br />
+          <span className="text-amber-500 font-mono text-[10px]">CA: {NAPIWAS_CONTRACT.slice(0, 12)}...</span>
+        </p>
       </div>
 
       <style jsx>{`
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

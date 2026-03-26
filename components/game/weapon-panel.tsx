@@ -38,7 +38,7 @@ export function WeaponPanel() {
   const weaponName = language === 'ru' ? currentWeapon.nameRu : currentWeapon.name
 
   return (
-    <div className="absolute bottom-28 left-0 right-0 z-20 px-4 pointer-events-none safe-bottom">
+    <div className="absolute bottom-6 left-0 right-0 z-20 px-4 pointer-events-none safe-bottom">
       <div className="flex items-center justify-center gap-2">
         {/* Prev */}
         <button

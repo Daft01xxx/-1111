@@ -97,9 +97,10 @@ export function GameHUD() {
         </div>
       )}
 
-      {/* Meters indicator */}
-      <div className="absolute bottom-24 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1">
-        <span className="text-xs text-white/80 font-medium">
+      {/* Meters indicator - under score */}
+      <div className="absolute top-[70px] left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5">
+        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+        <span className="text-xs text-white font-bold">
           {formatNumber(Math.floor(meters))} {language === 'ru' ? 'м' : 'm'}
         </span>
       </div>
