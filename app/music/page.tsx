@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useGameStore } from '@/lib/store'
-import { motion } from 'framer-motion'
 import { Music, Play, Pause, Lock, Volume2, ArrowLeft, SkipBack, SkipForward } from 'lucide-react'
 import Link from 'next/link'
 
@@ -11,19 +10,32 @@ interface MusicTrack {
   id: string
   title: string
   artist: string
-  url: string
-  unlock_score: number
+  file_url: string
+  unlock_type: string
+  unlock_requirement: number
+  unlock_cost: number
+  sort_order: number
   is_active: boolean
 }
 
 export default function MusicPage() {
-  const { highScore, musicVolume, setMusicVolume, currentTrack, setCurrentTrack } = useGameStore()
+  const { highScore, totalScore, musicVolume, setMusicVolume, currentTrack, setCurrentTrack, language, theme } = useGameStore()
   const [tracks, setTracks] = useState<MusicTrack[]>([])
   const [loading, setLoading] = useState(true)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  const t = {
+    title: language === 'ru' ? 'Музыка' : 'Jukebox',
+    yourScore: language === 'ru' ? 'Ваш рекорд' : 'Your High Score',
+    unlockHint: language === 'ru' ? 'Разблокируйте треки достигая рекордов!' : 'Unlock tracks by reaching score milestones!',
+    allTracks: language === 'ru' ? 'Все треки' : 'All Tracks',
+    noTracks: language === 'ru' ? 'Треки пока недоступны' : 'No tracks available yet',
+    unlockAt: language === 'ru' ? 'Откроется на' : 'Unlock at',
+    free: language === 'ru' ? 'Бесплатно' : 'Free',
+  }
 
   useEffect(() => {
     const fetchTracks = async () => {
@@ -32,7 +44,7 @@ export default function MusicPage() {
         .from('music_tracks')
         .select('*')
         .eq('is_active', true)
-        .order('unlock_score', { ascending: true })
+        .order('sort_order', { ascending: true })
 
       if (data) setTracks(data)
       setLoading(false)
@@ -47,13 +59,15 @@ export default function MusicPage() {
     }
   }, [musicVolume])
 
-  const isUnlocked = (track: MusicTrack) => highScore >= track.unlock_score
+  const isUnlocked = (track: MusicTrack) => {
+    if (track.unlock_type === 'free') return true
+    return totalScore >= track.unlock_requirement
+  }
 
   const playTrack = (track: MusicTrack) => {
     if (!isUnlocked(track)) return
 
-    if (currentTrack === track.url) {
-      // Toggle play/pause
+    if (currentTrack === track.file_url) {
       if (isPlaying) {
         audioRef.current?.pause()
         setIsPlaying(false)
@@ -62,8 +76,7 @@ export default function MusicPage() {
         setIsPlaying(true)
       }
     } else {
-      // Play new track
-      setCurrentTrack(track.url)
+      setCurrentTrack(track.file_url)
       setIsPlaying(true)
     }
   }
@@ -90,28 +103,28 @@ export default function MusicPage() {
   }
 
   const playNext = () => {
-    const currentIndex = tracks.findIndex(t => t.url === currentTrack)
+    const currentIndex = tracks.findIndex(t => t.file_url === currentTrack)
     const nextTracks = tracks.slice(currentIndex + 1).filter(t => isUnlocked(t))
     if (nextTracks.length > 0) {
-      setCurrentTrack(nextTracks[0].url)
+      setCurrentTrack(nextTracks[0].file_url)
       setIsPlaying(true)
     }
   }
 
   const playPrevious = () => {
-    const currentIndex = tracks.findIndex(t => t.url === currentTrack)
+    const currentIndex = tracks.findIndex(t => t.file_url === currentTrack)
     const prevTracks = tracks.slice(0, currentIndex).filter(t => isUnlocked(t))
     if (prevTracks.length > 0) {
-      setCurrentTrack(prevTracks[prevTracks.length - 1].url)
+      setCurrentTrack(prevTracks[prevTracks.length - 1].file_url)
       setIsPlaying(true)
     }
   }
 
-  const currentTrackData = tracks.find(t => t.url === currentTrack)
+  const currentTrackData = tracks.find(t => t.file_url === currentTrack)
+  const isDark = theme === 'dark'
 
   return (
-    <div className="min-h-screen bg-dark-950">
-      {/* Audio element */}
+    <div className={`min-h-screen ${isDark ? 'bg-[#0A0A0B]' : 'bg-amber-50'}`}>
       {currentTrack && (
         <audio
           ref={audioRef}
@@ -124,46 +137,50 @@ export default function MusicPage() {
         />
       )}
 
-      {/* Header */}
-      <header className="sticky top-0 z-20 bg-dark-950/90 backdrop-blur-sm border-b border-dark-800 p-4">
+      <header className={`sticky top-0 z-20 backdrop-blur-sm border-b px-4 py-3 ${
+        isDark ? 'bg-[#0A0A0B]/90 border-neutral-800' : 'bg-amber-50/90 border-amber-200'
+      }`}>
         <div className="flex items-center justify-between">
-          <Link href="/" className="p-2 -m-2 rounded-lg hover:bg-dark-800 transition-colors">
-            <ArrowLeft className="w-6 h-6 text-foam-100" />
+          <Link href="/" className={`p-2 -m-2 rounded-lg active:scale-95 transition-transform ${
+            isDark ? 'active:bg-neutral-800' : 'active:bg-amber-200'
+          }`}>
+            <ArrowLeft className={`w-6 h-6 ${isDark ? 'text-white' : 'text-neutral-900'}`} />
           </Link>
-          <h1 className="text-xl font-display font-bold beer-text flex items-center gap-2">
-            <Music className="w-5 h-5 text-beer-400" />
-            Jukebox
+          <h1 className="text-xl font-bold text-amber-500 flex items-center gap-2">
+            <Music className="w-5 h-5" />
+            {t.title}
           </h1>
           <div className="w-10" />
         </div>
       </header>
 
       <div className="p-4 space-y-4">
-        {/* Current high score */}
-        <div className="bg-dark-900 rounded-xl border border-dark-700 p-4 text-center">
-          <p className="text-sm text-foam-500">Your High Score</p>
-          <p className="text-2xl font-bold beer-text">{highScore.toLocaleString()}</p>
-          <p className="text-xs text-foam-500 mt-1">Unlock tracks by reaching score milestones!</p>
+        <div className={`rounded-xl border p-4 text-center animate-fadeInUp ${
+          isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-amber-200'
+        }`}>
+          <p className={`text-sm ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>{t.yourScore}</p>
+          <p className="text-2xl font-bold text-amber-500">{totalScore.toLocaleString()}</p>
+          <p className={`text-xs mt-1 ${isDark ? 'text-neutral-500' : 'text-neutral-500'}`}>{t.unlockHint}</p>
         </div>
 
-        {/* Now playing */}
         {currentTrackData && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-dark-900 rounded-2xl border border-beer-500/30 p-4 space-y-4"
-          >
+          <div className={`rounded-2xl border p-4 space-y-4 animate-fadeInUp ${
+            isDark ? 'bg-neutral-900 border-amber-500/30' : 'bg-white border-amber-300'
+          }`} style={{ animationDelay: '50ms' }}>
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl beer-gradient flex items-center justify-center">
-                <Music className="w-8 h-8 text-dark-950" />
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+                <Music className="w-8 h-8 text-black" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-foam-100 truncate">{currentTrackData.title}</p>
-                <p className="text-sm text-foam-500">{currentTrackData.artist}</p>
+                <p className={`font-bold truncate ${isDark ? 'text-white' : 'text-neutral-900'}`}>
+                  {currentTrackData.title}
+                </p>
+                <p className={`text-sm ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
+                  {currentTrackData.artist}
+                </p>
               </div>
             </div>
 
-            {/* Progress bar */}
             <div className="space-y-2">
               <input
                 type="range"
@@ -171,39 +188,41 @@ export default function MusicPage() {
                 max={duration || 100}
                 value={currentTime}
                 onChange={handleSeek}
-                className="w-full h-2 bg-dark-700 rounded-full appearance-none cursor-pointer accent-beer-500"
+                className="w-full h-2 bg-neutral-700 rounded-full appearance-none cursor-pointer accent-amber-500"
               />
-              <div className="flex justify-between text-xs text-foam-500">
+              <div className={`flex justify-between text-xs ${isDark ? 'text-neutral-500' : 'text-neutral-500'}`}>
                 <span>{formatTime(currentTime)}</span>
                 <span>{formatTime(duration)}</span>
               </div>
             </div>
 
-            {/* Controls */}
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={playPrevious}
-                className="p-3 rounded-full bg-dark-800 text-foam-400 hover:bg-dark-700 transition-colors"
+                className={`p-3 rounded-full transition-colors active:scale-95 ${
+                  isDark ? 'bg-neutral-800 text-neutral-400' : 'bg-amber-100 text-neutral-600'
+                }`}
               >
                 <SkipBack className="w-5 h-5" />
               </button>
               <button
                 onClick={() => playTrack(currentTrackData)}
-                className="p-4 rounded-full beer-gradient text-dark-950 hover:brightness-110 transition-all"
+                className="p-4 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-black active:scale-95 transition-transform"
               >
                 {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
               </button>
               <button
                 onClick={playNext}
-                className="p-3 rounded-full bg-dark-800 text-foam-400 hover:bg-dark-700 transition-colors"
+                className={`p-3 rounded-full transition-colors active:scale-95 ${
+                  isDark ? 'bg-neutral-800 text-neutral-400' : 'bg-amber-100 text-neutral-600'
+                }`}
               >
                 <SkipForward className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Volume */}
             <div className="flex items-center gap-3">
-              <Volume2 className="w-4 h-4 text-foam-500" />
+              <Volume2 className={`w-4 h-4 ${isDark ? 'text-neutral-500' : 'text-neutral-500'}`} />
               <input
                 type="range"
                 min="0"
@@ -211,86 +230,94 @@ export default function MusicPage() {
                 step="0.1"
                 value={musicVolume}
                 onChange={(e) => setMusicVolume(parseFloat(e.target.value))}
-                className="flex-1 h-2 bg-dark-700 rounded-full appearance-none cursor-pointer accent-beer-500"
+                className="flex-1 h-2 bg-neutral-700 rounded-full appearance-none cursor-pointer accent-amber-500"
               />
             </div>
-          </motion.div>
+          </div>
         )}
 
-        {/* Tracks list */}
         <div className="space-y-2">
-          <h2 className="text-lg font-bold text-foam-100 px-1">All Tracks</h2>
+          <h2 className={`text-lg font-bold px-1 ${isDark ? 'text-white' : 'text-neutral-900'}`}>{t.allTracks}</h2>
           
           {loading ? (
             [...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-dark-800 rounded-xl animate-pulse" />
+              <div key={i} className={`h-16 rounded-xl animate-pulse ${isDark ? 'bg-neutral-800' : 'bg-amber-100'}`} />
             ))
           ) : tracks.length === 0 ? (
-            <div className="text-center py-8 bg-dark-900 rounded-xl border border-dark-700">
-              <Music className="w-12 h-12 text-dark-600 mx-auto mb-3" />
-              <p className="text-foam-400">No tracks available yet</p>
+            <div className={`text-center py-8 rounded-xl border ${
+              isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-amber-200'
+            }`}>
+              <Music className={`w-12 h-12 mx-auto mb-3 ${isDark ? 'text-neutral-600' : 'text-neutral-400'}`} />
+              <p className={isDark ? 'text-neutral-400' : 'text-neutral-600'}>{t.noTracks}</p>
             </div>
           ) : (
             tracks.map((track, index) => {
               const unlocked = isUnlocked(track)
-              const isCurrentTrack = currentTrack === track.url
+              const isCurrentTrack = currentTrack === track.file_url
               
               return (
-                <motion.button
+                <button
                   key={track.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
                   onClick={() => playTrack(track)}
                   disabled={!unlocked}
+                  style={{ animationDelay: `${100 + index * 50}ms` }}
                   className={`
-                    w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all
+                    w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all active:scale-[0.98] animate-fadeInUp opacity-0
                     ${isCurrentTrack 
-                      ? 'bg-beer-500/20 border border-beer-500/30' 
+                      ? isDark ? 'bg-amber-500/20 border border-amber-500/30' : 'bg-amber-100 border border-amber-300'
                       : unlocked 
-                        ? 'bg-dark-900 border border-dark-700 hover:border-beer-500/30' 
-                        : 'bg-dark-900/50 border border-dark-800 opacity-60'
+                        ? isDark ? 'bg-neutral-900 border border-neutral-800' : 'bg-white border border-amber-200'
+                        : isDark ? 'bg-neutral-900/50 border border-neutral-800 opacity-60' : 'bg-neutral-100 border border-neutral-200 opacity-60'
                     }
                   `}
                 >
                   <div className={`
                     w-12 h-12 rounded-lg flex items-center justify-center
-                    ${isCurrentTrack ? 'beer-gradient' : unlocked ? 'bg-dark-800' : 'bg-dark-800'}
+                    ${isCurrentTrack 
+                      ? 'bg-gradient-to-br from-amber-400 to-amber-600' 
+                      : isDark ? 'bg-neutral-800' : 'bg-amber-100'
+                    }
                   `}>
                     {unlocked ? (
                       isCurrentTrack && isPlaying ? (
-                        <div className="flex gap-0.5">
-                          {[...Array(3)].map((_, i) => (
-                            <motion.div
+                        <div className="flex gap-0.5 items-end h-4">
+                          {[0, 1, 2].map((i) => (
+                            <div
                               key={i}
-                              className="w-1 bg-dark-950 rounded-full"
-                              animate={{ height: [8, 16, 8] }}
-                              transition={{ repeat: Infinity, duration: 0.5, delay: i * 0.1 }}
+                              className={`w-1 rounded-full ${isCurrentTrack ? 'bg-black' : isDark ? 'bg-amber-500' : 'bg-amber-600'}`}
+                              style={{
+                                height: `${8 + Math.sin(Date.now() / 200 + i) * 6}px`,
+                                animation: `pulse 0.5s ease-in-out ${i * 0.1}s infinite`
+                              }}
                             />
                           ))}
                         </div>
                       ) : (
-                        <Play className={`w-5 h-5 ${isCurrentTrack ? 'text-dark-950' : 'text-foam-400'}`} />
+                        <Play className={`w-5 h-5 ${isCurrentTrack ? 'text-black' : isDark ? 'text-neutral-400' : 'text-neutral-600'}`} />
                       )
                     ) : (
-                      <Lock className="w-5 h-5 text-foam-500" />
+                      <Lock className={`w-5 h-5 ${isDark ? 'text-neutral-500' : 'text-neutral-400'}`} />
                     )}
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <p className={`font-medium truncate ${unlocked ? 'text-foam-100' : 'text-foam-500'}`}>
+                    <p className={`font-medium truncate ${unlocked ? (isDark ? 'text-white' : 'text-neutral-900') : (isDark ? 'text-neutral-500' : 'text-neutral-500')}`}>
                       {track.title}
                     </p>
-                    <p className="text-xs text-foam-500">{track.artist}</p>
+                    <p className={`text-xs ${isDark ? 'text-neutral-500' : 'text-neutral-500'}`}>{track.artist}</p>
                   </div>
                   
                   {!unlocked && (
                     <div className="text-right">
-                      <p className="text-xs text-foam-500">Unlock at</p>
-                      <p className="text-sm font-bold text-beer-400">{track.unlock_score.toLocaleString()}</p>
+                      <p className={`text-xs ${isDark ? 'text-neutral-500' : 'text-neutral-500'}`}>{t.unlockAt}</p>
+                      <p className="text-sm font-bold text-amber-500">{track.unlock_requirement.toLocaleString()}</p>
                     </div>
                   )}
-                </motion.button>
+                  
+                  {unlocked && track.unlock_type === 'free' && (
+                    <span className="text-xs text-green-500 font-medium">{t.free}</span>
+                  )}
+                </button>
               )
             })
           )}

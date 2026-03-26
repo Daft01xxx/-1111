@@ -637,40 +637,57 @@ export function GameEngine() {
 
   // Main game loop
   useEffect(() => {
-    if (!isPlaying || isPaused) return
-    
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     
-    bossSpawnTimeRef.current = Date.now()
+    // Reset timers when game starts
+    if (isPlaying && !isPaused) {
+      if (bossSpawnTimeRef.current === 0) {
+        bossSpawnTimeRef.current = Date.now()
+      }
+    }
     
     const gameLoop = (timestamp: number) => {
-      if (!lastTimeRef.current) lastTimeRef.current = timestamp
-      const dt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.05)
-      lastTimeRef.current = timestamp
-      frameRef.current++
-      
+      // Still render background when paused/not playing
       const { w, h } = size
       if (w === 0 || h === 0) {
         frameRef.current = requestAnimationFrame(gameLoop)
         return
       }
       
-      // Clear
+      // Clear and draw background
       ctx.fillStyle = C.bg
       ctx.fillRect(0, 0, w, h)
       
-      // Stars
+      // Always draw stars
       starsRef.current.forEach(star => {
-        star.y += star.speed * dt
-        if (star.y > h) { star.y = 0; star.x = Math.random() * w }
+        if (isPlaying && !isPaused) {
+          star.y += star.speed * 0.016
+          if (star.y > h) { star.y = 0; star.x = Math.random() * w }
+        }
         ctx.fillStyle = `rgba(255,255,255,${0.3 + star.size * 0.2})`
         ctx.beginPath()
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2)
         ctx.fill()
       })
+      
+      const player = playerRef.current
+      
+      // Only run game logic when playing and not paused
+      if (!isPlaying || isPaused) {
+        // Just draw the cat even when paused
+        player.frame++
+        drawCat(ctx, player.x, player.y, player.frame, hasShield)
+        frameRef.current = requestAnimationFrame(gameLoop)
+        return
+      }
+      
+      if (!lastTimeRef.current) lastTimeRef.current = timestamp
+      const dt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.05)
+      lastTimeRef.current = timestamp
+      player.frame++
       
       // Update meters
       const metersGained = 50 * dt * (hasSpeedBoost ? 1.5 : 1)
@@ -682,13 +699,11 @@ export function GameEngine() {
       spawnEnemies(dt)
       
       // Update player position (touch)
-      const player = playerRef.current
       if (touchRef.current !== null) {
         const targetX = touchRef.current - 30
         player.x += (targetX - player.x) * 0.15
       }
       player.x = Math.max(5, Math.min(w - 65, player.x))
-      player.frame++
       
       // Fire projectiles
       const fireRate = weapon.fireRate * (hasSpeedBoost ? 1.5 : 1)
