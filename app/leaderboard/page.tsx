@@ -10,41 +10,34 @@ import { useGameStore } from '@/lib/store'
 
 interface LeaderboardEntry {
   id: string
+  wallet_address: string
+  username: string | null
   score: number
   level: number
+  meters: number
   bosses_defeated: number
-  multiplier: number
+  multiplier_used: number
   created_at: string
-  users: {
-    wallet_address: string
-    username: string | null
-  } | null
-}
-
-interface LeaderboardRow {
-  id: string
-  score: number
-  level: number
-  bosses_defeated: number
-  multiplier: number
-  created_at: string
-  users:
-    | {
-        wallet_address: string
-        username: string | null
-      }
-    | Array<{
-        wallet_address: string
-        username: string | null
-      }>
-    | null
 }
 
 export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [timeframe, setTimeframe] = useState<'all' | 'today' | 'week'>('all')
-  const { walletAddress } = useGameStore()
+  const { walletAddress, language } = useGameStore()
+
+  const t = {
+    title: language === 'ru' ? 'Лидеры' : 'Leaderboard',
+    allTime: language === 'ru' ? 'Все время' : 'All Time',
+    today: language === 'ru' ? 'Сегодня' : 'Today',
+    week: language === 'ru' ? 'Неделя' : 'This Week',
+    noScores: language === 'ru' ? 'Пока нет результатов!' : 'No scores yet!',
+    beFirst: language === 'ru' ? 'Стань первым в таблице лидеров.' : 'Be the first to play and claim the top spot.',
+    playNow: language === 'ru' ? 'Играть' : 'Play Now',
+    level: language === 'ru' ? 'Ур' : 'Lvl',
+    bosses: language === 'ru' ? 'боссов' : 'bosses',
+    you: language === 'ru' ? 'ВЫ' : 'YOU',
+  }
 
   const fetchLeaderboard = async () => {
     setLoading(true)
@@ -52,18 +45,7 @@ export default function LeaderboardPage() {
     
     let query = supabase
       .from('leaderboard')
-      .select(`
-        id,
-        score,
-        level,
-        bosses_defeated,
-        multiplier,
-        created_at,
-        users (
-          wallet_address,
-          username
-        )
-      `)
+      .select('*')
       .order('score', { ascending: false })
       .limit(100)
 
@@ -80,12 +62,7 @@ export default function LeaderboardPage() {
     const { data, error } = await query
 
     if (!error && data) {
-      const normalizedEntries = (data as LeaderboardRow[]).map((entry) => ({
-        ...entry,
-        users: Array.isArray(entry.users) ? (entry.users[0] ?? null) : entry.users,
-      }))
-
-      setEntries(normalizedEntries)
+      setEntries(data as LeaderboardEntry[])
     }
     setLoading(false)
   }
@@ -121,41 +98,42 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-950">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-dark-950/90 backdrop-blur-sm border-b border-dark-800">
+      <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm border-b border-border">
         <div className="flex items-center justify-between p-4">
-          <Link href="/" className="p-2 -m-2 rounded-lg hover:bg-dark-800 transition-colors">
-            <ArrowLeft className="w-6 h-6 text-foam-100" />
+          <Link href="/" className="p-2 -m-2 rounded-lg hover:bg-muted transition-colors active:scale-95">
+            <ArrowLeft className="w-6 h-6 text-foreground" />
           </Link>
           <h1 className="text-xl font-display font-bold beer-text flex items-center gap-2">
             <Trophy className="w-5 h-5 text-beer-400" />
-            Leaderboard
+            {t.title}
           </h1>
           <button 
             onClick={fetchLeaderboard}
-            className="p-2 -m-2 rounded-lg hover:bg-dark-800 transition-colors"
+            className="p-2 -m-2 rounded-lg hover:bg-muted transition-colors active:scale-95"
           >
-            <RefreshCw className={`w-5 h-5 text-foam-400 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-5 h-5 text-muted-foreground ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
         {/* Timeframe tabs */}
         <div className="flex gap-2 px-4 pb-3">
           {(['all', 'today', 'week'] as const).map((tf) => (
-            <button
+            <motion.button
               key={tf}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setTimeframe(tf)}
               className={`
                 flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors
                 ${timeframe === tf 
                   ? 'bg-beer-500 text-dark-950' 
-                  : 'bg-dark-800 text-foam-400 hover:bg-dark-700'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }
               `}
             >
-              {tf === 'all' ? 'All Time' : tf === 'today' ? 'Today' : 'This Week'}
-            </button>
+              {tf === 'all' ? t.allTime : tf === 'today' ? t.today : t.week}
+            </motion.button>
           ))}
         </div>
       </header>
@@ -165,25 +143,28 @@ export default function LeaderboardPage() {
         {loading ? (
           // Skeleton loading
           [...Array(10)].map((_, i) => (
-            <div key={i} className="h-16 bg-dark-800 rounded-xl animate-pulse" />
+            <div key={i} className="h-16 bg-muted rounded-xl animate-pulse" />
           ))
         ) : entries.length === 0 ? (
           <div className="text-center py-12">
-            <Trophy className="w-16 h-16 text-dark-600 mx-auto mb-4" />
-            <p className="text-foam-400">No scores yet!</p>
-            <p className="text-sm text-foam-500">Be the first to play and claim the top spot.</p>
-            <Link href="/play" className="inline-block mt-4 btn-primary">
-              Play Now
+            <Trophy className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-foreground">{t.noScores}</p>
+            <p className="text-sm text-muted-foreground">{t.beFirst}</p>
+            <Link href="/play">
+              <motion.button 
+                whileTap={{ scale: 0.95 }}
+                className="mt-4 px-6 py-3 bg-beer-500 text-dark-950 font-bold rounded-xl"
+              >
+                {t.playNow}
+              </motion.button>
             </Link>
           </div>
         ) : (
           entries.map((entry, index) => {
             const rank = index + 1
-            const isCurrentUser = walletAddress === entry.users?.wallet_address
-            const displayName = entry.users?.username || 
-              (entry.users?.wallet_address 
-                ? `${entry.users.wallet_address.slice(0, 6)}...${entry.users.wallet_address.slice(-4)}`
-                : 'Anonymous')
+            const isCurrentUser = walletAddress === entry.wallet_address
+            const displayName = entry.username || 
+              `${entry.wallet_address.slice(0, 6)}...${entry.wallet_address.slice(-4)}`
 
             return (
               <motion.div
@@ -205,23 +186,23 @@ export default function LeaderboardPage() {
                 {/* Player info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={`font-medium truncate ${isCurrentUser ? 'text-beer-400' : 'text-foam-100'}`}>
+                    <span className={`font-medium truncate ${isCurrentUser ? 'text-beer-400' : 'text-foreground'}`}>
                       {displayName}
                     </span>
                     {isCurrentUser && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-beer-500/20 text-beer-400">
-                        YOU
+                        {t.you}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-foam-500">
-                    <span>Lvl {entry.level}</span>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{t.level} {entry.level}</span>
                     <span>|</span>
-                    <span>{entry.bosses_defeated} bosses</span>
-                    {entry.multiplier > 1 && (
+                    <span>{entry.bosses_defeated} {t.bosses}</span>
+                    {entry.multiplier_used > 1 && (
                       <>
                         <span>|</span>
-                        <span className="text-beer-400">x{entry.multiplier.toFixed(2)}</span>
+                        <span className="text-beer-400">x{entry.multiplier_used.toFixed(2)}</span>
                       </>
                     )}
                   </div>
@@ -229,7 +210,7 @@ export default function LeaderboardPage() {
 
                 {/* Score */}
                 <div className="text-right">
-                  <p className={`text-lg font-bold ${rank <= 3 ? 'beer-text' : 'text-foam-100'}`}>
+                  <p className={`text-lg font-bold ${rank <= 3 ? 'beer-text' : 'text-foreground'}`}>
                     {formatNumber(entry.score)}
                   </p>
                 </div>

@@ -1,113 +1,90 @@
-"use server"
-
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const body = await request.json()
-  const { wallet_address, score, level, bosses_defeated } = body
+  const { wallet_address, username, score, level, meters, bosses_defeated, multiplier_used } = body
 
   if (!wallet_address || score === undefined) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
   }
 
-  // Get user and their multiplier
-  const { data: user } = await supabase
+  // Get or create user
+  let { data: user } = await supabase
     .from("users")
     .select("*")
     .eq("wallet_address", wallet_address)
     .single()
 
   if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 })
+    // Create new user
+    const { data: newUser, error: createError } = await supabase
+      .from("users")
+      .insert({ 
+        wallet_address,
+        username: username || `Player_${wallet_address.slice(-6)}`,
+        high_score: 0,
+        total_score: 0,
+        level: 1,
+        meters: 0,
+        bosses_defeated: 0,
+        games_played: 0,
+        multiplier: multiplier_used || 1.0
+      })
+      .select()
+      .single()
+
+    if (createError) {
+      return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
+    }
+    user = newUser
   }
 
-  const multiplier = user.multiplier || 1.0
-  const finalScore = Math.floor(score * multiplier)
+  const finalMultiplier = multiplier_used || user?.multiplier || 1.0
+  const finalScore = Math.floor(score * finalMultiplier)
 
   // Update user stats
-  const updates: Record<string, number | string> = {
-    total_score: user.total_score + finalScore,
+  const userUpdates: Record<string, unknown> = {
+    total_score: (user?.total_score || 0) + finalScore,
+    games_played: (user?.games_played || 0) + 1,
+    meters: (user?.meters || 0) + (meters || 0),
     updated_at: new Date().toISOString(),
   }
 
-  if (finalScore > user.highest_score) {
-    updates.highest_score = finalScore
+  if (finalScore > (user?.high_score || 0)) {
+    userUpdates.high_score = finalScore
   }
 
-  if (level && level > user.current_level) {
-    updates.current_level = level
+  if (level && level > (user?.level || 1)) {
+    userUpdates.level = level
   }
 
   if (bosses_defeated) {
-    updates.bosses_defeated = user.bosses_defeated + bosses_defeated
+    userUpdates.bosses_defeated = (user?.bosses_defeated || 0) + bosses_defeated
   }
 
   await supabase
     .from("users")
-    .update(updates)
+    .update(userUpdates)
     .eq("wallet_address", wallet_address)
 
-  // Add to leaderboard
-  const today = new Date().toISOString().split("T")[0]
-  
-  const { data: existingEntry } = await supabase
-    .from("leaderboard")
-    .select("*")
-    .eq("wallet_address", wallet_address)
-    .eq("period", "daily")
-    .eq("period_start", today)
-    .single()
-
-  if (existingEntry) {
-    if (finalScore > existingEntry.score) {
-      await supabase
-        .from("leaderboard")
-        .update({ score: finalScore })
-        .eq("id", existingEntry.id)
-    }
-  } else {
-    await supabase.from("leaderboard").insert({
-      wallet_address,
-      username: user.username,
-      score: finalScore,
-      level: level || user.current_level,
-      period: "daily",
-      period_start: today,
-    })
-  }
-
-  // Also update all-time leaderboard
-  const { data: allTimeEntry } = await supabase
-    .from("leaderboard")
-    .select("*")
-    .eq("wallet_address", wallet_address)
-    .eq("period", "all_time")
-    .single()
-
-  if (allTimeEntry) {
-    if (finalScore > allTimeEntry.score) {
-      await supabase
-        .from("leaderboard")
-        .update({ score: finalScore })
-        .eq("id", allTimeEntry.id)
-    }
-  } else {
-    await supabase.from("leaderboard").insert({
-      wallet_address,
-      username: user.username,
-      score: finalScore,
-      level: level || user.current_level,
-      period: "all_time",
-      period_start: "2024-01-01",
-    })
-  }
+  // Add to leaderboard (each game creates a new entry)
+  await supabase.from("leaderboard").insert({
+    wallet_address,
+    username: username || user?.username || `Player_${wallet_address.slice(-6)}`,
+    score: finalScore,
+    level: level || user?.level || 1,
+    meters: meters || 0,
+    bosses_defeated: bosses_defeated || 0,
+    multiplier_used: finalMultiplier,
+    created_at: new Date().toISOString(),
+  })
 
   return NextResponse.json({ 
     success: true, 
     finalScore, 
-    multiplier,
-    newHighScore: finalScore > user.highest_score 
+    multiplier: finalMultiplier,
+    newHighScore: finalScore > (user?.high_score || 0)
   })
 }
