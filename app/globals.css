@@ -23,6 +23,17 @@
   --radius: 0.75rem;
 }
 
+.light {
+  --background: 250 249 246;
+  --foreground: 13 13 13;
+  --card: 255 255 255;
+  --card-foreground: 13 13 13;
+  --muted: 245 245 245;
+  --muted-foreground: 100 100 100;
+  --border: 229 229 229;
+  --input: 245 245 245;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
@@ -41,6 +52,10 @@ body {
 @layer base {
   body {
     @apply bg-dark-950 text-foam-100;
+  }
+  
+  .light body {
+    @apply bg-foam-100 text-dark-900;
   }
 }
 
@@ -110,6 +125,10 @@ body {
   @apply bg-beer-500;
 }
 
+.light ::-webkit-scrollbar-track {
+  @apply bg-dark-100;
+}
+
 /* Game canvas styles */
 .game-canvas {
   image-rendering: pixelated;
@@ -156,4 +175,58 @@ body {
 
 .animate-bounce-in {
   animation: bounce-in 0.5s ease-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(249, 132, 7, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(249, 132, 7, 0.8);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Button press animation */
+@keyframes button-press {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-button-press {
+  animation: button-press 0.15s ease-out;
+}
+
+/* Ripple effect for buttons */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.ripple:active::after {
+  width: 200%;
+  height: 200%;
 }

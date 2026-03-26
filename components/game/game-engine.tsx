@@ -22,6 +22,7 @@ interface Enemy extends Entity {
   maxHealth: number
   points: number
   type: 'small' | 'medium' | 'large' | 'boss'
+  animFrame: number
 }
 
 interface PowerUpItem extends Entity {
@@ -30,6 +31,18 @@ interface PowerUpItem extends Entity {
 
 interface Player extends Entity {
   baseSpeed: number
+  animFrame: number
+  animTimer: number
+}
+
+interface BossEntity extends Entity {
+  health: number
+  maxHealth: number
+  points: number
+  animFrame: number
+  animTimer: number
+  attackTimer: number
+  phase: number
 }
 
 export function GameEngine() {
@@ -46,7 +59,10 @@ export function GameEngine() {
     gameOver,
     health,
     score,
+    meters,
     addScore,
+    addMeters,
+    checkLevelUp,
     takeDamage,
     heal,
     hasShield,
@@ -59,17 +75,26 @@ export function GameEngine() {
     currentWeaponIndex,
     multiplier,
     endGame,
+    skins,
+    currentSkinId,
+    activeBoss,
+    spawnBoss,
+    defeatBoss,
+    clearActiveBoss,
   } = useGameStore()
 
-  // Game state refs (not reactive, for performance)
+  const currentSkin = skins.find(s => s.id === currentSkinId) || skins[0]
+
   const playerRef = useRef<Player>({
     x: 0,
     y: 0,
     width: 50,
-    height: 60,
+    height: 50,
     velocityX: 0,
     velocityY: 0,
     baseSpeed: 300,
+    animFrame: 0,
+    animTimer: 0,
   })
   
   const projectilesRef = useRef<Projectile[]>([])
@@ -78,10 +103,15 @@ export function GameEngine() {
   const lastFireTimeRef = useRef<number>(0)
   const spawnTimerRef = useRef<number>(0)
   const difficultyRef = useRef<number>(1)
+  const bossRef = useRef<BossEntity | null>(null)
+  const gameTimeRef = useRef<number>(0)
   
-  // Beer mug drawing function
-  const drawBeerMug = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, hasShieldActive: boolean) => {
+  // Draw animated cat (player)
+  const drawCat = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, hasShieldActive: boolean, color: string, animFrame: number) => {
     ctx.save()
+    
+    const bounce = Math.sin(animFrame * 0.2) * 2
+    const tailWag = Math.sin(animFrame * 0.3) * 15
     
     // Shield effect
     if (hasShieldActive) {
@@ -91,135 +121,240 @@ export function GameEngine() {
         x + width / 2, y + height / 2, 0,
         x + width / 2, y + height / 2, width * 0.8
       )
-      gradient.addColorStop(0, 'rgba(249, 132, 7, 0)')
-      gradient.addColorStop(0.7, 'rgba(249, 132, 7, 0.2)')
-      gradient.addColorStop(1, 'rgba(249, 132, 7, 0.5)')
+      gradient.addColorStop(0, 'rgba(59, 130, 246, 0)')
+      gradient.addColorStop(0.7, 'rgba(59, 130, 246, 0.2)')
+      gradient.addColorStop(1, 'rgba(59, 130, 246, 0.5)')
       ctx.fillStyle = gradient
       ctx.fill()
     }
     
-    // Mug body (amber beer)
+    // Tail
     ctx.beginPath()
-    ctx.roundRect(x + 5, y + 15, width - 20, height - 20, 8)
-    const beerGradient = ctx.createLinearGradient(x, y, x, y + height)
-    beerGradient.addColorStop(0, '#FFD78A')
-    beerGradient.addColorStop(0.3, '#FFA724')
-    beerGradient.addColorStop(1, '#DD6102')
-    ctx.fillStyle = beerGradient
+    ctx.moveTo(x + width / 2, y + height - 5)
+    ctx.quadraticCurveTo(
+      x + width / 2 + tailWag, y + height + 15,
+      x + width / 2 + tailWag * 0.5, y + height + 25
+    )
+    ctx.strokeStyle = color
+    ctx.lineWidth = 6
+    ctx.lineCap = 'round'
+    ctx.stroke()
+    
+    // Body
+    ctx.beginPath()
+    ctx.ellipse(x + width / 2, y + height / 2 + 5 + bounce, width / 2 - 3, height / 2 - 8, 0, 0, Math.PI * 2)
+    ctx.fillStyle = color
     ctx.fill()
-    ctx.strokeStyle = '#B74206'
+    ctx.strokeStyle = '#000'
     ctx.lineWidth = 2
     ctx.stroke()
     
-    // Foam on top
+    // Head
     ctx.beginPath()
-    ctx.ellipse(x + width / 2 - 2, y + 12, width / 2 - 8, 10, 0, 0, Math.PI * 2)
-    ctx.fillStyle = '#FAF9F6'
+    ctx.ellipse(x + width / 2, y + 12 + bounce, 18, 14, 0, 0, Math.PI * 2)
+    ctx.fillStyle = color
+    ctx.fill()
+    ctx.stroke()
+    
+    // Ears
+    ctx.beginPath()
+    ctx.moveTo(x + 12, y + 8 + bounce)
+    ctx.lineTo(x + 8, y - 8 + bounce)
+    ctx.lineTo(x + 22, y + 4 + bounce)
+    ctx.closePath()
+    ctx.fillStyle = color
+    ctx.fill()
+    ctx.stroke()
+    
+    ctx.beginPath()
+    ctx.moveTo(x + width - 12, y + 8 + bounce)
+    ctx.lineTo(x + width - 8, y - 8 + bounce)
+    ctx.lineTo(x + width - 22, y + 4 + bounce)
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+    
+    // Inner ears
+    ctx.beginPath()
+    ctx.moveTo(x + 14, y + 6 + bounce)
+    ctx.lineTo(x + 11, y - 3 + bounce)
+    ctx.lineTo(x + 20, y + 4 + bounce)
+    ctx.closePath()
+    ctx.fillStyle = '#FFB6C1'
     ctx.fill()
     
-    // Foam bubbles
-    const bubblePositions = [
-      { x: x + 12, y: y + 8 },
-      { x: x + 22, y: y + 6 },
-      { x: x + 32, y: y + 9 },
-      { x: x + 17, y: y + 14 },
-      { x: x + 27, y: y + 12 },
-    ]
-    bubblePositions.forEach(pos => {
+    ctx.beginPath()
+    ctx.moveTo(x + width - 14, y + 6 + bounce)
+    ctx.lineTo(x + width - 11, y - 3 + bounce)
+    ctx.lineTo(x + width - 20, y + 4 + bounce)
+    ctx.closePath()
+    ctx.fill()
+    
+    // Eyes
+    const blinkMod = animFrame % 60
+    const eyeHeight = blinkMod < 3 ? 1 : 5
+    
+    ctx.fillStyle = '#FFF'
+    ctx.beginPath()
+    ctx.ellipse(x + 18, y + 12 + bounce, 5, eyeHeight, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.ellipse(x + width - 18, y + 12 + bounce, 5, eyeHeight, 0, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // Pupils
+    if (eyeHeight > 1) {
+      ctx.fillStyle = '#000'
       ctx.beginPath()
-      ctx.arc(pos.x, pos.y, 3 + Math.random() * 2, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+      ctx.ellipse(x + 18, y + 13 + bounce, 2.5, 3.5, 0, 0, Math.PI * 2)
       ctx.fill()
-    })
+      ctx.beginPath()
+      ctx.ellipse(x + width - 18, y + 13 + bounce, 2.5, 3.5, 0, 0, Math.PI * 2)
+      ctx.fill()
+    }
     
-    // Handle
+    // Nose
+    ctx.fillStyle = '#FFB6C1'
     ctx.beginPath()
-    ctx.moveTo(x + width - 15, y + 20)
-    ctx.quadraticCurveTo(x + width + 5, y + height / 2, x + width - 15, y + height - 10)
-    ctx.strokeStyle = '#B74206'
-    ctx.lineWidth = 6
-    ctx.stroke()
-    ctx.strokeStyle = '#DD6102'
-    ctx.lineWidth = 3
-    ctx.stroke()
+    ctx.moveTo(x + width / 2, y + 18 + bounce)
+    ctx.lineTo(x + width / 2 - 3, y + 15 + bounce)
+    ctx.lineTo(x + width / 2 + 3, y + 15 + bounce)
+    ctx.closePath()
+    ctx.fill()
     
-    // Highlight
-    ctx.beginPath()
-    ctx.moveTo(x + 10, y + 25)
-    ctx.lineTo(x + 10, y + height - 15)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
-    ctx.lineWidth = 3
-    ctx.stroke()
+    // Whiskers
+    ctx.strokeStyle = '#333'
+    ctx.lineWidth = 1
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath()
+      ctx.moveTo(x + 8, y + 16 + i * 3 + bounce)
+      ctx.lineTo(x - 5, y + 14 + i * 4 + bounce)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(x + width - 8, y + 16 + i * 3 + bounce)
+      ctx.lineTo(x + width + 5, y + 14 + i * 4 + bounce)
+      ctx.stroke()
+    }
     
     ctx.restore()
   }, [])
   
-  // Draw foam projectile
-  const drawFoamProjectile = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number) => {
+  // Draw foam/yarn projectile
+  const drawProjectile = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, time: number) => {
     ctx.save()
     
-    // Foam ball
+    // Yarn ball projectile
     const gradient = ctx.createRadialGradient(x + width/2, y + height/2, 0, x + width/2, y + height/2, width/2)
-    gradient.addColorStop(0, '#FFFFFF')
-    gradient.addColorStop(0.5, '#FAF9F6')
-    gradient.addColorStop(1, '#EBE7DC')
+    gradient.addColorStop(0, '#FFD700')
+    gradient.addColorStop(0.5, '#FFA500')
+    gradient.addColorStop(1, '#FF8C00')
     
     ctx.beginPath()
     ctx.arc(x + width/2, y + height/2, width/2, 0, Math.PI * 2)
     ctx.fillStyle = gradient
     ctx.fill()
     
-    // Glow
-    ctx.shadowColor = '#FFA724'
-    ctx.shadowBlur = 10
+    // Yarn lines
+    ctx.strokeStyle = '#FFE4B5'
+    ctx.lineWidth = 1.5
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath()
+      ctx.arc(x + width/2, y + height/2, width/2 - 2 - i * 2, (time * 0.01 + i) % (Math.PI * 2), (time * 0.01 + i + 1) % (Math.PI * 2))
+      ctx.stroke()
+    }
+    
+    ctx.shadowColor = '#FFA500'
+    ctx.shadowBlur = 8
     ctx.fill()
     
     ctx.restore()
   }, [])
   
-  // Draw enemy (bottles of various alcohol)
-  const drawEnemy = useCallback((ctx: CanvasRenderingContext2D, enemy: Enemy) => {
+  // Draw beer mug enemy
+  const drawBeerMugEnemy = useCallback((ctx: CanvasRenderingContext2D, enemy: Enemy, time: number) => {
     ctx.save()
     
-    const { x, y, width, height, type } = enemy
+    const { x, y, width, height, type, animFrame } = enemy
+    const wobble = Math.sin(animFrame * 0.1) * 3
     
-    // Different colors based on enemy type
-    const colors = {
-      small: { body: '#4A5568', cap: '#2D3748', label: '#E53E3E' }, // Vodka bottle
-      medium: { body: '#92400E', cap: '#78350F', label: '#F59E0B' }, // Whiskey bottle
-      large: { body: '#7C3AED', cap: '#5B21B6', label: '#A78BFA' }, // Wine bottle
-      boss: { body: '#059669', cap: '#047857', label: '#34D399' }, // Absinthe
-    }
+    // Scale based on type
+    const scale = type === 'small' ? 0.7 : type === 'medium' ? 1 : 1.3
+    const w = width * scale
+    const h = height * scale
+    const offsetX = (width - w) / 2
+    const offsetY = (height - h) / 2
     
-    const color = colors[type]
-    
-    // Bottle body
+    // Evil aura
     ctx.beginPath()
-    ctx.roundRect(x + width * 0.2, y + height * 0.3, width * 0.6, height * 0.65, 5)
-    ctx.fillStyle = color.body
+    ctx.arc(x + width/2, y + height/2, w * 0.6, 0, Math.PI * 2)
+    const auraGradient = ctx.createRadialGradient(x + width/2, y + height/2, 0, x + width/2, y + height/2, w * 0.6)
+    auraGradient.addColorStop(0, 'rgba(220, 38, 38, 0)')
+    auraGradient.addColorStop(1, 'rgba(220, 38, 38, 0.3)')
+    ctx.fillStyle = auraGradient
     ctx.fill()
-    ctx.strokeStyle = '#1a1a1a'
+    
+    // Mug body
+    ctx.beginPath()
+    ctx.roundRect(x + offsetX + 5, y + offsetY + 15 + wobble, w - 20, h - 20, 6)
+    const beerGradient = ctx.createLinearGradient(x, y, x, y + h)
+    beerGradient.addColorStop(0, '#FFD78A')
+    beerGradient.addColorStop(0.3, '#FFA724')
+    beerGradient.addColorStop(1, '#DD6102')
+    ctx.fillStyle = beerGradient
+    ctx.fill()
+    ctx.strokeStyle = '#8B4513'
     ctx.lineWidth = 2
     ctx.stroke()
     
-    // Bottle neck
+    // Foam
     ctx.beginPath()
-    ctx.roundRect(x + width * 0.35, y + height * 0.1, width * 0.3, height * 0.25, 3)
-    ctx.fillStyle = color.body
+    ctx.ellipse(x + width/2, y + offsetY + 12 + wobble, w/2 - 8, 8, 0, 0, Math.PI * 2)
+    ctx.fillStyle = '#FAF9F6'
     ctx.fill()
+    
+    // Foam bubbles
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath()
+      ctx.arc(x + offsetX + 12 + i * 10, y + offsetY + 8 + wobble + Math.sin(time * 0.005 + i) * 2, 3, 0, Math.PI * 2)
+      ctx.fillStyle = '#FFF'
+      ctx.fill()
+    }
+    
+    // Handle
+    ctx.beginPath()
+    ctx.moveTo(x + offsetX + w - 10, y + offsetY + 20 + wobble)
+    ctx.quadraticCurveTo(x + offsetX + w + 8, y + height/2, x + offsetX + w - 10, y + offsetY + h - 10 + wobble)
+    ctx.strokeStyle = '#8B4513'
+    ctx.lineWidth = 5
+    ctx.stroke()
+    ctx.strokeStyle = '#A0522D'
+    ctx.lineWidth = 3
     ctx.stroke()
     
-    // Cap
+    // Evil eyes
+    ctx.fillStyle = '#DC2626'
     ctx.beginPath()
-    ctx.roundRect(x + width * 0.32, y, width * 0.36, height * 0.12, 2)
-    ctx.fillStyle = color.cap
+    ctx.arc(x + width/2 - 8, y + height/2 - 5 + wobble, 4, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.arc(x + width/2 + 8, y + height/2 - 5 + wobble, 4, 0, Math.PI * 2)
     ctx.fill()
     
-    // Label
+    // Evil pupils
+    ctx.fillStyle = '#000'
     ctx.beginPath()
-    ctx.roundRect(x + width * 0.25, y + height * 0.45, width * 0.5, height * 0.3, 3)
-    ctx.fillStyle = color.label
+    ctx.arc(x + width/2 - 8, y + height/2 - 5 + wobble, 2, 0, Math.PI * 2)
     ctx.fill()
+    ctx.beginPath()
+    ctx.arc(x + width/2 + 8, y + height/2 - 5 + wobble, 2, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // Evil smile
+    ctx.beginPath()
+    ctx.arc(x + width/2, y + height/2 + 8 + wobble, 8, 0.1 * Math.PI, 0.9 * Math.PI)
+    ctx.strokeStyle = '#DC2626'
+    ctx.lineWidth = 2
+    ctx.stroke()
     
     // Health bar
     const healthPercent = enemy.health / enemy.maxHealth
@@ -231,15 +366,166 @@ export function GameEngine() {
     ctx.restore()
   }, [])
   
+  // Draw boss (evil cat)
+  const drawBoss = useCallback((ctx: CanvasRenderingContext2D, boss: BossEntity, time: number) => {
+    ctx.save()
+    
+    const { x, y, width, height, animFrame, phase } = boss
+    const bounce = Math.sin(animFrame * 0.15) * 5
+    const breathe = Math.sin(time * 0.003) * 3
+    
+    // Boss aura
+    ctx.beginPath()
+    ctx.arc(x + width/2, y + height/2, width * 0.8, 0, Math.PI * 2)
+    const auraGradient = ctx.createRadialGradient(x + width/2, y + height/2, 0, x + width/2, y + height/2, width * 0.8)
+    auraGradient.addColorStop(0, 'rgba(220, 38, 38, 0)')
+    auraGradient.addColorStop(0.5, 'rgba(220, 38, 38, 0.2)')
+    auraGradient.addColorStop(1, 'rgba(220, 38, 38, 0.5)')
+    ctx.fillStyle = auraGradient
+    ctx.fill()
+    
+    // Body (larger, more menacing)
+    ctx.beginPath()
+    ctx.ellipse(x + width/2, y + height/2 + 10 + bounce, width/2 - 10 + breathe, height/2 - 15 + breathe, 0, 0, Math.PI * 2)
+    ctx.fillStyle = '#1F2937'
+    ctx.fill()
+    ctx.strokeStyle = '#DC2626'
+    ctx.lineWidth = 3
+    ctx.stroke()
+    
+    // Head
+    ctx.beginPath()
+    ctx.ellipse(x + width/2, y + 25 + bounce, 30, 24, 0, 0, Math.PI * 2)
+    ctx.fillStyle = '#1F2937'
+    ctx.fill()
+    ctx.stroke()
+    
+    // Crown
+    ctx.fillStyle = '#FFD700'
+    ctx.beginPath()
+    ctx.moveTo(x + width/2 - 25, y + 10 + bounce)
+    ctx.lineTo(x + width/2 - 20, y - 15 + bounce)
+    ctx.lineTo(x + width/2 - 10, y + bounce)
+    ctx.lineTo(x + width/2, y - 20 + bounce)
+    ctx.lineTo(x + width/2 + 10, y + bounce)
+    ctx.lineTo(x + width/2 + 20, y - 15 + bounce)
+    ctx.lineTo(x + width/2 + 25, y + 10 + bounce)
+    ctx.closePath()
+    ctx.fill()
+    ctx.strokeStyle = '#B8860B'
+    ctx.lineWidth = 2
+    ctx.stroke()
+    
+    // Crown jewels
+    ctx.fillStyle = '#DC2626'
+    ctx.beginPath()
+    ctx.arc(x + width/2, y - 12 + bounce, 4, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // Evil ears
+    ctx.fillStyle = '#1F2937'
+    ctx.beginPath()
+    ctx.moveTo(x + width/2 - 25, y + 15 + bounce)
+    ctx.lineTo(x + width/2 - 35, y - 15 + bounce)
+    ctx.lineTo(x + width/2 - 10, y + 10 + bounce)
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+    
+    ctx.beginPath()
+    ctx.moveTo(x + width/2 + 25, y + 15 + bounce)
+    ctx.lineTo(x + width/2 + 35, y - 15 + bounce)
+    ctx.lineTo(x + width/2 + 10, y + 10 + bounce)
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+    
+    // Glowing evil eyes
+    const eyeGlow = Math.sin(time * 0.01) * 0.3 + 0.7
+    ctx.fillStyle = `rgba(220, 38, 38, ${eyeGlow})`
+    ctx.shadowColor = '#DC2626'
+    ctx.shadowBlur = 15
+    ctx.beginPath()
+    ctx.ellipse(x + width/2 - 12, y + 22 + bounce, 8, 10, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.ellipse(x + width/2 + 12, y + 22 + bounce, 8, 10, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.shadowBlur = 0
+    
+    // Slit pupils
+    ctx.fillStyle = '#000'
+    ctx.beginPath()
+    ctx.ellipse(x + width/2 - 12, y + 22 + bounce, 2, 8, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.ellipse(x + width/2 + 12, y + 22 + bounce, 2, 8, 0, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // Evil grin
+    ctx.strokeStyle = '#DC2626'
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.arc(x + width/2, y + 38 + bounce, 12, 0.1 * Math.PI, 0.9 * Math.PI)
+    ctx.stroke()
+    
+    // Fangs
+    ctx.fillStyle = '#FFF'
+    ctx.beginPath()
+    ctx.moveTo(x + width/2 - 8, y + 42 + bounce)
+    ctx.lineTo(x + width/2 - 5, y + 50 + bounce)
+    ctx.lineTo(x + width/2 - 2, y + 42 + bounce)
+    ctx.closePath()
+    ctx.fill()
+    ctx.beginPath()
+    ctx.moveTo(x + width/2 + 8, y + 42 + bounce)
+    ctx.lineTo(x + width/2 + 5, y + 50 + bounce)
+    ctx.lineTo(x + width/2 + 2, y + 42 + bounce)
+    ctx.closePath()
+    ctx.fill()
+    
+    // Tail (menacing)
+    ctx.beginPath()
+    ctx.moveTo(x + width/2, y + height - 10)
+    ctx.bezierCurveTo(
+      x + width/2 + 30 + Math.sin(time * 0.005) * 20, y + height,
+      x + width/2 + 50 + Math.sin(time * 0.005) * 30, y + height + 20,
+      x + width/2 + 40 + Math.sin(time * 0.005) * 25, y + height + 40
+    )
+    ctx.strokeStyle = '#1F2937'
+    ctx.lineWidth = 8
+    ctx.stroke()
+    ctx.strokeStyle = '#DC2626'
+    ctx.lineWidth = 2
+    ctx.stroke()
+    
+    // Health bar (larger for boss)
+    const healthPercent = boss.health / boss.maxHealth
+    ctx.fillStyle = '#1a1a1a'
+    ctx.fillRect(x, y - 25, width, 12)
+    
+    const healthGradient = ctx.createLinearGradient(x, 0, x + width * healthPercent, 0)
+    healthGradient.addColorStop(0, '#DC2626')
+    healthGradient.addColorStop(1, '#7F1D1D')
+    ctx.fillStyle = healthGradient
+    ctx.fillRect(x + 2, y - 23, (width - 4) * healthPercent, 8)
+    
+    // Boss name
+    ctx.fillStyle = '#FFF'
+    ctx.font = 'bold 14px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('BOSS', x + width/2, y - 30)
+    
+    ctx.restore()
+  }, [])
+  
   // Draw power-up
-  const drawPowerUp = useCallback((ctx: CanvasRenderingContext2D, powerUp: PowerUpItem) => {
+  const drawPowerUp = useCallback((ctx: CanvasRenderingContext2D, powerUp: PowerUpItem, time: number) => {
     ctx.save()
     
     const { x, y, width, height, type } = powerUp
-    const time = Date.now() / 1000
-    const pulse = Math.sin(time * 4) * 0.2 + 1
+    const pulse = Math.sin(time * 0.008) * 0.2 + 1
     
-    // Glow effect
     ctx.shadowBlur = 15
     
     const colors = {
@@ -253,14 +539,12 @@ export function GameEngine() {
     const color = colors[type]
     ctx.shadowColor = color.glow
     
-    // Circle background
     ctx.beginPath()
     ctx.arc(x + width/2, y + height/2, (width/2) * pulse, 0, Math.PI * 2)
     ctx.fillStyle = color.bg
     ctx.fill()
     
-    // Icon (emoji rendered as text)
-    ctx.font = `${20 * pulse}px Arial`
+    ctx.font = `${18 * pulse}px Arial`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     const icons = {
@@ -284,9 +568,8 @@ export function GameEngine() {
         const height = container.clientHeight
         setCanvasSize({ width, height })
         
-        // Initialize player position
         playerRef.current.x = width / 2 - playerRef.current.width / 2
-        playerRef.current.y = height - 120 // Higher position above controls
+        playerRef.current.y = height - 130
       }
     }
     
@@ -318,7 +601,6 @@ export function GameEngine() {
       const rect = canvas.getBoundingClientRect()
       const touchX = touch.clientX - rect.left
       
-      // Move player based on touch position
       const targetX = touchX - playerRef.current.width / 2
       playerRef.current.x = Math.max(0, Math.min(canvasSize.width - playerRef.current.width, targetX))
     }
@@ -338,7 +620,7 @@ export function GameEngine() {
     }
   }, [canvasSize.width, isPlaying, isPaused])
 
-  // Mouse controls for desktop
+  // Mouse controls
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -364,9 +646,9 @@ export function GameEngine() {
     const type = types[typeIndex]
     
     const sizes = {
-      small: { width: 30, height: 50, health: 20, points: 10, speed: 100 },
-      medium: { width: 40, height: 65, health: 40, points: 25, speed: 80 },
-      large: { width: 50, height: 80, health: 80, points: 50, speed: 60 },
+      small: { width: 40, height: 50, health: 20, points: 10, speed: 100 },
+      medium: { width: 50, height: 60, health: 40, points: 25, speed: 80 },
+      large: { width: 60, height: 70, health: 80, points: 50, speed: 60 },
     }
     
     const size = sizes[type]
@@ -382,6 +664,7 @@ export function GameEngine() {
       maxHealth: size.health * (1 + difficultyRef.current * 0.1),
       points: size.points,
       type,
+      animFrame: 0,
     }
     
     enemiesRef.current.push(enemy)
@@ -419,7 +702,6 @@ export function GameEngine() {
     const player = playerRef.current
     let projectileCount = weapon.projectileCount
     
-    // Stackable power-ups affect projectile count
     if (hasDoubleShot) projectileCount *= 2
     if (hasTripleShot) projectileCount *= 3
     
@@ -473,55 +755,79 @@ export function GameEngine() {
     const gameLoop = (timestamp: number) => {
       const deltaTime = (timestamp - lastTimeRef.current) / 1000
       lastTimeRef.current = timestamp
+      gameTimeRef.current = timestamp
+      
+      // Add meters based on time
+      addMeters(deltaTime * 100)
+      checkLevelUp()
+      
+      // Check for boss spawn
+      const newBoss = spawnBoss()
+      if (newBoss && !bossRef.current) {
+        bossRef.current = {
+          x: canvasSize.width / 2 - 50,
+          y: 50,
+          width: 100,
+          height: 120,
+          velocityX: 50,
+          velocityY: 0,
+          health: newBoss.health,
+          maxHealth: newBoss.maxHealth,
+          points: newBoss.points,
+          animFrame: 0,
+          animTimer: 0,
+          attackTimer: 0,
+          phase: 1,
+        }
+      }
       
       // Clear canvas
       ctx.fillStyle = '#0d0d0d'
       ctx.fillRect(0, 0, canvasSize.width, canvasSize.height)
       
-      // Draw starfield background
+      // Draw starfield
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'
       for (let i = 0; i < 50; i++) {
         const x = (i * 73 + timestamp * 0.02) % canvasSize.width
-        const y = (i * 37 + timestamp * 0.01) % canvasSize.height
+        const y = (i * 37 + timestamp * 0.05) % canvasSize.height
         ctx.beginPath()
-        ctx.arc(x, y, 1, 0, Math.PI * 2)
+        ctx.arc(x, y, 1 + Math.sin(timestamp * 0.001 + i) * 0.5, 0, Math.PI * 2)
         ctx.fill()
       }
       
       // Auto-fire
       fireProjectile()
       
-      // Spawn enemies
+      // Spawn enemies (less if boss is active)
       spawnTimerRef.current += deltaTime
-      if (spawnTimerRef.current > 1.5 / (1 + difficultyRef.current * 0.1)) {
+      const spawnRate = bossRef.current ? 3 : 1.5 / (1 + difficultyRef.current * 0.1)
+      if (spawnTimerRef.current > spawnRate) {
         spawnEnemy()
         spawnTimerRef.current = 0
         
-        // Occasionally spawn power-up
         if (Math.random() < 0.15) {
           spawnPowerUp()
         }
       }
       
-      // Increase difficulty over time
       difficultyRef.current = 1 + score / 500
       
-      // Update power-up timers
       updatePowerUpTimers(deltaTime)
+      
+      // Update player animation
+      playerRef.current.animFrame++
       
       // Update and draw projectiles
       projectilesRef.current = projectilesRef.current.filter(proj => {
         proj.x += proj.velocityX * deltaTime
         proj.y += proj.velocityY * deltaTime
         
-        // Remove if off screen
         if (proj.y < -20 || proj.y > canvasSize.height + 20) return false
         
-        // Draw
         if (!proj.isEnemy) {
-          drawFoamProjectile(ctx, proj.x, proj.y, proj.width, proj.height)
+          drawProjectile(ctx, proj.x, proj.y, proj.width, proj.height, timestamp)
         } else {
-          ctx.fillStyle = '#EF4444'
+          ctx.fillStyle = '#DC2626'
           ctx.beginPath()
           ctx.arc(proj.x + proj.width/2, proj.y + proj.height/2, proj.width/2, 0, Math.PI * 2)
           ctx.fill()
@@ -530,22 +836,73 @@ export function GameEngine() {
         return true
       })
       
+      // Update and draw boss
+      if (bossRef.current) {
+        const boss = bossRef.current
+        boss.animFrame++
+        boss.x += boss.velocityX * deltaTime
+        
+        // Bounce off walls
+        if (boss.x <= 0 || boss.x >= canvasSize.width - boss.width) {
+          boss.velocityX *= -1
+        }
+        
+        // Boss attacks
+        boss.attackTimer += deltaTime
+        if (boss.attackTimer > 2) {
+          boss.attackTimer = 0
+          // Fire projectiles at player
+          for (let i = 0; i < 3; i++) {
+            const angle = (Math.random() - 0.5) * 0.5
+            projectilesRef.current.push({
+              x: boss.x + boss.width / 2,
+              y: boss.y + boss.height,
+              width: 15,
+              height: 15,
+              velocityX: Math.sin(angle) * 100,
+              velocityY: 200,
+              damage: 15,
+              isEnemy: true,
+            })
+          }
+        }
+        
+        // Check projectile hits
+        for (let i = projectilesRef.current.length - 1; i >= 0; i--) {
+          const proj = projectilesRef.current[i]
+          if (!proj.isEnemy && checkCollision(proj, boss)) {
+            boss.health -= proj.damage
+            projectilesRef.current.splice(i, 1)
+            
+            if (boss.health <= 0) {
+              addScore(boss.points)
+              if (activeBoss) {
+                defeatBoss(activeBoss.id)
+              }
+              bossRef.current = null
+            }
+          }
+        }
+        
+        if (bossRef.current) {
+          drawBoss(ctx, boss, timestamp)
+        }
+      }
+      
       // Update and draw enemies
       enemiesRef.current = enemiesRef.current.filter(enemy => {
         enemy.x += enemy.velocityX * deltaTime
         enemy.y += enemy.velocityY * deltaTime
+        enemy.animFrame++
         
-        // Bounce off walls
         if (enemy.x <= 0 || enemy.x >= canvasSize.width - enemy.width) {
           enemy.velocityX *= -1
         }
         
-        // Remove if off screen bottom
         if (enemy.y > canvasSize.height + 50) {
           return false
         }
         
-        // Check collision with player projectiles
         for (let i = projectilesRef.current.length - 1; i >= 0; i--) {
           const proj = projectilesRef.current[i]
           if (!proj.isEnemy && checkCollision(proj, enemy)) {
@@ -559,15 +916,23 @@ export function GameEngine() {
           }
         }
         
-        // Check collision with player
         if (checkCollision(enemy, playerRef.current)) {
           takeDamage(20)
           return false
         }
         
-        drawEnemy(ctx, enemy)
+        drawBeerMugEnemy(ctx, enemy, timestamp)
         return true
       })
+      
+      // Check enemy projectile hits on player
+      for (let i = projectilesRef.current.length - 1; i >= 0; i--) {
+        const proj = projectilesRef.current[i]
+        if (proj.isEnemy && checkCollision(proj, playerRef.current)) {
+          takeDamage(proj.damage)
+          projectilesRef.current.splice(i, 1)
+        }
+      }
       
       // Update and draw power-ups
       powerUpsRef.current = powerUpsRef.current.filter(powerUp => {
@@ -575,7 +940,6 @@ export function GameEngine() {
         
         if (powerUp.y > canvasSize.height + 50) return false
         
-        // Check collision with player
         if (checkCollision(powerUp, playerRef.current)) {
           if (powerUp.type === 'health') {
             heal(25)
@@ -585,14 +949,19 @@ export function GameEngine() {
           return false
         }
         
-        drawPowerUp(ctx, powerUp)
+        drawPowerUp(ctx, powerUp, timestamp)
         return true
       })
       
-      // Draw player
-      drawBeerMug(ctx, playerRef.current.x, playerRef.current.y, playerRef.current.width, playerRef.current.height, hasShield)
+      // Draw player (cat)
+      drawCat(ctx, playerRef.current.x, playerRef.current.y, playerRef.current.width, playerRef.current.height, hasShield, currentSkin.color, playerRef.current.animFrame)
       
-      // Continue loop
+      // Draw meters counter
+      ctx.fillStyle = '#FFF'
+      ctx.font = '12px sans-serif'
+      ctx.textAlign = 'right'
+      ctx.fillText(`${Math.floor(meters)}m`, canvasSize.width - 10, 20)
+      
       gameLoopRef.current = requestAnimationFrame(gameLoop)
     }
     
@@ -605,11 +974,11 @@ export function GameEngine() {
       }
     }
   }, [
-    isPlaying, isPaused, gameOver, canvasSize, score,
+    isPlaying, isPaused, gameOver, canvasSize, score, meters,
     fireProjectile, spawnEnemy, spawnPowerUp, checkCollision,
-    drawBeerMug, drawFoamProjectile, drawEnemy, drawPowerUp,
-    addScore, takeDamage, heal, activatePowerUp, updatePowerUpTimers,
-    hasShield,
+    drawCat, drawProjectile, drawBeerMugEnemy, drawBoss, drawPowerUp,
+    addScore, addMeters, checkLevelUp, takeDamage, heal, activatePowerUp, updatePowerUpTimers,
+    hasShield, currentSkin, activeBoss, spawnBoss, defeatBoss,
   ])
 
   // Check game over
