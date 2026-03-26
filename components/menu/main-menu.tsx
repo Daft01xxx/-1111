@@ -80,7 +80,7 @@ export function MainMenu() {
           {/* Coins */}
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[rgb(var(--muted))]">
             <span className="text-amber-400 font-bold">{formatNumber(coins)}</span>
-            <span className="text-xs text-[rgb(var(--muted-foreground))]">coins</span>
+            <span className="text-xs text-[rgb(var(--muted-foreground))]">{language === 'ru' ? 'монет' : 'coins'}</span>
           </div>
 
           {/* Language Toggle */}
@@ -120,7 +120,7 @@ export function MainMenu() {
 
           {/* Title */}
           <h1 className="text-3xl font-bold gold-text mb-1">NAPIWAS</h1>
-          <p className="text-sm text-[rgb(var(--muted-foreground))]">Cat vs Beer</p>
+          <p className="text-sm text-[rgb(var(--muted-foreground))]">{language === 'ru' ? 'Кот против Пива' : 'Cat vs Beer'}</p>
         </div>
 
         {/* Stats */}

@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useGameStore, translations } from '@/lib/store'
+import { useGameStore } from '@/lib/store'
 import { formatNumber } from '@/lib/utils'
-import { motion } from 'framer-motion'
-import { ArrowLeft, ShoppingBag, Cat, Zap, Coins, Check, Lock } from 'lucide-react'
+import { ArrowLeft, ShoppingBag, Cat, Zap, Check, Lock, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ShopPage() {
@@ -15,7 +14,21 @@ export default function ShopPage() {
     theme, language
   } = useGameStore()
 
-  const t = translations[language]
+  const t = {
+    title: language === 'ru' ? 'Магазин' : 'Shop',
+    skins: language === 'ru' ? 'Скины' : 'Skins',
+    weapons: language === 'ru' ? 'Оружие' : 'Weapons',
+    select: language === 'ru' ? 'Выбрать' : 'Select',
+    selected: language === 'ru' ? 'Выбран' : 'Selected',
+    active: language === 'ru' ? 'Активно' : 'Active',
+    buy: language === 'ru' ? 'Купить' : 'Buy',
+    locked: language === 'ru' ? 'Заблокировано' : 'Locked',
+    damage: language === 'ru' ? 'Урон' : 'DMG',
+    rate: language === 'ru' ? 'Скор.' : 'Rate',
+    projectiles: language === 'ru' ? 'Снаряды' : 'Proj',
+    earnCoins: language === 'ru' ? 'Зарабатывай монеты играя и побеждая боссов!' : 'Earn coins by playing and defeating bosses!',
+    coins: language === 'ru' ? 'монет' : 'coins',
+  }
 
   const handlePurchaseSkin = (skinId: string) => {
     if (purchaseSkin(skinId)) {
@@ -29,31 +42,34 @@ export default function ShopPage() {
     }
   }
 
+  const isDark = theme === 'dark'
+
   return (
-    <div className={`min-h-screen overflow-x-hidden ${theme === 'light' ? 'bg-foam-100' : 'bg-dark-950'}`}>
+    <div className={`min-h-screen overflow-x-hidden ${isDark ? 'bg-[#0a0a0b]' : 'bg-[#fefefe]'}`}>
       {/* Header */}
-      <header className={`sticky top-0 z-20 backdrop-blur-sm border-b px-3 py-3 safe-area-inset ${
-        theme === 'light' 
-          ? 'bg-foam-100/90 border-dark-200' 
-          : 'bg-dark-950/90 border-dark-800'
+      <header className={`sticky top-0 z-20 backdrop-blur-md border-b px-4 pt-[env(safe-area-inset-top)] pb-3 ${
+        isDark ? 'bg-[#0a0a0b]/95 border-[#222]' : 'bg-[#fefefe]/95 border-[#e5e5e5]'
       }`}>
-        <div className="flex items-center justify-between gap-2">
-          <Link href="/" className={`p-2 -m-2 rounded-lg transition-colors active:scale-95 flex-shrink-0 ${
-            theme === 'light' ? 'active:bg-dark-200' : 'active:bg-dark-800'
-          }`}>
-            <ArrowLeft className={`w-6 h-6 ${theme === 'light' ? 'text-dark-900' : 'text-foam-100'}`} />
+        <div className="flex items-center justify-between gap-3 pt-3">
+          <Link 
+            href="/" 
+            className={`w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-transform ${
+              isDark ? 'bg-[#1a1a1a]' : 'bg-[#f0f0f0]'
+            }`}
+          >
+            <ArrowLeft className={`w-5 h-5 ${isDark ? 'text-white' : 'text-black'}`} />
           </Link>
-          <h1 className="text-lg font-display font-bold beer-text flex items-center gap-2 truncate">
-            <ShoppingBag className="w-5 h-5 text-beer-500 flex-shrink-0" />
-            {language === 'ru' ? 'Магазин' : 'Shop'}
+          
+          <h1 className="text-lg font-bold flex items-center gap-2">
+            <ShoppingBag className="w-5 h-5 text-amber-500" />
+            {t.title}
           </h1>
-          <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg flex-shrink-0 ${
-            theme === 'light' ? 'bg-dark-200' : 'bg-dark-800'
+          
+          <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl ${
+            isDark ? 'bg-[#1a1a1a]' : 'bg-[#f0f0f0]'
           }`}>
-            <Coins className="w-4 h-4 text-beer-500" />
-            <span className={`font-bold text-sm ${theme === 'light' ? 'text-dark-900' : 'text-foam-100'}`}>
-              {formatNumber(coins)}
-            </span>
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <span className="font-bold text-amber-500">{formatNumber(coins)}</span>
           </div>
         </div>
 
@@ -61,34 +77,30 @@ export default function ShopPage() {
         <div className="flex gap-2 mt-3">
           <button
             onClick={() => setTab('skins')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-all active:scale-[0.98] ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium transition-all active:scale-[0.98] ${
               tab === 'skins'
-                ? 'bg-beer-500 text-dark-950'
-                : theme === 'light'
-                  ? 'bg-dark-200 text-dark-600'
-                  : 'bg-dark-800 text-foam-400'
+                ? 'bg-amber-500 text-black'
+                : isDark ? 'bg-[#1a1a1a] text-gray-400' : 'bg-[#f0f0f0] text-gray-600'
             }`}
           >
             <Cat className="w-4 h-4" />
-            {language === 'ru' ? 'Скины' : 'Skins'}
+            {t.skins}
           </button>
           <button
             onClick={() => setTab('weapons')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-all active:scale-[0.98] ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium transition-all active:scale-[0.98] ${
               tab === 'weapons'
-                ? 'bg-beer-500 text-dark-950'
-                : theme === 'light'
-                  ? 'bg-dark-200 text-dark-600'
-                  : 'bg-dark-800 text-foam-400'
+                ? 'bg-amber-500 text-black'
+                : isDark ? 'bg-[#1a1a1a] text-gray-400' : 'bg-[#f0f0f0] text-gray-600'
             }`}
           >
             <Zap className="w-4 h-4" />
-            {language === 'ru' ? 'Оружие' : 'Weapons'}
+            {t.weapons}
           </button>
         </div>
       </header>
 
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         {tab === 'skins' ? (
           <>
             {skins.map((skin, index) => {
@@ -96,80 +108,79 @@ export default function ShopPage() {
               const canAfford = coins >= skin.price
 
               return (
-                <motion.div
+                <div
                   key={skin.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className={`p-4 rounded-xl border transition-all ${
+                  className={`p-4 rounded-2xl border transition-all ${
                     isSelected
-                      ? 'border-beer-500 ring-2 ring-beer-500/30'
-                      : theme === 'light'
-                        ? 'bg-white border-dark-200'
-                        : 'bg-dark-900 border-dark-700'
+                      ? 'border-amber-500 ring-2 ring-amber-500/30'
+                      : isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5e5]'
                   }`}
+                  style={{ 
+                    animationDelay: `${index * 50}ms`,
+                    animation: 'fadeInUp 0.3s ease forwards',
+                    opacity: 0
+                  }}
                 >
                   <div className="flex items-center gap-4">
                     {/* Preview */}
                     <div 
-                      className="w-16 h-16 rounded-xl flex items-center justify-center"
+                      className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: skin.color + '20' }}
                     >
                       <div 
-                        className="w-10 h-10 rounded-full"
-                        style={{ backgroundColor: skin.color }}
+                        className="w-10 h-10 rounded-full shadow-lg"
+                        style={{ 
+                          backgroundColor: skin.color,
+                          boxShadow: `0 4px 15px ${skin.color}40`
+                        }}
                       />
                     </div>
 
                     {/* Info */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className={`font-bold ${theme === 'light' ? 'text-dark-900' : 'text-foam-100'}`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>
                           {language === 'ru' ? skin.nameRu : skin.name}
                         </h3>
                         {isSelected && (
-                          <span className="text-xs px-2 py-0.5 rounded bg-beer-500/20 text-beer-500 font-medium">
-                            {language === 'ru' ? 'Выбран' : 'Selected'}
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 font-medium">
+                            {t.selected}
                           </span>
                         )}
                       </div>
-                      <p className={`text-sm ${theme === 'light' ? 'text-dark-500' : 'text-foam-500'}`}>
+                      <p className={`text-sm mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         {skin.description}
                       </p>
                     </div>
 
                     {/* Action */}
-                    <div>
+                    <div className="flex-shrink-0">
                       {skin.unlocked ? (
                         isSelected ? (
-                          <div className="w-10 h-10 rounded-full bg-beer-500 flex items-center justify-center">
-                            <Check className="w-5 h-5 text-dark-950" />
+                          <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center">
+                            <Check className="w-5 h-5 text-black" />
                           </div>
                         ) : (
-                          <motion.button
-                            whileTap={{ scale: 0.95 }}
+                          <button
                             onClick={() => selectSkin(skin.id)}
-                            className="px-4 py-2 rounded-lg bg-beer-500 text-dark-950 font-bold text-sm"
+                            className="px-4 py-2 rounded-xl bg-amber-500 text-black font-bold text-sm active:scale-95 transition-transform"
                           >
-                            {language === 'ru' ? 'Выбрать' : 'Select'}
-                          </motion.button>
+                            {t.select}
+                          </button>
                         )
                       ) : (
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
+                        <button
                           onClick={() => handlePurchaseSkin(skin.id)}
                           disabled={!canAfford}
-                          className={`px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-1 ${
+                          className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 active:scale-95 transition-transform ${
                             canAfford
-                              ? 'bg-beer-500 text-dark-950'
-                              : theme === 'light'
-                                ? 'bg-dark-200 text-dark-400'
-                                : 'bg-dark-700 text-dark-500'
+                              ? 'bg-amber-500 text-black'
+                              : isDark ? 'bg-[#222] text-gray-600' : 'bg-[#e5e5e5] text-gray-400'
                           }`}
                         >
                           {canAfford ? (
                             <>
-                              <Coins className="w-4 h-4" />
+                              <Sparkles className="w-4 h-4" />
                               {skin.price}
                             </>
                           ) : (
@@ -178,11 +189,11 @@ export default function ShopPage() {
                               {skin.price}
                             </>
                           )}
-                        </motion.button>
+                        </button>
                       )}
                     </div>
                   </div>
-                </motion.div>
+                </div>
               )
             })}
           </>
@@ -193,76 +204,72 @@ export default function ShopPage() {
               const canAfford = coins >= weapon.price
 
               return (
-                <motion.div
+                <div
                   key={weapon.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className={`p-4 rounded-xl border transition-all ${
+                  className={`p-4 rounded-2xl border transition-all ${
                     isSelected
-                      ? 'border-beer-500 ring-2 ring-beer-500/30'
-                      : theme === 'light'
-                        ? 'bg-white border-dark-200'
-                        : 'bg-dark-900 border-dark-700'
+                      ? 'border-amber-500 ring-2 ring-amber-500/30'
+                      : isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5e5]'
                   }`}
+                  style={{ 
+                    animationDelay: `${index * 50}ms`,
+                    animation: 'fadeInUp 0.3s ease forwards',
+                    opacity: 0
+                  }}
                 >
                   <div className="flex items-center gap-4">
                     {/* Icon */}
-                    <div className="w-16 h-16 rounded-xl bg-beer-500/20 flex items-center justify-center">
-                      <Zap className="w-8 h-8 text-beer-500" />
+                    <div className="w-16 h-16 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <Zap className="w-8 h-8 text-amber-500" />
                     </div>
 
                     {/* Info */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className={`font-bold ${theme === 'light' ? 'text-dark-900' : 'text-foam-100'}`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>
                           {language === 'ru' ? weapon.nameRu : weapon.name}
                         </h3>
                         {isSelected && (
-                          <span className="text-xs px-2 py-0.5 rounded bg-beer-500/20 text-beer-500 font-medium">
-                            {language === 'ru' ? 'Активно' : 'Active'}
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 font-medium">
+                            {t.active}
                           </span>
                         )}
                       </div>
-                      <div className={`flex gap-3 text-xs mt-1 ${theme === 'light' ? 'text-dark-500' : 'text-foam-500'}`}>
-                        <span>{language === 'ru' ? 'Урон' : 'DMG'}: {weapon.damage}</span>
-                        <span>{language === 'ru' ? 'Скор.' : 'Rate'}: {weapon.fireRate}/s</span>
-                        <span>{language === 'ru' ? 'Снаряды' : 'Proj'}: {weapon.projectileCount}</span>
+                      <div className={`flex gap-3 text-xs mt-1 flex-wrap ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <span>{t.damage}: <strong>{weapon.damage}</strong></span>
+                        <span>{t.rate}: <strong>{weapon.fireRate}/s</strong></span>
+                        <span>{t.projectiles}: <strong>{weapon.projectileCount}</strong></span>
                       </div>
                     </div>
 
                     {/* Action */}
-                    <div>
+                    <div className="flex-shrink-0">
                       {weapon.unlocked ? (
                         isSelected ? (
-                          <div className="w-10 h-10 rounded-full bg-beer-500 flex items-center justify-center">
-                            <Check className="w-5 h-5 text-dark-950" />
+                          <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center">
+                            <Check className="w-5 h-5 text-black" />
                           </div>
                         ) : (
-                          <motion.button
-                            whileTap={{ scale: 0.95 }}
+                          <button
                             onClick={() => selectWeapon(index)}
-                            className="px-4 py-2 rounded-lg bg-beer-500 text-dark-950 font-bold text-sm"
+                            className="px-4 py-2 rounded-xl bg-amber-500 text-black font-bold text-sm active:scale-95 transition-transform"
                           >
-                            {language === 'ru' ? 'Выбрать' : 'Select'}
-                          </motion.button>
+                            {t.select}
+                          </button>
                         )
                       ) : (
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
+                        <button
                           onClick={() => handlePurchaseWeapon(weapon.id, index)}
                           disabled={!canAfford}
-                          className={`px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-1 ${
+                          className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 active:scale-95 transition-transform ${
                             canAfford
-                              ? 'bg-beer-500 text-dark-950'
-                              : theme === 'light'
-                                ? 'bg-dark-200 text-dark-400'
-                                : 'bg-dark-700 text-dark-500'
+                              ? 'bg-amber-500 text-black'
+                              : isDark ? 'bg-[#222] text-gray-600' : 'bg-[#e5e5e5] text-gray-400'
                           }`}
                         >
                           {canAfford ? (
                             <>
-                              <Coins className="w-4 h-4" />
+                              <Sparkles className="w-4 h-4" />
                               {weapon.price}
                             </>
                           ) : (
@@ -271,27 +278,38 @@ export default function ShopPage() {
                               {weapon.price}
                             </>
                           )}
-                        </motion.button>
+                        </button>
                       )}
                     </div>
                   </div>
-                </motion.div>
+                </div>
               )
             })}
           </>
         )}
 
-        {/* Info */}
-        <div className={`p-4 rounded-xl text-center ${
-          theme === 'light' ? 'bg-dark-100' : 'bg-dark-800/50'
+        {/* Info Card */}
+        <div className={`p-4 rounded-2xl text-center ${
+          isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
         }`}>
-          <p className={`text-sm ${theme === 'light' ? 'text-dark-500' : 'text-foam-500'}`}>
-            {language === 'ru' 
-              ? 'Зарабатывай монеты играя и побеждая боссов!' 
-              : 'Earn coins by playing and defeating bosses!'}
+          <p className={`text-sm ${isDark ? 'text-amber-200' : 'text-amber-700'}`}>
+            {t.earnCoins}
           </p>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   )
 }

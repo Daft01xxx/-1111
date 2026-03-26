@@ -7,7 +7,7 @@ import { Heart, Pause, Zap, Shield, Target, Flame } from 'lucide-react'
 export function GameHUD() {
   const {
     score, health, maxHealth, level, meters, multiplier,
-    napiwasBalance, powerUps, pauseGame, isPlaying
+    napiwasBalance, powerUps, pauseGame, isPlaying, language
   } = useGameStore()
 
   if (!isPlaying) return null
@@ -99,7 +99,9 @@ export function GameHUD() {
 
       {/* Meters indicator */}
       <div className="absolute bottom-24 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1">
-        <span className="text-xs text-white/80 font-medium">{formatNumber(Math.floor(meters))}m</span>
+        <span className="text-xs text-white/80 font-medium">
+          {formatNumber(Math.floor(meters))} {language === 'ru' ? 'м' : 'm'}
+        </span>
       </div>
     </div>
   )
