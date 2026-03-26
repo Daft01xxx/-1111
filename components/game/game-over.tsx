@@ -1,70 +1,61 @@
 'use client'
 
-import { useGameStore } from '@/lib/store'
+import { useGameStore, translations } from '@/lib/store'
 import { formatNumber, getMultiplierTier } from '@/lib/utils'
-import { motion } from 'framer-motion'
-import { Trophy, RotateCcw, Home, Share2 } from 'lucide-react'
+import { Trophy, RotateCcw, Home, Share2, Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 
 export function GameOver() {
   const router = useRouter()
-  const { gameOver, score, highScore, level, bossesDefeated, multiplier, napiwasBalance, walletAddress, resetGame, startGame } = useGameStore()
-  const [rank, setRank] = useState<number | null>(null)
+  const { 
+    gameOver, score, highScore, level, meters, bossesDefeated, 
+    multiplier, napiwasBalance, walletAddress, language,
+    resetGame, startGame, coins 
+  } = useGameStore()
   const [saving, setSaving] = useState(false)
+  const t = translations[language]
 
   const tier = getMultiplierTier(napiwasBalance)
   const isNewHighScore = score === highScore && score > 0
+  const earnedCoins = Math.floor(score / 10)
 
-  // Save score to leaderboard
+  // Save score
   useEffect(() => {
     if (!gameOver || !walletAddress || score === 0) return
 
     const saveScore = async () => {
       setSaving(true)
-      const supabase = createClient()
-
-      // Check if user exists, if not create
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('wallet_address', walletAddress)
-        .single()
-
-      let userId = existingUser?.id
-
-      if (!userId) {
-        const { data: newUser } = await supabase
+      try {
+        const supabase = createClient()
+        const { data: user } = await supabase
           .from('users')
-          .insert({ wallet_address: walletAddress, napiwas_balance: napiwasBalance })
           .select('id')
+          .eq('wallet_address', walletAddress)
           .single()
-        userId = newUser?.id
+
+        let userId = user?.id
+        if (!userId) {
+          const { data: newUser } = await supabase
+            .from('users')
+            .insert({ wallet_address: walletAddress, napiwas_balance: napiwasBalance })
+            .select('id')
+            .single()
+          userId = newUser?.id
+        }
+
+        if (userId) {
+          await supabase.from('leaderboard').insert({
+            user_id: userId, score, level,
+            bosses_defeated: bossesDefeated, multiplier_used: multiplier
+          })
+        }
+      } catch (e) {
+        console.error('Failed to save score', e)
       }
-
-      if (userId) {
-        // Save to leaderboard
-        await supabase.from('leaderboard').insert({
-          user_id: userId,
-          score,
-          level,
-          bosses_defeated: bossesDefeated,
-          multiplier,
-        })
-
-        // Get rank
-        const { count } = await supabase
-          .from('leaderboard')
-          .select('*', { count: 'exact', head: true })
-          .gt('score', score)
-
-        setRank((count || 0) + 1)
-      }
-
       setSaving(false)
     }
-
     saveScore()
   }, [gameOver, walletAddress, score, level, bossesDefeated, multiplier, napiwasBalance])
 
@@ -81,138 +72,92 @@ export function GameOver() {
   }
 
   const handleShare = () => {
-    const text = `I scored ${formatNumber(score)} points in NAPIWAS Beer Shooter! Can you beat my score?`
+    const text = `I scored ${formatNumber(score)} points in NAPIWAS! Can you beat me?`
     if (navigator.share) {
-      navigator.share({ title: 'NAPIWAS Score', text, url: window.location.origin })
+      navigator.share({ title: 'NAPIWAS', text, url: window.location.origin })
     } else {
       navigator.clipboard.writeText(text)
     }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="absolute inset-0 z-50 flex items-center justify-center bg-dark-950/90 backdrop-blur-sm p-4"
-    >
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-        className="w-full max-w-sm bg-dark-900 rounded-3xl border border-dark-700 overflow-hidden"
-      >
-        {/* Header */}
-        <div className="relative h-32 beer-gradient flex items-center justify-center overflow-hidden">
-          {/* Animated bubbles */}
-          {[...Array(8)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-4 h-4 rounded-full bg-white/20"
-              initial={{ y: 100, x: Math.random() * 200 - 100 }}
-              animate={{ y: -100, opacity: [0, 1, 0] }}
-              transition={{ 
-                repeat: Infinity, 
-                duration: 2 + Math.random() * 2,
-                delay: Math.random() * 2,
-              }}
-            />
-          ))}
-          
-          <div className="text-center z-10">
-            <motion.h2
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-3xl font-display font-bold text-dark-950"
-            >
-              GAME OVER
-            </motion.h2>
-            {isNewHighScore && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.4, type: 'spring' }}
-                className="flex items-center gap-1 justify-center mt-1"
-              >
-                <Trophy className="w-4 h-4 text-dark-950" />
-                <span className="text-sm font-bold text-dark-950">NEW HIGH SCORE!</span>
-              </motion.div>
-            )}
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-fade-in">
+      <div className="w-full max-w-sm bg-[rgb(var(--card))] rounded-2xl border border-[rgb(var(--border))] p-6 animate-slide-up">
+        {/* Title */}
+        <div className="text-center mb-6">
+          {isNewHighScore && (
+            <div className="flex items-center justify-center gap-1 text-amber-400 text-sm font-bold mb-2">
+              <Star className="w-4 h-4 fill-current" />
+              NEW RECORD!
+              <Star className="w-4 h-4 fill-current" />
+            </div>
+          )}
+          <h2 className="text-2xl font-bold gold-text">GAME OVER</h2>
+        </div>
+
+        {/* Score */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black/30">
+            <Trophy className="w-5 h-5 text-amber-400" />
+            <span className="text-3xl font-bold gold-text">{formatNumber(score)}</span>
+          </div>
+          {multiplier > 1 && (
+            <p className="text-xs mt-2" style={{ color: tier.color }}>
+              x{multiplier.toFixed(1)} Multiplier Applied
+            </p>
+          )}
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-2 mb-6">
+          <div className="bg-black/20 rounded-xl p-3 text-center">
+            <p className="text-xs text-[rgb(var(--muted-foreground))]">Level</p>
+            <p className="text-lg font-bold">{level}</p>
+          </div>
+          <div className="bg-black/20 rounded-xl p-3 text-center">
+            <p className="text-xs text-[rgb(var(--muted-foreground))]">Meters</p>
+            <p className="text-lg font-bold">{formatNumber(Math.floor(meters))}</p>
+          </div>
+          <div className="bg-black/20 rounded-xl p-3 text-center">
+            <p className="text-xs text-[rgb(var(--muted-foreground))]">Coins</p>
+            <p className="text-lg font-bold text-amber-400">+{earnedCoins}</p>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="p-6 space-y-4">
-          {/* Score */}
-          <div className="text-center">
-            <p className="text-sm text-foam-400 mb-1">Final Score</p>
-            <motion.p
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.3, type: 'spring' }}
-              className="text-5xl font-display font-bold beer-text"
-            >
-              {formatNumber(score)}
-            </motion.p>
-            {multiplier > 1 && (
-              <p 
-                className="text-sm mt-1 font-bold"
-                style={{ color: tier.color }}
-              >
-                x{multiplier.toFixed(2)} {tier.tier} bonus applied
-              </p>
-            )}
-          </div>
-
-          {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-dark-800 rounded-xl p-3 text-center">
-              <p className="text-xs text-foam-400">Level</p>
-              <p className="text-xl font-bold text-foam-100">{level}</p>
-            </div>
-            <div className="bg-dark-800 rounded-xl p-3 text-center">
-              <p className="text-xs text-foam-400">Bosses</p>
-              <p className="text-xl font-bold text-foam-100">{bossesDefeated}</p>
-            </div>
-            <div className="bg-dark-800 rounded-xl p-3 text-center">
-              <p className="text-xs text-foam-400">Rank</p>
-              <p className="text-xl font-bold text-foam-100">
-                {saving ? '...' : rank ? `#${rank}` : '-'}
-              </p>
-            </div>
-          </div>
-
-          {/* Best score */}
-          <div className="flex items-center justify-between bg-dark-800 rounded-xl p-3">
-            <span className="text-sm text-foam-400">Best Score</span>
-            <span className="text-lg font-bold text-beer-400">{formatNumber(highScore)}</span>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
+        {/* Buttons */}
+        <div className="space-y-2">
+          <button
+            onClick={handlePlayAgain}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl gold-gradient text-[#1a1a1a] font-bold active:scale-[0.98] transition-transform"
+          >
+            <RotateCcw className="w-5 h-5" />
+            {language === 'ru' ? 'Ещё раз' : 'Play Again'}
+          </button>
+          
+          <div className="flex gap-2">
             <button
               onClick={handleGoHome}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-dark-800 text-foam-100 font-bold hover:bg-dark-700 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgb(var(--muted))] font-medium active:scale-[0.98] transition-transform"
             >
               <Home className="w-5 h-5" />
-              Menu
+              {language === 'ru' ? 'Меню' : 'Menu'}
             </button>
             <button
               onClick={handleShare}
-              className="w-12 flex items-center justify-center rounded-xl bg-dark-800 text-foam-100 hover:bg-dark-700 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgb(var(--muted))] font-medium active:scale-[0.98] transition-transform"
             >
               <Share2 className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handlePlayAgain}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl beer-gradient text-dark-950 font-bold hover:brightness-110 transition-all"
-            >
-              <RotateCcw className="w-5 h-5" />
-              Again
+              {language === 'ru' ? 'Поделиться' : 'Share'}
             </button>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+
+        {saving && (
+          <p className="text-center text-xs text-[rgb(var(--muted-foreground))] mt-4">
+            Saving score...
+          </p>
+        )}
+      </div>
+    </div>
   )
 }

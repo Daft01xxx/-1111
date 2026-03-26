@@ -15,9 +15,9 @@ const russo = Russo_One({
 })
 
 export const metadata: Metadata = {
-  title: 'NAPIWAS - Beer Space Shooter',
-  description: 'The ultimate beer-themed space shooter game with TON wallet integration. Shoot foam, defeat bosses, and climb the leaderboard!',
-  keywords: ['game', 'TON', 'NAPIWAS', 'crypto', 'shooter', 'beer'],
+  title: 'NAPIWAS - Cat vs Beer',
+  description: 'The ultimate beer-themed shooter game with TON wallet integration',
+  keywords: ['game', 'TON', 'NAPIWAS', 'crypto', 'shooter', 'beer', 'cat'],
   authors: [{ name: 'NAPIWAS Team' }],
 }
 
@@ -26,7 +26,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#f98407',
+  viewportFit: 'cover',
+  themeColor: '#D4AF37',
 }
 
 export default function RootLayout({
@@ -36,7 +37,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" className={`${inter.variable} ${russo.variable}`}>
-      <body className="min-h-screen bg-dark-950 text-foam-100 font-sans antialiased">
+      <body className="min-h-screen bg-[rgb(var(--background))] text-[rgb(var(--foreground))] font-sans antialiased">
         <Providers>
           {children}
         </Providers>

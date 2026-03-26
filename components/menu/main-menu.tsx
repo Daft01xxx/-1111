@@ -2,56 +2,20 @@
 
 import { useGameStore, translations } from '@/lib/store'
 import { formatNumber, getMultiplierTier } from '@/lib/utils'
-import { motion } from 'framer-motion'
 import { 
   Play, Trophy, Calendar, Swords, Music, Users, 
-  Skull, Wallet, Crown, Info, ShoppingBag, Sun, Moon, Globe
+  Skull, Wallet, Crown, Info, ShoppingBag, Sun, Moon
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react'
-import { useEffect, useState, useCallback, memo } from 'react'
-
-// Memoized menu button for better performance
-const MenuButton = memo(function MenuButton({ 
-  item, 
-  index, 
-  theme 
-}: { 
-  item: { icon: React.ElementType; label: string; href: string; primary?: boolean }
-  index: number
-  theme: string
-}) {
-  const Icon = item.icon
-  
-  return (
-    <Link
-      href={item.href}
-      className={item.primary ? 'col-span-2' : ''}
-    >
-      <div
-        className={`
-          flex items-center gap-3 rounded-xl transition-all duration-150 active:scale-[0.97]
-          ${item.primary 
-            ? 'beer-gradient text-dark-950 font-bold justify-center p-4 shadow-lg shadow-beer-500/25'
-            : theme === 'light'
-              ? 'bg-white text-dark-900 border border-dark-200 active:bg-dark-100 p-3'
-              : 'bg-dark-800/80 text-foam-100 border border-dark-700 active:bg-dark-700 p-3'
-          }
-        `}
-      >
-        <Icon className={`w-5 h-5 flex-shrink-0 ${item.primary ? '' : 'text-beer-500'}`} />
-        <span className={`font-medium ${item.primary ? 'text-base' : 'text-sm'}`}>{item.label}</span>
-      </div>
-    </Link>
-  )
-})
+import { useEffect, useState, useCallback } from 'react'
 
 export function MainMenu() {
   const wallet = useTonWallet()
   const [tonConnectUI] = useTonConnectUI()
   const { 
-    highScore, level, bossesDefeated, napiwasBalance, coins,
+    highScore, level, napiwasBalance, coins,
     setWallet, setMultiplier, theme, setTheme, language, setLanguage
   } = useGameStore()
   
@@ -66,7 +30,6 @@ export function MainMenu() {
       const address = wallet.account.address
       const mockBalance = Math.floor(Math.random() * 50000) + 1000
       setWallet(address, mockBalance)
-      
       const tier = getMultiplierTier(mockBalance)
       setMultiplier(tier.multiplier)
     } else {
@@ -83,18 +46,7 @@ export function MainMenu() {
 
   const tier = getMultiplierTier(napiwasBalance)
   const t = translations[language]
-
-  const menuItems = [
-    { icon: Play, label: t.play, href: '/play', primary: true },
-    { icon: Trophy, label: t.leaderboard, href: '/leaderboard' },
-    { icon: Calendar, label: t.daily, href: '/daily' },
-    { icon: Swords, label: t.pvp, href: '/pvp' },
-    { icon: Skull, label: t.bosses, href: '/bosses' },
-    { icon: ShoppingBag, label: t.shop, href: '/shop' },
-    { icon: Music, label: t.music, href: '/music' },
-    { icon: Users, label: t.partners, href: '/partners' },
-    { icon: Info, label: t.guide, href: '/guide' },
-  ]
+  const isDark = theme === 'dark'
 
   const handleWalletClick = useCallback(() => {
     if (wallet) {
@@ -106,174 +58,167 @@ export function MainMenu() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-dark-950 flex items-center justify-center">
-        <div className="w-16 h-16 rounded-full beer-gradient animate-pulse" />
+      <div className="min-h-screen bg-[rgb(var(--background))] flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full gold-gradient animate-pulse-subtle" />
       </div>
     )
   }
 
   return (
-    <div className={`min-h-screen flex flex-col overflow-x-hidden ${theme === 'light' ? 'bg-foam-100' : 'bg-dark-950'}`}>
-      {/* Header - fixed height, no overflow */}
-      <header className="flex-shrink-0 px-3 py-3 safe-area-inset">
-        <div className="flex items-center justify-between gap-2">
-          {/* Logo */}
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-10 h-10 relative rounded-full overflow-hidden shadow-lg flex-shrink-0 ring-2 ring-beer-500/30">
+    <div className="min-h-screen flex flex-col bg-[rgb(var(--background))] safe-top overflow-hidden">
+      {/* Header */}
+      <header className="flex-shrink-0 px-4 py-3">
+        <div className="flex items-center justify-between">
+          {/* Theme Toggle */}
+          <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            className="w-10 h-10 rounded-xl bg-[rgb(var(--muted))] flex items-center justify-center active:scale-95 transition-transform"
+          >
+            {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
+          </button>
+
+          {/* Coins */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[rgb(var(--muted))]">
+            <span className="text-amber-400 font-bold">{formatNumber(coins)}</span>
+            <span className="text-xs text-[rgb(var(--muted-foreground))]">coins</span>
+          </div>
+
+          {/* Language Toggle */}
+          <button
+            onClick={() => setLanguage(language === 'ru' ? 'en' : 'ru')}
+            className="w-10 h-10 rounded-xl bg-[rgb(var(--muted))] flex items-center justify-center active:scale-95 transition-transform"
+          >
+            <span className="font-bold text-sm">{language.toUpperCase()}</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col px-4 pb-4 overflow-y-auto no-scrollbar">
+        {/* Hero Logo */}
+        <div className="flex flex-col items-center py-6">
+          <div className="relative mb-4">
+            {/* Glow */}
+            <div className="absolute inset-0 blur-3xl bg-amber-500/30 rounded-full scale-150" />
+            
+            {/* Logo */}
+            <div className="relative w-32 h-32 rounded-full overflow-hidden ring-4 ring-amber-500/50 shadow-2xl animate-float">
               <Image 
                 src="/images/napiwas-logo.jpg" 
                 alt="NAPIWAS" 
-                width={40} 
-                height={40}
+                fill
                 className="object-cover"
                 priority
               />
             </div>
-            <span className={`text-lg font-display font-bold truncate ${theme === 'light' ? 'text-dark-900' : 'beer-text'}`}>
-              NAPIWAS
-            </span>
+            
+            {/* Level Badge */}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 gold-gradient text-[#1a1a1a] text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+              LVL {level}
+            </div>
           </div>
 
-          {/* Controls */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            {/* Theme */}
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className={`p-2 rounded-lg transition-colors active:scale-95 ${
-                theme === 'light' ? 'bg-dark-200 text-dark-800' : 'bg-dark-800 text-foam-100'
-              }`}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            
-            {/* Language */}
-            <button
-              onClick={() => setLanguage(language === 'ru' ? 'en' : 'ru')}
-              className={`px-2 py-2 rounded-lg flex items-center gap-1 transition-colors active:scale-95 ${
-                theme === 'light' ? 'bg-dark-200 text-dark-800' : 'bg-dark-800 text-foam-100'
-              }`}
-            >
-              <Globe className="w-4 h-4" />
-              <span className="text-xs font-bold">{language.toUpperCase()}</span>
-            </button>
+          {/* Title */}
+          <h1 className="text-3xl font-bold gold-text mb-1">NAPIWAS</h1>
+          <p className="text-sm text-[rgb(var(--muted-foreground))]">Cat vs Beer</p>
+        </div>
 
-            {/* Wallet */}
-            <button
-              onClick={handleWalletClick}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg border transition-all active:scale-95 ${
-                theme === 'light'
-                  ? 'bg-white border-dark-200 active:bg-dark-100'
-                  : 'bg-dark-800 border-dark-600 active:bg-dark-700'
-              }`}
-            >
-              <Wallet className="w-4 h-4 text-beer-500 flex-shrink-0" />
-              <span className={`text-xs font-medium truncate max-w-[60px] ${theme === 'light' ? 'text-dark-900' : 'text-foam-100'}`}>
-                {wallet 
-                  ? `${wallet.account.address.slice(0, 4)}...${wallet.account.address.slice(-3)}`
-                  : t.connect
-                }
-              </span>
-            </button>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="bg-[rgb(var(--card))] rounded-xl p-3 text-center border border-[rgb(var(--border))]">
+            <p className="text-xs text-[rgb(var(--muted-foreground))] mb-1">{t.highScore}</p>
+            <p className="text-lg font-bold gold-text">{formatNumber(highScore)}</p>
+          </div>
+          <div className="bg-[rgb(var(--card))] rounded-xl p-3 text-center border border-[rgb(var(--border))]">
+            <p className="text-xs text-[rgb(var(--muted-foreground))] mb-1">{t.level}</p>
+            <p className="text-lg font-bold">{level}</p>
+          </div>
+          <div className="bg-[rgb(var(--card))] rounded-xl p-3 text-center border border-[rgb(var(--border))]">
+            <p className="text-xs text-[rgb(var(--muted-foreground))] mb-1">{t.multiplier}</p>
+            <p className="text-lg font-bold" style={{ color: tier.color }}>x{tier.multiplier}</p>
           </div>
         </div>
-      </header>
 
-      {/* Main content - scrollable */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-4">
-        {/* Hero with Logo */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="py-4"
+        {/* Play Button */}
+        <Link 
+          href="/play"
+          className="w-full py-4 rounded-2xl gold-gradient text-[#1a1a1a] font-bold text-lg flex items-center justify-center gap-2 mb-4 active:scale-[0.98] transition-transform glow-gold"
         >
-          {/* Logo Circle with Glow */}
-          <div className="relative flex items-center justify-center mb-4">
-            <div className="relative">
-              {/* Glow effect - simplified for performance */}
-              <div className="absolute inset-0 blur-2xl bg-beer-500/40 rounded-full scale-125" />
-              
-              {/* Logo */}
-              <div className="relative w-28 h-28 rounded-full overflow-hidden ring-4 ring-beer-500/50 shadow-2xl">
-                <Image 
-                  src="/images/napiwas-logo.jpg" 
-                  alt="NAPIWAS Cat" 
-                  width={112} 
-                  height={112}
-                  className="object-cover"
-                  priority
-                />
-              </div>
-              
-              {/* Level badge */}
-              <div className="absolute -bottom-1 -right-1 bg-beer-500 text-dark-950 text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                LVL {level}
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Card */}
-          <div className={`rounded-2xl border p-3 ${
-            theme === 'light' ? 'bg-white border-dark-200' : 'bg-dark-900/90 border-dark-700'
-          }`}>
-            {/* High Score */}
-            <div className="flex items-center justify-between mb-3">
-              <span className={`text-sm ${theme === 'light' ? 'text-dark-500' : 'text-foam-400'}`}>
-                {t.highScore}
-              </span>
-              <span className="text-xl font-bold beer-text">{formatNumber(highScore)}</span>
-            </div>
-            
-            {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-2">
-              <div className={`rounded-xl p-2.5 text-center ${theme === 'light' ? 'bg-dark-100' : 'bg-dark-800'}`}>
-                <p className={`text-[10px] uppercase tracking-wide ${theme === 'light' ? 'text-dark-500' : 'text-foam-500'}`}>{t.level}</p>
-                <p className={`text-lg font-bold ${theme === 'light' ? 'text-dark-900' : 'text-foam-100'}`}>{level}</p>
-              </div>
-              <div className={`rounded-xl p-2.5 text-center ${theme === 'light' ? 'bg-dark-100' : 'bg-dark-800'}`}>
-                <p className={`text-[10px] uppercase tracking-wide ${theme === 'light' ? 'text-dark-500' : 'text-foam-500'}`}>{t.coins}</p>
-                <p className={`text-lg font-bold ${theme === 'light' ? 'text-dark-900' : 'text-foam-100'}`}>{formatNumber(coins)}</p>
-              </div>
-              <div className={`rounded-xl p-2.5 text-center ${theme === 'light' ? 'bg-dark-100' : 'bg-dark-800'}`}>
-                <p className={`text-[10px] uppercase tracking-wide ${theme === 'light' ? 'text-dark-500' : 'text-foam-500'}`}>{t.multiplier}</p>
-                <p className="text-lg font-bold" style={{ color: tier.color }}>x{tier.multiplier}</p>
-              </div>
-            </div>
-
-            {/* Wallet Tier */}
-            {wallet && (
-              <div className={`mt-3 pt-3 border-t ${theme === 'light' ? 'border-dark-200' : 'border-dark-700'}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Crown className="w-4 h-4" style={{ color: tier.color }} />
-                    <span className="text-xs font-bold" style={{ color: tier.color }}>{tier.tier}</span>
-                  </div>
-                  <span className={`text-xs ${theme === 'light' ? 'text-dark-500' : 'text-foam-400'}`}>
-                    {formatNumber(napiwasBalance)} NAPIWAS
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
+          <Play className="w-6 h-6" />
+          {t.play}
+        </Link>
 
         {/* Menu Grid */}
-        <div className="grid grid-cols-2 gap-2">
-          {menuItems.map((item, index) => (
-            <MenuButton key={item.href} item={item} index={index} theme={theme} />
-          ))}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <MenuLink href="/leaderboard" icon={Trophy} label={t.leaderboard} />
+          <MenuLink href="/daily" icon={Calendar} label={t.daily} />
+          <MenuLink href="/pvp" icon={Swords} label={t.pvp} />
+          <MenuLink href="/bosses" icon={Skull} label={t.bosses} />
+          <MenuLink href="/shop" icon={ShoppingBag} label={t.shop} />
+          <MenuLink href="/music" icon={Music} label={t.music} />
         </div>
 
-        {/* Admin Link */}
-        <Link 
-          href="/admin"
-          className={`block mt-4 text-center text-xs py-2 transition-colors ${
-            theme === 'light' ? 'text-dark-400 active:text-dark-600' : 'text-dark-600 active:text-foam-400'
-          }`}
-        >
-          Admin Access
-        </Link>
+        {/* Secondary Links */}
+        <div className="grid grid-cols-2 gap-2">
+          <MenuLink href="/partners" icon={Users} label={t.partners} small />
+          <MenuLink href="/guide" icon={Info} label={t.guide} small />
+        </div>
+
+        {/* Spacer */}
+        <div className="flex-1 min-h-4" />
+
+        {/* Wallet Section */}
+        <div className="mt-4 space-y-2">
+          <button
+            onClick={handleWalletClick}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgb(var(--muted))] border border-[rgb(var(--border))] active:scale-[0.98] transition-transform"
+          >
+            <Wallet className="w-5 h-5 text-amber-500" />
+            <span className="font-medium">
+              {wallet 
+                ? `${wallet.account.address.slice(0, 6)}...${wallet.account.address.slice(-4)}`
+                : t.connect
+              }
+            </span>
+          </button>
+
+          {wallet && (
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[rgb(var(--card))] border border-[rgb(var(--border))]">
+              <div className="flex items-center gap-2">
+                <Crown className="w-4 h-4" style={{ color: tier.color }} />
+                <span className="text-sm font-medium" style={{ color: tier.color }}>{tier.tier}</span>
+              </div>
+              <span className="text-sm text-[rgb(var(--muted-foreground))]">
+                {formatNumber(napiwasBalance)} NAPIWAS
+              </span>
+            </div>
+          )}
+        </div>
       </main>
     </div>
+  )
+}
+
+function MenuLink({ 
+  href, 
+  icon: Icon, 
+  label, 
+  small 
+}: { 
+  href: string
+  icon: React.ElementType
+  label: string
+  small?: boolean
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-2 rounded-xl bg-[rgb(var(--card))] border border-[rgb(var(--border))] active:scale-[0.97] transition-transform ${
+        small ? 'py-2.5 px-3' : 'py-3.5 px-4'
+      }`}
+    >
+      <Icon className={`text-amber-500 flex-shrink-0 ${small ? 'w-4 h-4' : 'w-5 h-5'}`} />
+      <span className={`font-medium truncate ${small ? 'text-sm' : ''}`}>{label}</span>
+    </Link>
   )
 }

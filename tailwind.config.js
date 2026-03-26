@@ -42,34 +42,43 @@ module.exports = {
           900: '#1a1a1a',
           950: '#0d0d0d',
         },
+        gold: {
+          400: '#f5d742',
+          500: '#d4af37',
+          600: '#b8972f',
+        },
       },
       fontFamily: {
-        sans: ['var(--font-inter)'],
-        display: ['var(--font-russo)'],
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-russo)', 'sans-serif'],
       },
       animation: {
         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
         'float': 'float 3s ease-in-out infinite',
-        'shake': 'shake 0.5s ease-in-out',
-        'foam-bubble': 'foam-bubble 2s ease-in-out infinite',
+        'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
+        'fade-in': 'fade-in 0.2s ease-out',
+        'slide-up': 'slide-up 0.25s ease-out',
       },
       keyframes: {
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(249, 132, 7, 0.5)' },
-          '50%': { boxShadow: '0 0 40px rgba(249, 132, 7, 0.8)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(212, 175, 55, 0.5)' },
+          '50%': { boxShadow: '0 0 40px rgba(212, 175, 55, 0.8)' },
         },
         'float': {
           '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
+          '50%': { transform: 'translateY(-6px)' },
         },
-        'shake': {
-          '0%, 100%': { transform: 'translateX(0)' },
-          '25%': { transform: 'translateX(-5px)' },
-          '75%': { transform: 'translateX(5px)' },
+        'pulse-subtle': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.7' },
         },
-        'foam-bubble': {
-          '0%, 100%': { transform: 'scale(1)', opacity: '0.8' },
-          '50%': { transform: 'scale(1.2)', opacity: '1' },
+        'fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'slide-up': {
+          from: { opacity: '0', transform: 'translateY(12px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
         },
       },
     },

@@ -5,7 +5,6 @@ import { useGameStore } from '@/lib/store'
 import { GameEngine } from './game-engine'
 import { GameHUD } from './game-hud'
 import { WeaponPanel } from './weapon-panel'
-import { TouchControls } from './touch-controls'
 import { GameOver } from './game-over'
 import { PauseMenu } from './pause-menu'
 
@@ -13,32 +12,28 @@ export function GameContainer() {
   const { startGame, isPlaying } = useGameStore()
 
   useEffect(() => {
-    // Auto-start game when component mounts
     if (!isPlaying) {
       startGame()
     }
   }, [startGame, isPlaying])
 
   return (
-    <div className="relative w-full h-screen bg-dark-950 overflow-hidden">
-      {/* Game canvas */}
+    <div className="relative w-full h-screen bg-[rgb(var(--background))] overflow-hidden">
+      {/* Game Canvas */}
       <div className="absolute inset-0">
         <GameEngine />
       </div>
 
-      {/* HUD overlay */}
+      {/* HUD */}
       <GameHUD />
 
-      {/* Weapon panel (above touch controls) */}
+      {/* Weapon Panel */}
       <WeaponPanel />
 
-      {/* Touch controls area indicator */}
-      <TouchControls />
-
-      {/* Pause menu */}
+      {/* Pause Menu */}
       <PauseMenu />
 
-      {/* Game over screen */}
+      {/* Game Over */}
       <GameOver />
     </div>
   )
