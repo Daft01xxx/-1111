@@ -30,38 +30,38 @@ export default function ShopPage() {
   }
 
   return (
-    <div className={`min-h-screen ${theme === 'light' ? 'bg-foam-100' : 'bg-dark-950'}`}>
+    <div className={`min-h-screen overflow-x-hidden ${theme === 'light' ? 'bg-foam-100' : 'bg-dark-950'}`}>
       {/* Header */}
-      <header className={`sticky top-0 z-20 backdrop-blur-sm border-b p-4 ${
+      <header className={`sticky top-0 z-20 backdrop-blur-sm border-b px-3 py-3 safe-area-inset ${
         theme === 'light' 
           ? 'bg-foam-100/90 border-dark-200' 
           : 'bg-dark-950/90 border-dark-800'
       }`}>
-        <div className="flex items-center justify-between">
-          <Link href="/" className={`p-2 -m-2 rounded-lg transition-colors ${
-            theme === 'light' ? 'hover:bg-dark-200' : 'hover:bg-dark-800'
+        <div className="flex items-center justify-between gap-2">
+          <Link href="/" className={`p-2 -m-2 rounded-lg transition-colors active:scale-95 flex-shrink-0 ${
+            theme === 'light' ? 'active:bg-dark-200' : 'active:bg-dark-800'
           }`}>
             <ArrowLeft className={`w-6 h-6 ${theme === 'light' ? 'text-dark-900' : 'text-foam-100'}`} />
           </Link>
-          <h1 className="text-xl font-display font-bold beer-text flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-beer-500" />
+          <h1 className="text-lg font-display font-bold beer-text flex items-center gap-2 truncate">
+            <ShoppingBag className="w-5 h-5 text-beer-500 flex-shrink-0" />
             {language === 'ru' ? 'Магазин' : 'Shop'}
           </h1>
-          <div className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
+          <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg flex-shrink-0 ${
             theme === 'light' ? 'bg-dark-200' : 'bg-dark-800'
           }`}>
             <Coins className="w-4 h-4 text-beer-500" />
-            <span className={`font-bold ${theme === 'light' ? 'text-dark-900' : 'text-foam-100'}`}>
+            <span className={`font-bold text-sm ${theme === 'light' ? 'text-dark-900' : 'text-foam-100'}`}>
               {formatNumber(coins)}
             </span>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-3">
           <button
             onClick={() => setTab('skins')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-all active:scale-[0.98] ${
               tab === 'skins'
                 ? 'bg-beer-500 text-dark-950'
                 : theme === 'light'
@@ -74,7 +74,7 @@ export default function ShopPage() {
           </button>
           <button
             onClick={() => setTab('weapons')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-all active:scale-[0.98] ${
               tab === 'weapons'
                 ? 'bg-beer-500 text-dark-950'
                 : theme === 'light'

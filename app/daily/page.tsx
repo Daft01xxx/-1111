@@ -188,17 +188,23 @@ export default function DailyPage() {
     { days: 30, points: 1000 },
   ]
 
+  const { theme, language } = useGameStore()
+  
   return (
-    <div className="min-h-screen bg-dark-950">
+    <div className={`min-h-screen overflow-x-hidden ${theme === 'light' ? 'bg-foam-100' : 'bg-dark-950'}`}>
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-dark-950/90 backdrop-blur-sm border-b border-dark-800 p-4">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="p-2 -m-2 rounded-lg hover:bg-dark-800 transition-colors">
-            <ArrowLeft className="w-6 h-6 text-foam-100" />
+      <header className={`sticky top-0 z-20 backdrop-blur-sm border-b px-3 py-3 safe-area-inset ${
+        theme === 'light' ? 'bg-foam-100/90 border-dark-200' : 'bg-dark-950/90 border-dark-800'
+      }`}>
+        <div className="flex items-center justify-between gap-2">
+          <Link href="/" className={`p-2 -m-2 rounded-lg transition-colors active:scale-95 ${
+            theme === 'light' ? 'active:bg-dark-200' : 'active:bg-dark-800'
+          }`}>
+            <ArrowLeft className={`w-6 h-6 ${theme === 'light' ? 'text-dark-900' : 'text-foam-100'}`} />
           </Link>
-          <h1 className="text-xl font-display font-bold beer-text flex items-center gap-2">
+          <h1 className="text-lg font-display font-bold beer-text flex items-center gap-2">
             <Calendar className="w-5 h-5 text-beer-400" />
-            Daily Rewards
+            {language === 'ru' ? 'Награды' : 'Daily'}
           </h1>
           <div className="w-10" />
         </div>
