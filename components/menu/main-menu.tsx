@@ -150,18 +150,18 @@ export function MainMenu() {
 
         {/* Menu Grid */}
         <div className="grid grid-cols-2 gap-2 mb-4">
-          <MenuLink href="/leaderboard" icon={Trophy} label={t.leaderboard} />
-          <MenuLink href="/daily" icon={Calendar} label={t.daily} />
-          <MenuLink href="/pvp" icon={Swords} label={t.pvp} />
-          <MenuLink href="/bosses" icon={Skull} label={t.bosses} />
-          <MenuLink href="/shop" icon={ShoppingBag} label={t.shop} />
-          <MenuLink href="/music" icon={Music} label={t.music} />
+          <MenuLink href="/leaderboard" icon={Trophy} label={t.leaderboard} delay={50} />
+          <MenuLink href="/daily" icon={Calendar} label={t.daily} delay={100} />
+          <MenuLink href="/pvp" icon={Swords} label={t.pvp} delay={150} />
+          <MenuLink href="/bosses" icon={Skull} label={t.bosses} delay={200} />
+          <MenuLink href="/shop" icon={ShoppingBag} label={t.shop} delay={250} />
+          <MenuLink href="/music" icon={Music} label={t.music} delay={300} />
         </div>
 
         {/* Secondary Links */}
         <div className="grid grid-cols-2 gap-2">
-          <MenuLink href="/partners" icon={Users} label={t.partners} small />
-          <MenuLink href="/guide" icon={Info} label={t.guide} small />
+          <MenuLink href="/partners" icon={Users} label={t.partners} small delay={350} />
+          <MenuLink href="/guide" icon={Info} label={t.guide} small delay={400} />
         </div>
 
         {/* Spacer */}
@@ -203,17 +203,20 @@ function MenuLink({
   href, 
   icon: Icon, 
   label, 
-  small 
+  small,
+  delay = 0
 }: { 
   href: string
   icon: React.ElementType
   label: string
   small?: boolean
+  delay?: number
 }) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2 rounded-xl bg-[rgb(var(--card))] border border-[rgb(var(--border))] active:scale-[0.97] transition-transform ${
+      style={{ animationDelay: `${delay}ms` }}
+      className={`flex items-center gap-2 rounded-xl bg-[rgb(var(--card))] border border-[rgb(var(--border))] active:scale-[0.97] transition-transform opacity-0 animate-fadeInUp ${
         small ? 'py-2.5 px-3' : 'py-3.5 px-4'
       }`}
     >
