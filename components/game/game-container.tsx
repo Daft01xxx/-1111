@@ -9,13 +9,13 @@ import { GameOver } from './game-over'
 import { PauseMenu } from './pause-menu'
 
 export function GameContainer() {
-  const { startGame, isPlaying } = useGameStore()
+  const { startGame, isPlaying, gameOver } = useGameStore()
 
   useEffect(() => {
-    if (!isPlaying) {
+    if (!isPlaying && !gameOver) {
       startGame()
     }
-  }, [startGame, isPlaying])
+  }, [startGame, isPlaying, gameOver])
 
   return (
     <div className="relative w-full h-screen bg-[rgb(var(--background))] overflow-hidden">

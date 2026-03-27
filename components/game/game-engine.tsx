@@ -52,9 +52,10 @@ export function GameEngine() {
   const enemiesRef = useRef<Enemy[]>([])
   const powerUpsRef = useRef<PowerUp[]>([])
   const bossRef = useRef<Boss | null>(null)
-  const spawnTimerRef = useRef(0)
+  const spawnTimerRef = useRef(0.81)
   const metersRef = useRef(0)
   const starsRef = useRef<{x: number; y: number; size: number; speed: number}[]>([])
+  const playerSpriteRef = useRef<HTMLImageElement | null>(null)
 
   const skin = skins.find(s => s.id === currentSkinId) || skins[0]
   const weapon = weapons[currentWeaponIndex]
@@ -67,6 +68,18 @@ export function GameEngine() {
       size: Math.random() * 2 + 0.5,
       speed: Math.random() * 80 + 40
     }))
+  }, [])
+
+  useEffect(() => {
+    const sprite = new window.Image()
+    sprite.decoding = 'async'
+    sprite.src = '/images/napiwas-logo.jpg'
+    sprite.onload = () => {
+      playerSpriteRef.current = sprite
+    }
+    sprite.onerror = () => {
+      playerSpriteRef.current = null
+    }
   }, [])
 
   // Resize handler - make player higher to not be covered by controls
@@ -83,16 +96,22 @@ export function GameEngine() {
     return () => window.removeEventListener('resize', resize)
   }, [])
 
-  // Draw cat flying like Superman (belly down, paws stretched forward)
+  // Draw a more detailed hero cat
   const drawCat = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, frame: number, shielded: boolean) => {
     const glide = Math.sin(frame * 0.1) * 3
     const pawMove = Math.sin(frame * 0.15) * 5
+    const flameKick = Math.sin(frame * 0.35) * 4
     const color = skin.color || C.cat
     const colorLight = color === C.cat ? C.catLight : color
-    
+    const sprite = playerSpriteRef.current
+
     ctx.save()
-    
-    // Shield effect
+
+    ctx.beginPath()
+    ctx.ellipse(x + 30, y + 60, 26, 10, 0, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(0,0,0,0.28)'
+    ctx.fill()
+
     if (shielded) {
       ctx.beginPath()
       ctx.arc(x + 30, y + 25, 50, 0, Math.PI * 2)
@@ -103,8 +122,63 @@ export function GameEngine() {
       ctx.fillStyle = grad
       ctx.fill()
     }
-    
-    // Cape flowing behind (like Superman!)
+
+    if (sprite?.complete) {
+      ctx.fillStyle = '#DC2626'
+      ctx.beginPath()
+      ctx.moveTo(x + 14, y + 24)
+      ctx.quadraticCurveTo(x + 30, y + 58 + glide, x + 10, y + 72 + glide * 2)
+      ctx.quadraticCurveTo(x + 30, y + 66 + glide, x + 50, y + 72 + glide * 2)
+      ctx.quadraticCurveTo(x + 30, y + 58 + glide, x + 46, y + 24)
+      ctx.fill()
+
+      const jetGrad = ctx.createLinearGradient(x + 30, y + 52, x + 30, y + 88)
+      jetGrad.addColorStop(0, 'rgba(255,255,255,0.92)')
+      jetGrad.addColorStop(0.35, '#FDE68A')
+      jetGrad.addColorStop(0.7, '#FB923C')
+      jetGrad.addColorStop(1, 'rgba(251,146,60,0)')
+      ctx.fillStyle = jetGrad
+      ctx.beginPath()
+      ctx.moveTo(x + 22, y + 46)
+      ctx.quadraticCurveTo(x + 30, y + 76 + flameKick, x + 38, y + 46)
+      ctx.closePath()
+      ctx.fill()
+
+      ctx.beginPath()
+      ctx.arc(x + 30, y + 24 + glide, 31, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(249,115,22,0.16)'
+      ctx.fill()
+
+      ctx.beginPath()
+      ctx.arc(x + 30, y + 24 + glide, 29, 0, Math.PI * 2)
+      ctx.fillStyle = '#120D0A'
+      ctx.fill()
+
+      ctx.beginPath()
+      ctx.arc(x + 30, y + 24 + glide, 30, 0, Math.PI * 2)
+      ctx.strokeStyle = color
+      ctx.lineWidth = 3
+      ctx.stroke()
+
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(x + 30, y + 24 + glide, 27, 0, Math.PI * 2)
+      ctx.clip()
+      ctx.drawImage(sprite, x + 3, y - 3 + glide, 54, 54)
+      ctx.restore()
+
+      ctx.beginPath()
+      ctx.arc(x + 22, y + 15 + glide, 6, 0, Math.PI * 2)
+      const sheen = ctx.createRadialGradient(x + 20, y + 13 + glide, 0, x + 22, y + 15 + glide, 10)
+      sheen.addColorStop(0, 'rgba(255,255,255,0.35)')
+      sheen.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.fillStyle = sheen
+      ctx.fill()
+
+      ctx.restore()
+      return
+    }
+
     ctx.fillStyle = '#DC2626'
     ctx.beginPath()
     ctx.moveTo(x + 15, y + 20)
@@ -112,8 +186,19 @@ export function GameEngine() {
     ctx.quadraticCurveTo(x + 30, y + 65 + glide, x + 50, y + 70 + glide * 2)
     ctx.quadraticCurveTo(x + 30, y + 60 + glide, x + 45, y + 20)
     ctx.fill()
-    
-    // Tail pointing up-back
+
+    const jetGrad = ctx.createLinearGradient(x + 30, y + 48, x + 30, y + 78)
+    jetGrad.addColorStop(0, 'rgba(255,255,255,0.9)')
+    jetGrad.addColorStop(0.35, '#FDE68A')
+    jetGrad.addColorStop(0.7, '#FB923C')
+    jetGrad.addColorStop(1, 'rgba(251,146,60,0)')
+    ctx.fillStyle = jetGrad
+    ctx.beginPath()
+    ctx.moveTo(x + 24, y + 42)
+    ctx.quadraticCurveTo(x + 30, y + 68 + flameKick, x + 36, y + 42)
+    ctx.closePath()
+    ctx.fill()
+
     ctx.beginPath()
     ctx.moveTo(x + 30, y + 45)
     ctx.quadraticCurveTo(x + 30 + Math.sin(frame * 0.2) * 10, y + 65, x + 25 + Math.sin(frame * 0.15) * 8, y + 75)
@@ -121,28 +206,32 @@ export function GameEngine() {
     ctx.lineWidth = 6
     ctx.lineCap = 'round'
     ctx.stroke()
-    
-    // Body (horizontal, flying position - belly down)
+
     ctx.beginPath()
-    ctx.ellipse(x + 30, y + 30 + glide, 22, 12, 0, 0, Math.PI * 2)
+    ctx.ellipse(x + 30, y + 31 + glide, 23, 13, 0, 0, Math.PI * 2)
     const bodyGrad = ctx.createRadialGradient(x + 25, y + 25 + glide, 0, x + 30, y + 30 + glide, 24)
-    bodyGrad.addColorStop(0, colorLight)
+    bodyGrad.addColorStop(0, '#FFD6A8')
+    bodyGrad.addColorStop(0.35, colorLight)
     bodyGrad.addColorStop(1, color)
     ctx.fillStyle = bodyGrad
     ctx.fill()
     ctx.strokeStyle = C.catDark
-    ctx.lineWidth = 1.5
+    ctx.lineWidth = 1.75
     ctx.stroke()
-    
-    // Belly (visible from below since flying)
+
+    ctx.beginPath()
+    ctx.moveTo(x + 14, y + 30 + glide)
+    ctx.quadraticCurveTo(x + 30, y + 24 + glide, x + 46, y + 30 + glide)
+    ctx.strokeStyle = 'rgba(255,240,220,0.55)'
+    ctx.lineWidth = 3
+    ctx.stroke()
+
     ctx.beginPath()
     ctx.ellipse(x + 30, y + 35 + glide, 14, 7, 0, 0, Math.PI * 2)
     ctx.fillStyle = C.foam
     ctx.fill()
-    
-    // Front paws stretched forward like Superman!
+
     ctx.fillStyle = color
-    // Left paw
     ctx.beginPath()
     ctx.ellipse(x + 8 - pawMove, y + 15 + glide, 6, 4, -0.5, 0, Math.PI * 2)
     ctx.fill()
@@ -152,8 +241,7 @@ export function GameEngine() {
     ctx.strokeStyle = color
     ctx.lineWidth = 8
     ctx.stroke()
-    
-    // Right paw
+
     ctx.beginPath()
     ctx.ellipse(x + 52 + pawMove, y + 15 + glide, 6, 4, 0.5, 0, Math.PI * 2)
     ctx.fill()
@@ -163,27 +251,30 @@ export function GameEngine() {
     ctx.strokeStyle = color
     ctx.lineWidth = 8
     ctx.stroke()
-    
-    // Back paws (stretched back)
+
     ctx.beginPath()
     ctx.ellipse(x + 15, y + 48 + glide, 5, 4, -0.3, 0, Math.PI * 2)
     ctx.ellipse(x + 45, y + 48 + glide, 5, 4, 0.3, 0, Math.PI * 2)
     ctx.fillStyle = color
     ctx.fill()
-    
-    // Head
+
     ctx.beginPath()
-    ctx.ellipse(x + 30, y + 8 + glide, 14, 11, 0, 0, Math.PI * 2)
+    ctx.ellipse(x + 30, y + 8 + glide, 15, 12, 0, 0, Math.PI * 2)
     const headGrad = ctx.createRadialGradient(x + 25, y + 4 + glide, 0, x + 30, y + 8 + glide, 15)
-    headGrad.addColorStop(0, colorLight)
+    headGrad.addColorStop(0, '#FFE7C7')
+    headGrad.addColorStop(0.35, colorLight)
     headGrad.addColorStop(1, color)
     ctx.fillStyle = headGrad
     ctx.fill()
     ctx.strokeStyle = C.catDark
-    ctx.lineWidth = 1.5
+    ctx.lineWidth = 1.75
     ctx.stroke()
-    
-    // Ears
+
+    ctx.beginPath()
+    ctx.ellipse(x + 30, y + 10 + glide, 13, 8, 0, Math.PI, 0, true)
+    ctx.fillStyle = 'rgba(110,50,20,0.22)'
+    ctx.fill()
+
     const drawEar = (ex: number, flip: number) => {
       ctx.beginPath()
       ctx.moveTo(ex, y + 4 + glide)
@@ -192,7 +283,10 @@ export function GameEngine() {
       ctx.closePath()
       ctx.fillStyle = color
       ctx.fill()
-      // Inner ear
+      ctx.strokeStyle = C.catDark
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+
       ctx.beginPath()
       ctx.moveTo(ex + flip * 2, y + 2 + glide)
       ctx.lineTo(ex + flip * 4, y - 6 + glide)
@@ -203,40 +297,37 @@ export function GameEngine() {
     }
     drawEar(x + 18, -1)
     drawEar(x + 42, 1)
-    
-    // Eyes (determined, looking forward)
+
     const blink = frame % 150 < 5
     ctx.fillStyle = '#FFF'
     ctx.beginPath()
-    ctx.ellipse(x + 23, y + 6 + glide, 5, blink ? 0.5 : 4, 0, 0, Math.PI * 2)
-    ctx.ellipse(x + 37, y + 6 + glide, 5, blink ? 0.5 : 4, 0, 0, Math.PI * 2)
+    ctx.ellipse(x + 23, y + 7 + glide, 5.2, blink ? 0.5 : 4.5, 0, 0, Math.PI * 2)
+    ctx.ellipse(x + 37, y + 7 + glide, 5.2, blink ? 0.5 : 4.5, 0, 0, Math.PI * 2)
     ctx.fill()
-    
+
     if (!blink) {
-      ctx.fillStyle = '#22C55E'
+      ctx.fillStyle = '#2DD4BF'
       ctx.beginPath()
-      ctx.ellipse(x + 23, y + 6 + glide, 3, 3.5, 0, 0, Math.PI * 2)
-      ctx.ellipse(x + 37, y + 6 + glide, 3, 3.5, 0, 0, Math.PI * 2)
+      ctx.ellipse(x + 23, y + 7 + glide, 3.1, 3.8, 0, 0, Math.PI * 2)
+      ctx.ellipse(x + 37, y + 7 + glide, 3.1, 3.8, 0, 0, Math.PI * 2)
       ctx.fill()
       ctx.fillStyle = '#000'
       ctx.beginPath()
-      ctx.ellipse(x + 23, y + 6 + glide, 1.5, 2.5, 0, 0, Math.PI * 2)
-      ctx.ellipse(x + 37, y + 6 + glide, 1.5, 2.5, 0, 0, Math.PI * 2)
+      ctx.ellipse(x + 23, y + 7 + glide, 1.4, 2.7, 0, 0, Math.PI * 2)
+      ctx.ellipse(x + 37, y + 7 + glide, 1.4, 2.7, 0, 0, Math.PI * 2)
       ctx.fill()
       ctx.fillStyle = '#FFF'
       ctx.beginPath()
-      ctx.arc(x + 21, y + 4 + glide, 1.5, 0, Math.PI * 2)
-      ctx.arc(x + 35, y + 4 + glide, 1.5, 0, Math.PI * 2)
+      ctx.arc(x + 21, y + 5 + glide, 1.4, 0, Math.PI * 2)
+      ctx.arc(x + 35, y + 5 + glide, 1.4, 0, Math.PI * 2)
       ctx.fill()
     }
-    
-    // Nose
+
     ctx.fillStyle = '#FF69B4'
     ctx.beginPath()
     ctx.ellipse(x + 30, y + 13 + glide, 2.5, 2, 0, 0, Math.PI * 2)
     ctx.fill()
-    
-    // Whiskers
+
     ctx.strokeStyle = 'rgba(0,0,0,0.5)'
     ctx.lineWidth = 0.5
     for (let i = 0; i < 3; i++) {
@@ -249,12 +340,94 @@ export function GameEngine() {
       ctx.lineTo(x + 58, y + 10 + i * 3 + glide)
       ctx.stroke()
     }
-    
+
+    ctx.strokeStyle = '#7C2D12'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(x + 30, y + 14 + glide)
+    ctx.lineTo(x + 30, y + 17 + glide)
+    ctx.moveTo(x + 30, y + 17 + glide)
+    ctx.quadraticCurveTo(x + 27, y + 19 + glide, x + 24, y + 17 + glide)
+    ctx.moveTo(x + 30, y + 17 + glide)
+    ctx.quadraticCurveTo(x + 33, y + 19 + glide, x + 36, y + 17 + glide)
+    ctx.stroke()
+
     ctx.restore()
   }, [skin.color])
 
-  // Draw beer mug WITHOUT smile (just evil eyes)
+  const drawMeteorite = useCallback((ctx: CanvasRenderingContext2D, e: Enemy) => {
+    const { x, y, w, h, frame, hp, maxHp } = e
+    const spin = frame * 0.04
+    const cx = x + w / 2
+    const cy = y + h / 2
+
+    ctx.save()
+    ctx.translate(cx, cy)
+    ctx.rotate(spin)
+
+    const tailGrad = ctx.createLinearGradient(-w * 0.6, h * 0.1, 0, 0)
+    tailGrad.addColorStop(0, 'rgba(249,115,22,0)')
+    tailGrad.addColorStop(0.45, 'rgba(249,115,22,0.18)')
+    tailGrad.addColorStop(1, 'rgba(251,191,36,0.45)')
+    ctx.fillStyle = tailGrad
+    ctx.beginPath()
+    ctx.moveTo(-w * 0.55, h * 0.08)
+    ctx.quadraticCurveTo(-w * 0.95, h * 0.22, -w * 1.05, 0)
+    ctx.quadraticCurveTo(-w * 0.92, -h * 0.18, -w * 0.5, -h * 0.04)
+    ctx.closePath()
+    ctx.fill()
+
+    ctx.beginPath()
+    ctx.moveTo(-w * 0.34, -h * 0.22)
+    ctx.lineTo(w * 0.04, -h * 0.42)
+    ctx.lineTo(w * 0.33, -h * 0.18)
+    ctx.lineTo(w * 0.39, h * 0.12)
+    ctx.lineTo(w * 0.18, h * 0.38)
+    ctx.lineTo(-w * 0.18, h * 0.34)
+    ctx.lineTo(-w * 0.4, h * 0.06)
+    ctx.closePath()
+    const rockGrad = ctx.createRadialGradient(-w * 0.12, -h * 0.18, 0, 0, 0, w * 0.55)
+    rockGrad.addColorStop(0, '#FDE68A')
+    rockGrad.addColorStop(0.18, '#FB923C')
+    rockGrad.addColorStop(0.6, '#7C2D12')
+    rockGrad.addColorStop(1, '#29180F')
+    ctx.fillStyle = rockGrad
+    ctx.fill()
+    ctx.strokeStyle = '#F59E0B'
+    ctx.lineWidth = 2
+    ctx.stroke()
+
+    const crater = (craterX: number, craterY: number, rx: number, ry: number) => {
+      ctx.beginPath()
+      ctx.ellipse(craterX, craterY, rx, ry, 0, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(20,12,10,0.35)'
+      ctx.fill()
+      ctx.strokeStyle = 'rgba(255,237,213,0.08)'
+      ctx.lineWidth = 1
+      ctx.stroke()
+    }
+
+    crater(-w * 0.06, -h * 0.14, 6, 5)
+    crater(w * 0.18, h * 0.04, 5, 4)
+    crater(-w * 0.18, h * 0.15, 4, 3)
+
+    if (hp < maxHp) {
+      ctx.fillStyle = 'rgba(0,0,0,0.6)'
+      ctx.fillRect(-w * 0.32, h * 0.46, w * 0.64, 4)
+      ctx.fillStyle = hp / maxHp > 0.5 ? C.health : hp / maxHp > 0.25 ? C.beer : C.red
+      ctx.fillRect(-w * 0.32, h * 0.46, w * 0.64 * (hp / maxHp), 4)
+    }
+
+    ctx.restore()
+  }, [])
+
+  // Draw enemy
   const drawBeerMug = useCallback((ctx: CanvasRenderingContext2D, e: Enemy) => {
+    if (e.type === 3) {
+      drawMeteorite(ctx, e)
+      return
+    }
+
     const wobble = Math.sin(e.frame * 0.12) * 2
     const { x, y, w, h, type, hp, maxHp } = e
     const scale = 0.9 + type * 0.1
@@ -309,29 +482,19 @@ export function GameEngine() {
     ctx.ellipse(w - 10, foamY, 8, 6, 0, 0, Math.PI * 2)
     ctx.fill()
     
-    // Evil eyes ONLY (NO SMILE!)
-    ctx.fillStyle = '#000'
+    // Glass shine
+    ctx.fillStyle = 'rgba(255,255,255,0.22)'
     ctx.beginPath()
-    ctx.ellipse(w * 0.32, h * 0.5, 4, 5, 0, 0, Math.PI * 2)
-    ctx.ellipse(w * 0.68, h * 0.5, 4, 5, 0, 0, Math.PI * 2)
+    ctx.roundRect(10, h * 0.28, 7, h * 0.48, 3)
     ctx.fill()
-    
-    // Red glow in eyes
-    ctx.fillStyle = '#EF4444'
+
+    // Foam bubbles
+    ctx.fillStyle = 'rgba(255,255,255,0.75)'
     ctx.beginPath()
-    ctx.ellipse(w * 0.32, h * 0.5, 2, 2, 0, 0, Math.PI * 2)
-    ctx.ellipse(w * 0.68, h * 0.5, 2, 2, 0, 0, Math.PI * 2)
+    ctx.arc(w * 0.34, h * 0.17, 2.2, 0, Math.PI * 2)
+    ctx.arc(w * 0.52, h * 0.12, 2.5, 0, Math.PI * 2)
+    ctx.arc(w * 0.68, h * 0.17, 2, 0, Math.PI * 2)
     ctx.fill()
-    
-    // Angry eyebrows
-    ctx.strokeStyle = '#000'
-    ctx.lineWidth = 2.5
-    ctx.beginPath()
-    ctx.moveTo(w * 0.2, h * 0.42)
-    ctx.lineTo(w * 0.42, h * 0.38)
-    ctx.moveTo(w * 0.8, h * 0.42)
-    ctx.lineTo(w * 0.58, h * 0.38)
-    ctx.stroke()
     
     // HP bar
     if (hp < maxHp) {
@@ -342,7 +505,7 @@ export function GameEngine() {
     }
     
     ctx.restore()
-  }, [])
+  }, [drawMeteorite])
 
   // Draw Boss Cat (appears every minute!)
   const drawBoss = useCallback((ctx: CanvasRenderingContext2D, b: Boss) => {
@@ -586,17 +749,21 @@ export function GameEngine() {
     if (spawnTimerRef.current > 0.8) { // Spawn every 0.8 seconds
       spawnTimerRef.current = 0
       const { w, h } = size
-      const type = Math.random() < 0.2 ? 2 : Math.random() < 0.5 ? 1 : 0
-      const ew = 36 + type * 6
-      const eh = 44 + type * 8
+      const roll = Math.random()
+      const type = roll < 0.18 ? 3 : roll < 0.38 ? 2 : roll < 0.66 ? 1 : 0
+      const isMeteor = type === 3
+      const ew = isMeteor ? 44 + Math.random() * 10 : 36 + type * 6
+      const eh = isMeteor ? 44 + Math.random() * 12 : 44 + type * 8
+      const hp = isMeteor ? 42 : 20 + type * 15
+      const pts = isMeteor ? 35 : 10 + type * 10
       enemiesRef.current.push({
         x: Math.random() * (w - ew - 20) + 10,
         y: -eh - 10,
         w: ew,
         h: eh,
-        hp: 20 + type * 15,
-        maxHp: 20 + type * 15,
-        pts: 10 + type * 10,
+        hp,
+        maxHp: hp,
+        pts,
         type,
         frame: 0
       })
@@ -722,11 +889,12 @@ export function GameEngine() {
       
       // Update enemies
       enemiesRef.current = enemiesRef.current.filter(e => {
-        e.y += (100 + e.type * 30) * dt
+        const fallSpeed = e.type === 3 ? 185 : 100 + e.type * 30
+        e.y += fallSpeed * dt
         e.frame++
         
         // Enemy shooting
-        if (Math.random() < 0.003) {
+        if (e.type !== 3 && Math.random() < 0.003) {
           projectilesRef.current.push({
             x: e.x + e.w/2 - 5,
             y: e.y + e.h,
@@ -785,9 +953,11 @@ export function GameEngine() {
             e.hp -= p.dmg
             if (e.hp <= 0) {
               addScore(e.pts)
-              tryDropWeapon(false)
+              if (e.type !== 3) {
+                tryDropWeapon(false)
+              }
               // Power-up drop
-              if (Math.random() < 0.15) {
+              if (e.type !== 3 && Math.random() < 0.15) {
                 const types: PowerUp['type'][] = ['shield', 'double', 'speed', 'health']
                 powerUpsRef.current.push({
                   x: e.x + e.w/2 - 12,
@@ -832,7 +1002,7 @@ export function GameEngine() {
       // Collision: enemies vs player
       enemiesRef.current.forEach(e => {
         if (e.x < px + 50 && e.x + e.w > px + 10 && e.y < py + 45 && e.y + e.h > py + 5) {
-          takeDamage(20)
+          takeDamage(e.type === 3 ? 32 : 20)
           e.hp = 0
         }
       })

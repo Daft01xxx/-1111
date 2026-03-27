@@ -216,7 +216,7 @@ function MenuLink({
     <Link
       href={href}
       style={{ animationDelay: `${delay}ms` }}
-      className={`flex items-center gap-2 rounded-xl bg-[rgb(var(--card))] border border-[rgb(var(--border))] active:scale-[0.97] transition-transform opacity-0 animate-fadeInUp ${
+      className={`flex items-center gap-2 rounded-xl bg-[rgb(var(--card))] border border-[rgb(var(--border))] active:scale-[0.97] transition-transform animate-fadeInUp ${
         small ? 'py-2.5 px-3' : 'py-3.5 px-4'
       }`}
     >

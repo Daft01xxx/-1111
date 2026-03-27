@@ -3,9 +3,66 @@
 import { useState, useEffect } from 'react'
 import { useGameStore, NAPIWAS_CONTRACT } from '@/lib/store'
 import { formatNumber } from '@/lib/utils'
-import { ArrowLeft, ShoppingBag, Cat, Zap, Check, Lock, Coins, Wallet, ExternalLink } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  ArrowLeft,
+  ShoppingBag,
+  Cat,
+  Zap,
+  Check,
+  Lock,
+  Coins,
+  Wallet,
+  ExternalLink,
+  Crosshair,
+  Fish,
+  Droplets,
+  Bomb,
+  Sparkles,
+  Wind,
+  Crown,
+  Flame,
+  Star,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useTonWallet, useTonAddress } from '@tonconnect/ui-react'
+
+const weaponIcons: Record<string, LucideIcon> = {
+  yarn_ball: Crosshair,
+  fish_bone: Fish,
+  milk_splash: Droplets,
+  catnip_bomb: Bomb,
+  whisker_laser: Zap,
+  paw_punch: Star,
+  fur_tornado: Wind,
+  golden_scratch: Crown,
+  nine_lives: Sparkles,
+  napiwas_beam: Flame,
+}
+
+function WeaponGlyph({ weaponId, color }: { weaponId: string; color: string }) {
+  const Icon = weaponIcons[weaponId] ?? Crosshair
+
+  return (
+    <div
+      className="relative w-10 h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-110 hover:-rotate-6"
+      style={{
+        background: `radial-gradient(circle at 30% 30%, ${color}40 0%, ${color}18 42%, rgba(8,8,10,0.92) 100%)`,
+        boxShadow: `0 8px 24px ${color}35`,
+      }}
+    >
+      <div
+        className="absolute inset-[2px] rounded-[10px] opacity-80"
+        style={{ border: `1px solid ${color}55` }}
+      />
+      <Icon className="w-5 h-5" style={{ color }} strokeWidth={2.25} />
+      <div
+        className="absolute right-1.5 top-1.5 w-1.5 h-1.5 rounded-full"
+        style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}` }}
+      />
+    </div>
+  )
+}
 
 export default function ShopPage() {
   const [tab, setTab] = useState<'skins' | 'weapons'>('skins')
@@ -277,13 +334,7 @@ export default function ShopPage() {
                       className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden"
                       style={{ backgroundColor: weapon.color + '15' }}
                     >
-                      <div 
-                        className="w-8 h-8 rounded-lg transition-transform hover:scale-110 hover:rotate-12"
-                        style={{ 
-                          backgroundColor: weapon.color,
-                          boxShadow: `0 4px 15px ${weapon.color}40`
-                        }}
-                      />
+                      <WeaponGlyph weaponId={weapon.id} color={weapon.color} />
                       {/* Rarity badge */}
                       <span 
                         className="absolute -top-0.5 -right-0.5 text-[8px] px-1.5 py-0.5 rounded-bl-lg rounded-tr-xl font-bold text-white uppercase"

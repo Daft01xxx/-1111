@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, type PersistStorage, type StorageValue } from 'zustand/middleware'
 
 // NAPIWAS Token Contract Address
 export const NAPIWAS_CONTRACT = 'EQDOCUp_pDBvOmGRyEDE2bnCl2cjGmAWjPsTWRt_veSsfGSn'
@@ -125,6 +125,22 @@ interface GameState {
   setLanguage: (language: 'en' | 'ru') => void
   addCoins: (amount: number) => void
 }
+
+type PersistedGameState = Pick<
+  GameState,
+  | 'highScore'
+  | 'level'
+  | 'totalMeters'
+  | 'weapons'
+  | 'skins'
+  | 'currentSkinId'
+  | 'bossesDefeated'
+  | 'musicVolume'
+  | 'sfxVolume'
+  | 'theme'
+  | 'language'
+  | 'coins'
+>
 
 // 10 Unique Weapons with varied stats
 const defaultWeapons: Weapon[] = [
@@ -404,6 +420,126 @@ const defaultPowerUps: PowerUp[] = [
 const METERS_PER_LEVEL = 10000
 const BOSS_INTERVAL_MS = 60000 // 60 seconds = 1 minute
 
+function sanitizeNumber(value: unknown, fallback: number, min = 0) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
+  return Math.max(min, value)
+}
+
+function sanitizeInteger(value: unknown, fallback: number, min = 0) {
+  return Math.floor(sanitizeNumber(value, fallback, min))
+}
+
+function sanitizeVolume(value: unknown, fallback: number) {
+  return Math.min(1, sanitizeNumber(value, fallback, 0))
+}
+
+function sanitizeTheme(value: unknown): GameState['theme'] {
+  return value === 'light' ? 'light' : 'dark'
+}
+
+function sanitizeLanguage(value: unknown): GameState['language'] {
+  return value === 'en' ? 'en' : 'ru'
+}
+
+function sanitizeWeapons(value: unknown) {
+  const unlockedIds = new Set(
+    Array.isArray(value)
+      ? value
+          .filter(
+            (entry): entry is Partial<Weapon> & { id: string } =>
+              typeof entry === 'object' &&
+              entry !== null &&
+              typeof (entry as Weapon).id === 'string' &&
+              (entry as Weapon).unlocked === true
+          )
+          .map((entry) => entry.id)
+      : []
+  )
+
+  return defaultWeapons.map((weapon) =>
+    unlockedIds.has(weapon.id) ? { ...weapon, unlocked: true } : { ...weapon }
+  )
+}
+
+function sanitizeSkins(value: unknown) {
+  const unlockedIds = new Set(
+    Array.isArray(value)
+      ? value
+          .filter(
+            (entry): entry is Partial<Skin> & { id: string } =>
+              typeof entry === 'object' &&
+              entry !== null &&
+              typeof (entry as Skin).id === 'string' &&
+              (entry as Skin).unlocked === true
+          )
+          .map((entry) => entry.id)
+      : []
+  )
+
+  return defaultSkins.map((skin) =>
+    unlockedIds.has(skin.id) ? { ...skin, unlocked: true } : { ...skin }
+  )
+}
+
+function sanitizeCurrentSkinId(value: unknown, skins: Skin[]) {
+  if (typeof value === 'string' && skins.some((skin) => skin.id === value && skin.unlocked)) {
+    return value
+  }
+
+  return skins.find((skin) => skin.unlocked)?.id ?? defaultSkins[0].id
+}
+
+function sanitizePersistedState(persistedState: unknown, currentState: GameState): GameState {
+  const persisted =
+    typeof persistedState === 'object' && persistedState !== null
+      ? (persistedState as Partial<PersistedGameState>)
+      : {}
+
+  const weapons = sanitizeWeapons(persisted.weapons)
+  const skins = sanitizeSkins(persisted.skins)
+
+  return {
+    ...currentState,
+    highScore: sanitizeInteger(persisted.highScore, currentState.highScore),
+    level: sanitizeInteger(persisted.level, currentState.level, 1),
+    totalMeters: sanitizeInteger(persisted.totalMeters, currentState.totalMeters),
+    weapons,
+    skins,
+    currentSkinId: sanitizeCurrentSkinId(persisted.currentSkinId, skins),
+    bossesDefeated: sanitizeInteger(persisted.bossesDefeated, currentState.bossesDefeated),
+    musicVolume: sanitizeVolume(persisted.musicVolume, currentState.musicVolume),
+    sfxVolume: sanitizeVolume(persisted.sfxVolume, currentState.sfxVolume),
+    theme: sanitizeTheme(persisted.theme),
+    language: sanitizeLanguage(persisted.language),
+    coins: sanitizeInteger(persisted.coins, currentState.coins),
+  }
+}
+
+const safePersistStorage: PersistStorage<PersistedGameState> | undefined =
+  typeof window === 'undefined'
+    ? undefined
+    : {
+        getItem: (name) => {
+          try {
+            const rawValue = window.localStorage.getItem(name)
+            if (!rawValue) return null
+
+            const parsed = JSON.parse(rawValue) as StorageValue<PersistedGameState>
+            if (!parsed || typeof parsed !== 'object' || !('state' in parsed)) {
+              window.localStorage.removeItem(name)
+              return null
+            }
+
+            return parsed
+          } catch {
+            window.localStorage.removeItem(name)
+            return null
+          }
+        },
+        setItem: (name, value) => window.localStorage.setItem(name, JSON.stringify(value)),
+        removeItem: (name) => window.localStorage.removeItem(name),
+      }
+
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
@@ -669,6 +805,7 @@ export const useGameStore = create<GameState>()(
     }),
     {
       name: 'napiwas-game-storage',
+      storage: safePersistStorage,
       partialize: (state) => ({
         highScore: state.highScore,
         level: state.level,
@@ -683,6 +820,7 @@ export const useGameStore = create<GameState>()(
         language: state.language,
         coins: state.coins,
       }),
+      merge: (persistedState, currentState) => sanitizePersistedState(persistedState, currentState),
     }
   )
 )
