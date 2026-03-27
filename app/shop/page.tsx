@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useGameStore, NAPIWAS_CONTRACT } from '@/lib/store'
 import { formatNumber } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
@@ -25,7 +25,6 @@ import {
   Star,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useTonWallet, useTonAddress } from '@tonconnect/ui-react'
 
 const weaponIcons: Record<string, LucideIcon> = {
   yarn_ball: Crosshair,
@@ -66,34 +65,12 @@ function WeaponGlyph({ weaponId, color }: { weaponId: string; color: string }) {
 
 export default function ShopPage() {
   const [tab, setTab] = useState<'skins' | 'weapons'>('skins')
-  const [isLoading, setIsLoading] = useState(true)
-  const wallet = useTonWallet()
-  const address = useTonAddress()
   
   const { 
     napiwasBalance, skins, weapons, currentSkinId, currentWeaponIndex,
-    purchaseSkin, purchaseWeapon, selectSkin, selectWeapon, setWallet,
+    purchaseSkin, purchaseWeapon, selectSkin, selectWeapon,
     theme, language, walletAddress
   } = useGameStore()
-
-  // Fetch NAPIWAS token balance when wallet connects
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (!address) {
-        setWallet(null, 0)
-        setIsLoading(false)
-        return
-      }
-
-      setWallet(address, napiwasBalance)
-      
-      // In production, fetch actual token balance from TON API
-      // For demo, we'll use local state
-      setIsLoading(false)
-    }
-
-    fetchBalance()
-  }, [address, setWallet, napiwasBalance])
 
   const t = {
     title: language === 'ru' ? 'Магазин' : 'Shop',
@@ -130,14 +107,12 @@ export default function ShopPage() {
   }
 
   const handlePurchaseSkin = (skinId: string) => {
-    if (!walletAddress) return
     if (purchaseSkin(skinId)) {
       selectSkin(skinId)
     }
   }
 
   const handlePurchaseWeapon = (weaponId: string, index: number) => {
-    if (!walletAddress) return
     if (purchaseWeapon(weaponId)) {
       selectWeapon(index)
     }
@@ -149,10 +124,9 @@ export default function ShopPage() {
     <div className={`min-h-screen overflow-x-hidden ${isDark ? 'bg-[#0a0a0b]' : 'bg-[#faf9f7]'}`}>
       {/* Header */}
       <header 
-        className={`sticky top-0 z-20 backdrop-blur-md border-b pt-[env(safe-area-inset-top)] ${
+        className={`sticky top-0 z-20 backdrop-blur-md border-b pt-[env(safe-area-inset-top)] animate-fadeInUp ${
           isDark ? 'bg-[#0a0a0b]/95 border-[#1a1a1a]' : 'bg-[#faf9f7]/95 border-[#e5e5e5]'
         }`}
-        style={{ animation: 'fadeInDown 0.3s ease' }}
       >
         <div className="flex items-center justify-between gap-3 px-4 pt-3 pb-3">
           <Link 
@@ -214,15 +188,14 @@ export default function ShopPage() {
               return (
                 <div
                   key={skin.id}
-                  className={`p-4 rounded-2xl border-2 transition-all ${
+                  className={`p-4 rounded-2xl border-2 transition-all animate-fadeInUp ${
                     isSelected
                       ? 'border-amber-500 shadow-lg shadow-amber-500/20'
                       : isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-white border-[#e5e5e5]'
                   }`}
                   style={{ 
                     borderColor: isSelected ? '#F59E0B' : skin.unlocked ? rarityColors[skin.rarity] + '40' : undefined,
-                    animation: `fadeInUp 0.4s ease ${index * 50}ms forwards`,
-                    opacity: 0
+                    animationDelay: `${index * 50}ms`
                   }}
                 >
                   <div className="flex items-center gap-4">
@@ -238,7 +211,6 @@ export default function ShopPage() {
                           boxShadow: `0 4px 20px ${skin.color}50`
                         }}
                       />
-                      {/* Rarity badge */}
                       <span 
                         className="absolute -top-0.5 -right-0.5 text-[8px] px-1.5 py-0.5 rounded-bl-lg rounded-tr-xl font-bold text-white uppercase"
                         style={{ backgroundColor: rarityColors[skin.rarity] }}
@@ -282,14 +254,14 @@ export default function ShopPage() {
                       ) : (
                         <button
                           onClick={() => handlePurchaseSkin(skin.id)}
-                          disabled={!canAfford || !walletAddress}
+                          disabled={!canAfford}
                           className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 active:scale-95 transition-all ${
-                            canAfford && walletAddress
+                            canAfford
                               ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/25'
                               : isDark ? 'bg-[#1a1a1a] text-gray-600' : 'bg-[#e5e5e5] text-gray-400'
                           }`}
                         >
-                          {canAfford && walletAddress ? (
+                          {canAfford ? (
                             <>
                               <Coins className="w-3.5 h-3.5" />
                               {formatNumber(skin.price)}
@@ -317,15 +289,14 @@ export default function ShopPage() {
               return (
                 <div
                   key={weapon.id}
-                  className={`p-4 rounded-2xl border-2 transition-all ${
+                  className={`p-4 rounded-2xl border-2 transition-all animate-fadeInUp ${
                     isSelected
                       ? 'border-amber-500 shadow-lg shadow-amber-500/20'
                       : isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-white border-[#e5e5e5]'
                   }`}
                   style={{ 
                     borderColor: isSelected ? '#F59E0B' : weapon.unlocked ? rarityColors[weapon.rarity] + '40' : undefined,
-                    animation: `fadeInUp 0.4s ease ${index * 50}ms forwards`,
-                    opacity: 0
+                    animationDelay: `${index * 50}ms`
                   }}
                 >
                   <div className="flex items-center gap-4">
@@ -335,7 +306,6 @@ export default function ShopPage() {
                       style={{ backgroundColor: weapon.color + '15' }}
                     >
                       <WeaponGlyph weaponId={weapon.id} color={weapon.color} />
-                      {/* Rarity badge */}
                       <span 
                         className="absolute -top-0.5 -right-0.5 text-[8px] px-1.5 py-0.5 rounded-bl-lg rounded-tr-xl font-bold text-white uppercase"
                         style={{ backgroundColor: rarityColors[weapon.rarity] }}
@@ -384,14 +354,14 @@ export default function ShopPage() {
                       ) : (
                         <button
                           onClick={() => handlePurchaseWeapon(weapon.id, index)}
-                          disabled={!canAfford || !walletAddress}
+                          disabled={!canAfford}
                           className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 active:scale-95 transition-all ${
-                            canAfford && walletAddress
+                            canAfford
                               ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/25'
                               : isDark ? 'bg-[#1a1a1a] text-gray-600' : 'bg-[#e5e5e5] text-gray-400'
                           }`}
                         >
-                          {canAfford && walletAddress ? (
+                          {canAfford ? (
                             <>
                               <Coins className="w-3.5 h-3.5" />
                               {formatNumber(weapon.price)}
@@ -419,39 +389,21 @@ export default function ShopPage() {
           isDark ? 'bg-[#0a0a0b]/95 backdrop-blur-md border-[#1a1a1a]' : 'bg-white/95 backdrop-blur-md border-[#e5e5e5]'
         }`}
       >
-        {!walletAddress ? (
-          <div className="flex items-center justify-center gap-2 text-amber-500">
-            <Wallet className="w-4 h-4" />
-            <span className="text-sm font-medium">{t.connectWallet}</span>
-          </div>
-        ) : (
-          <div className="text-center">
-            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-              {t.napiwasInfo}
-            </p>
-            <a 
-              href={`https://tonviewer.com/${NAPIWAS_CONTRACT}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-amber-500 text-[10px] font-mono mt-1 hover:underline"
-            >
-              CA: {NAPIWAS_CONTRACT.slice(0, 8)}...{NAPIWAS_CONTRACT.slice(-6)}
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
-        )}
+        <div className="text-center">
+          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            {t.napiwasInfo}
+          </p>
+          <a 
+            href={`https://tonviewer.com/${NAPIWAS_CONTRACT}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-amber-500 text-[10px] font-mono mt-1 hover:underline"
+          >
+            CA: {NAPIWAS_CONTRACT.slice(0, 8)}...{NAPIWAS_CONTRACT.slice(-6)}
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeInDown {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   )
 }
