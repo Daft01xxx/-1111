@@ -57,10 +57,12 @@ export default function ShopPage() {
             <Sparkles className="w-5 h-5 text-amber-400" />
             Shop
           </h1>
-          {/* Coin balance */}
-          <div className="flex items-center gap-1.5 bg-dark-800 rounded-lg px-3 py-1.5">
-            <Coins className="w-4 h-4 text-amber-400" />
-            <span className="font-bold text-foam-100">{coins.toLocaleString()}</span>
+          {/* Coin balance - prominent display */}
+          <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl px-4 py-2 border border-amber-500/30">
+            <div className="w-6 h-6 rounded-full bg-amber-500/30 flex items-center justify-center">
+              <Coins className="w-4 h-4 text-amber-400" />
+            </div>
+            <span className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">{coins.toLocaleString()}</span>
           </div>
         </div>
       </header>
@@ -107,6 +109,7 @@ export default function ShopPage() {
                   onPurchase={() => purchaseSkin(skin.id)}
                   onSelect={() => selectSkin(skin.id)}
                   canAfford={coins >= skin.price}
+                  currentCoins={coins}
                 />
               ))}
             </motion.div>
@@ -127,6 +130,7 @@ export default function ShopPage() {
                   weapon={weapon}
                   onPurchase={() => purchaseWeapon(weapon.id)}
                   canAfford={coins >= weapon.price}
+                  currentCoins={coins}
                 />
               ))}
             </motion.div>
@@ -148,6 +152,7 @@ export default function ShopPage() {
                   isOwned={purchasedMusic.includes(track.id)}
                   onPurchase={() => handlePurchaseMusic(track.id, track.price)}
                   canAfford={coins >= track.price}
+                  currentCoins={coins}
                 />
               ))}
             </motion.div>
@@ -163,14 +168,18 @@ function SkinCard({
   isSelected, 
   onPurchase, 
   onSelect,
-  canAfford 
+  canAfford,
+  currentCoins
 }: { 
   skin: { id: string; name: string; price: number; description: string; unlocked: boolean }
   isSelected: boolean
   onPurchase: () => void
   onSelect: () => void
   canAfford: boolean
+  currentCoins: number
 }) {
+  const coinsNeeded = skin.price - currentCoins
+  
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
@@ -181,17 +190,36 @@ function SkinCard({
           ? 'bg-amber-500/10 border-amber-500/50' 
           : skin.unlocked 
             ? 'bg-dark-900 border-dark-700' 
-            : 'bg-dark-900/50 border-dark-800'
+            : canAfford 
+              ? 'bg-dark-900/50 border-green-500/30'
+              : 'bg-dark-900/50 border-dark-800'
         }
       `}
     >
+      {/* Affordability indicator */}
+      {!skin.unlocked && canAfford && (
+        <div className="absolute top-2 right-2">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/20 text-green-400">
+            CAN BUY
+          </span>
+        </div>
+      )}
+      
       <div className="flex items-center gap-4">
-        {/* Skin preview */}
-        <div className={`
-          w-16 h-16 rounded-xl flex items-center justify-center
-          ${skin.unlocked ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20' : 'bg-dark-800'}
-        `}>
-          <CatSkinIcon skinId={skin.id} />
+        {/* Skin preview with coin indicator */}
+        <div className="relative">
+          <div className={`
+            w-16 h-16 rounded-xl flex items-center justify-center
+            ${skin.unlocked ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20' : 'bg-dark-800'}
+          `}>
+            <CatSkinIcon skinId={skin.id} />
+          </div>
+          {/* Coin icon badge for premium skins */}
+          {skin.price > 0 && !skin.unlocked && (
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center">
+              <Coins className="w-3 h-3 text-dark-950" />
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -203,8 +231,20 @@ function SkinCard({
                 EQUIPPED
               </span>
             )}
+            {skin.price === 0 && !skin.unlocked && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/20 text-green-400">
+                FREE
+              </span>
+            )}
           </div>
           <p className="text-xs text-foam-500 mt-0.5">{skin.description}</p>
+          {/* Show coins needed if can't afford */}
+          {!skin.unlocked && !canAfford && skin.price > 0 && (
+            <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
+              <Coins className="w-3 h-3" />
+              Need {coinsNeeded.toLocaleString()} more coins
+            </p>
+          )}
         </div>
 
         {/* Action */}
@@ -229,8 +269,8 @@ function SkinCard({
               className={`
                 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all
                 ${canAfford 
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-dark-950 hover:brightness-110' 
-                  : 'bg-dark-700 text-foam-500 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-dark-950 hover:brightness-110 hover:scale-105' 
+                  : 'bg-dark-700 text-foam-500 cursor-not-allowed opacity-60'
                 }
               `}
             >
@@ -247,12 +287,16 @@ function SkinCard({
 function WeaponCard({ 
   weapon, 
   onPurchase, 
-  canAfford 
+  canAfford,
+  currentCoins
 }: { 
   weapon: { id: string; name: string; price: number; damage: number; fireRate: number; unlocked: boolean; icon: string }
   onPurchase: () => void
   canAfford: boolean
+  currentCoins: number
 }) {
+  const coinsNeeded = weapon.price - currentCoins
+  
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
@@ -261,10 +305,20 @@ function WeaponCard({
         relative overflow-hidden rounded-xl border p-4
         ${weapon.unlocked 
           ? 'bg-dark-900 border-green-500/30' 
-          : 'bg-dark-900/50 border-dark-800'
+          : canAfford && weapon.price > 0
+            ? 'bg-dark-900/50 border-amber-500/30'
+            : 'bg-dark-900/50 border-dark-800'
         }
       `}
     >
+      {/* Affordability indicator */}
+      {!weapon.unlocked && canAfford && weapon.price > 0 && (
+        <div className="absolute top-2 right-2">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/20 text-green-400">
+            CAN BUY
+          </span>
+        </div>
+      )}
       <div className="flex items-center gap-4">
         {/* Weapon icon */}
         <div className={`
@@ -286,6 +340,13 @@ function WeaponCard({
             <span className="text-xs text-foam-500">DMG: <span className="text-foam-300">{weapon.damage}</span></span>
             <span className="text-xs text-foam-500">RATE: <span className="text-foam-300">{weapon.fireRate}/s</span></span>
           </div>
+          {/* Show coins needed if can't afford */}
+          {!weapon.unlocked && !canAfford && weapon.price > 0 && (
+            <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
+              <Coins className="w-3 h-3" />
+              Need {coinsNeeded.toLocaleString()} more coins
+            </p>
+          )}
         </div>
 
         {/* Action */}
@@ -295,7 +356,7 @@ function WeaponCard({
               <Check className="w-5 h-5 text-green-400" />
             </div>
           ) : weapon.price === 0 ? (
-            <span className="text-sm text-foam-400">Free</span>
+            <span className="px-3 py-1 rounded-lg bg-green-500/20 text-green-400 text-sm font-bold">Free</span>
           ) : (
             <button
               onClick={onPurchase}
@@ -303,8 +364,8 @@ function WeaponCard({
               className={`
                 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all
                 ${canAfford 
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-dark-950 hover:brightness-110' 
-                  : 'bg-dark-700 text-foam-500 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-dark-950 hover:brightness-110 hover:scale-105' 
+                  : 'bg-dark-700 text-foam-500 cursor-not-allowed opacity-60'
                 }
               `}
             >
@@ -322,13 +383,17 @@ function MusicCard({
   track, 
   isOwned, 
   onPurchase, 
-  canAfford 
+  canAfford,
+  currentCoins
 }: { 
   track: { id: string; title: string; artist: string; price: number; style: string }
   isOwned: boolean
   onPurchase: () => void
   canAfford: boolean
+  currentCoins: number
 }) {
+  const coinsNeeded = track.price - currentCoins
+  
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
@@ -337,10 +402,20 @@ function MusicCard({
         relative overflow-hidden rounded-xl border p-4
         ${isOwned 
           ? 'bg-dark-900 border-purple-500/30' 
-          : 'bg-dark-900/50 border-dark-800'
+          : canAfford
+            ? 'bg-dark-900/50 border-amber-500/30'
+            : 'bg-dark-900/50 border-dark-800'
         }
       `}
     >
+      {/* Affordability indicator */}
+      {!isOwned && canAfford && (
+        <div className="absolute top-2 right-2">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/20 text-green-400">
+            CAN BUY
+          </span>
+        </div>
+      )}
       <div className="flex items-center gap-4">
         {/* Music icon */}
         <div className={`
@@ -362,6 +437,13 @@ function MusicCard({
           <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-dark-700 text-foam-400">
             {track.style}
           </span>
+          {/* Show coins needed if can't afford */}
+          {!isOwned && !canAfford && (
+            <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
+              <Coins className="w-3 h-3" />
+              Need {coinsNeeded.toLocaleString()} more coins
+            </p>
+          )}
         </div>
 
         {/* Action */}
@@ -377,8 +459,8 @@ function MusicCard({
               className={`
                 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all
                 ${canAfford 
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-dark-950 hover:brightness-110' 
-                  : 'bg-dark-700 text-foam-500 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-dark-950 hover:brightness-110 hover:scale-105' 
+                  : 'bg-dark-700 text-foam-500 cursor-not-allowed opacity-60'
                 }
               `}
             >

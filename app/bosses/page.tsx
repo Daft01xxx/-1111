@@ -2,7 +2,7 @@
 
 import { useGameStore } from '@/lib/store'
 import { motion } from 'framer-motion'
-import { Lock, ArrowLeft, Heart, Swords, Star, Sparkles } from 'lucide-react'
+import { Lock, ArrowLeft, Heart, Swords, Star, Sparkles, Coins } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -15,7 +15,7 @@ const BOSS_IMAGES: Record<string, string> = {
 }
 
 export default function BossesPage() {
-  const { bosses, bossesDefeated } = useGameStore()
+  const { bosses, bossesDefeated, coins } = useGameStore()
 
   return (
     <div className="min-h-screen bg-dark-950">
@@ -29,7 +29,11 @@ export default function BossesPage() {
             <Sparkles className="w-5 h-5 text-purple-400" />
             Alien Cat Bosses
           </h1>
-          <div className="w-10" />
+          {/* Coin balance */}
+          <Link href="/shop" className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-lg px-3 py-1.5 border border-amber-500/30 hover:border-amber-500/50 transition-colors">
+            <Coins className="w-4 h-4 text-amber-400" />
+            <span className="font-bold text-amber-400">{coins.toLocaleString()}</span>
+          </Link>
         </div>
       </header>
 

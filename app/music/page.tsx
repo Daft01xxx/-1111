@@ -47,10 +47,10 @@ export default function MusicPage() {
             Music
           </h1>
           {/* Coin balance */}
-          <div className="flex items-center gap-1.5 bg-dark-800 rounded-lg px-3 py-1.5">
+          <Link href="/shop" className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-lg px-3 py-1.5 border border-amber-500/30 hover:border-amber-500/50 transition-colors">
             <Coins className="w-4 h-4 text-amber-400" />
-            <span className="font-bold text-foam-100">{coins.toLocaleString()}</span>
-          </div>
+            <span className="font-bold text-amber-400">{coins.toLocaleString()}</span>
+          </Link>
         </div>
       </header>
 
@@ -125,6 +125,7 @@ export default function MusicPage() {
             {PREMIUM_TRACKS.map((track, index) => {
               const isOwned = purchasedMusic.includes(track.id)
               const canAfford = coins >= track.price
+              const coinsNeeded = track.price - coins
               
               return (
                 <motion.div
@@ -133,13 +134,23 @@ export default function MusicPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
                   className={`
-                    flex items-center gap-3 p-3 rounded-xl border transition-all
+                    relative flex items-center gap-3 p-3 rounded-xl border transition-all
                     ${isOwned 
                       ? 'bg-dark-900 border-purple-500/30' 
-                      : 'bg-dark-900/50 border-dark-800'
+                      : canAfford 
+                        ? 'bg-dark-900/50 border-amber-500/30'
+                        : 'bg-dark-900/50 border-dark-800'
                     }
                   `}
                 >
+                  {/* Can buy indicator */}
+                  {!isOwned && canAfford && (
+                    <div className="absolute top-2 right-2">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-500/20 text-green-400">
+                        CAN BUY
+                      </span>
+                    </div>
+                  )}
                   <div className={`
                     w-12 h-12 rounded-lg flex items-center justify-center
                     ${isOwned 
@@ -167,6 +178,13 @@ export default function MusicPage() {
                     <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-dark-700 text-foam-500">
                       {track.style}
                     </span>
+                    {/* Show coins needed */}
+                    {!isOwned && !canAfford && (
+                      <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
+                        <Coins className="w-3 h-3" />
+                        Need {coinsNeeded.toLocaleString()} more
+                      </p>
+                    )}
                   </div>
                   
                   {isOwned ? (
@@ -180,8 +198,8 @@ export default function MusicPage() {
                       className={`
                         flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all
                         ${canAfford 
-                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-dark-950 hover:brightness-110' 
-                          : 'bg-dark-700 text-foam-500 cursor-not-allowed'
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-dark-950 hover:brightness-110 hover:scale-105' 
+                          : 'bg-dark-700 text-foam-500 cursor-not-allowed opacity-60'
                         }
                       `}
                     >

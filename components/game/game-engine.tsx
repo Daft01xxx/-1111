@@ -98,29 +98,48 @@ export function GameEngine() {
   const spawnTimerRef = useRef<number>(0)
   const difficultyRef = useRef<number>(1)
   const screenShakeRef = useRef<number>(0)
+  const bossSpawnScoreRef = useRef<number>(500) // First boss at 500 points
+  const bossActiveRef = useRef<boolean>(false)
   
-  // Draw cute orange cat player
+  // Draw cute orange cat player - enhanced visuals
   const drawOrangeCat = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, hasShieldActive: boolean, skin: string, animFrame: number) => {
     ctx.save()
     
     const centerX = x + width / 2
     const centerY = y + height / 2
     const bounce = Math.sin(animFrame * 0.15) * 2
+    const breathe = Math.sin(animFrame * 0.08) * 0.02 + 1 // Subtle breathing effect
+    
+    // Get colors based on skin
+    const skinColors = getSkinColors(skin)
+    
+    // Outer glow effect (always visible, color based on skin)
+    const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width * 1.2)
+    glowGradient.addColorStop(0, skinColors.body + '20')
+    glowGradient.addColorStop(0.5, skinColors.body + '10')
+    glowGradient.addColorStop(1, 'transparent')
+    ctx.fillStyle = glowGradient
+    ctx.beginPath()
+    ctx.arc(centerX, centerY, width * 1.2, 0, Math.PI * 2)
+    ctx.fill()
     
     // Shield effect
     if (hasShieldActive) {
       ctx.beginPath()
       ctx.arc(centerX, centerY, width * 0.9, 0, Math.PI * 2)
-      const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width * 0.9)
-      gradient.addColorStop(0, 'rgba(100, 200, 255, 0)')
-      gradient.addColorStop(0.7, 'rgba(100, 200, 255, 0.2)')
-      gradient.addColorStop(1, 'rgba(100, 200, 255, 0.5)')
-      ctx.fillStyle = gradient
+      const shieldGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width * 0.9)
+      shieldGradient.addColorStop(0, 'rgba(100, 200, 255, 0)')
+      shieldGradient.addColorStop(0.6, 'rgba(100, 200, 255, 0.15)')
+      shieldGradient.addColorStop(0.85, 'rgba(100, 200, 255, 0.4)')
+      shieldGradient.addColorStop(1, 'rgba(150, 220, 255, 0.6)')
+      ctx.fillStyle = shieldGradient
       ctx.fill()
+      
+      // Shield ring
+      ctx.strokeStyle = 'rgba(150, 220, 255, 0.8)'
+      ctx.lineWidth = 2
+      ctx.stroke()
     }
-    
-    // Get colors based on skin
-    const skinColors = getSkinColors(skin)
     
     // Cat body (oval)
     ctx.beginPath()
@@ -641,8 +660,39 @@ export function GameEngine() {
     return () => canvas.removeEventListener('mousemove', handleMouseMove)
   }, [canvasSize.width, isPlaying, isPaused])
 
+  // Spawn boss enemy
+  const spawnBoss = useCallback(() => {
+    if (bossActiveRef.current) return
+    
+    bossActiveRef.current = true
+    setGamePhase('boss')
+    
+    const boss: Enemy = {
+      x: canvasSize.width / 2 - 50,
+      y: -100,
+      width: 80,
+      height: 100,
+      velocityX: 60,
+      velocityY: 40,
+      health: 200 + difficultyRef.current * 50,
+      maxHealth: 200 + difficultyRef.current * 50,
+      points: 200,
+      type: 'boss',
+      animFrame: 0,
+    }
+    
+    enemiesRef.current.push(boss)
+  }, [canvasSize.width, setGamePhase])
+  
   // Spawn enemies
   const spawnEnemy = useCallback(() => {
+    // Check if boss should spawn
+    if (score >= bossSpawnScoreRef.current && !bossActiveRef.current) {
+      spawnBoss()
+      bossSpawnScoreRef.current += 500 // Next boss every 500 points
+      return
+    }
+    
     const types: Array<'small' | 'medium' | 'large'> = ['small', 'medium', 'large']
     const typeIndex = Math.min(Math.floor(Math.random() * (1 + difficultyRef.current / 3)), 2)
     const type = types[typeIndex]
@@ -816,19 +866,25 @@ export function GameEngine() {
       // Auto-fire
       fireProjectile()
       
-      // Spawn enemies (faster spawn rate)
+      // Spawn enemies (faster spawn rate for more frequent encounters)
       spawnTimerRef.current += deltaTime
-      if (spawnTimerRef.current > 1.2 / (1 + difficultyRef.current * 0.15)) {
+      const spawnInterval = 0.7 / (1 + difficultyRef.current * 0.25) // Much faster spawning
+      if (spawnTimerRef.current > spawnInterval) {
         spawnEnemy()
         spawnTimerRef.current = 0
         
-        if (Math.random() < 0.2) {
+        // Spawn additional enemy at higher difficulties
+        if (difficultyRef.current > 2 && Math.random() < 0.3) {
+          spawnEnemy()
+        }
+        
+        if (Math.random() < 0.25) {
           spawnPowerUp()
         }
       }
       
-      // Increase difficulty over time
-      difficultyRef.current = 1 + score / 400
+      // Increase difficulty over time (faster scaling)
+      difficultyRef.current = 1 + score / 300
       
       // Update power-up timers
       updatePowerUpTimers(deltaTime)
@@ -889,14 +945,24 @@ export function GameEngine() {
             // Hit particles
             spawnParticles(proj.x, proj.y, '#FFE66D', 5)
             
-            if (enemy.health <= 0) {
-              addScore(enemy.points)
-              incrementKills()
-              // Death particles
-              spawnParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#FF6B6B', 12)
-              screenShakeRef.current = 5
-              return false
-            }
+if (enemy.health <= 0) {
+                              addScore(enemy.points)
+                              incrementKills()
+                              
+                              // Handle boss defeat
+                              if (enemy.type === 'boss') {
+                                bossActiveRef.current = false
+                                setGamePhase('gameplay')
+                                addCoins(50) // Bonus coins for boss defeat
+                                spawnParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#FFD700', 25)
+                                screenShakeRef.current = 20
+                              } else {
+                                spawnParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#FF6B6B', 12)
+                                screenShakeRef.current = 5
+                              }
+                              
+                              return false
+                            }
           }
         }
         
@@ -965,10 +1031,10 @@ export function GameEngine() {
     }
   }, [
     isPlaying, isPaused, gameOver, canvasSize, score,
-    fireProjectile, spawnEnemy, spawnPowerUp, checkCollision,
+    fireProjectile, spawnEnemy, spawnPowerUp, spawnBoss, checkCollision,
     drawOrangeCat, drawProjectile, drawAlienCatEnemy, drawPowerUp, drawParticle,
     addScore, takeDamage, heal, activatePowerUp, updatePowerUpTimers,
-    hasShield, currentSkin, incrementKills, addCoins, spawnParticles,
+    hasShield, currentSkin, incrementKills, addCoins, spawnParticles, setGamePhase,
   ])
 
   // Check game over
