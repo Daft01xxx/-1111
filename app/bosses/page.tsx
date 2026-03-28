@@ -4,6 +4,15 @@ import { useGameStore } from '@/lib/store'
 import { motion } from 'framer-motion'
 import { Lock, ArrowLeft, Heart, Swords, Star, Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
+
+const BOSS_IMAGES: Record<string, string> = {
+  nebula_prowler: '/bosses/nebula-prowler.jpg',
+  plasma_whisker: '/bosses/plasma-whisker.jpg',
+  void_stalker: '/bosses/void-stalker.jpg',
+  gravity_crusher: '/bosses/gravity-crusher.jpg',
+  cosmic_emperor: '/bosses/cosmic-emperor.jpg',
+}
 
 export default function BossesPage() {
   const { bosses, bossesDefeated } = useGameStore()
@@ -48,6 +57,7 @@ export default function BossesPage() {
         <div className="space-y-4">
           {bosses.map((boss, index) => {
             const isUnlocked = index === 0 || bosses[index - 1]?.defeated
+            const bossImage = BOSS_IMAGES[boss.id]
             
             return (
               <motion.div
@@ -72,7 +82,7 @@ export default function BossesPage() {
                 
                 {/* Status badge */}
                 <div className={`
-                  absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-bold
+                  absolute top-3 right-3 z-10 px-2 py-1 rounded-full text-xs font-bold
                   ${boss.defeated 
                     ? 'bg-green-500/20 text-green-400' 
                     : isUnlocked 
@@ -89,13 +99,21 @@ export default function BossesPage() {
                     <div className={`
                       w-24 h-24 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden
                       ${boss.defeated 
-                        ? 'bg-green-500/10' 
+                        ? 'ring-2 ring-green-500/50' 
                         : isUnlocked 
-                          ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20' 
+                          ? 'ring-2 ring-purple-500/50' 
                           : 'bg-dark-800'
                       }
                     `}>
-                      {isUnlocked ? (
+                      {isUnlocked && bossImage ? (
+                        <Image 
+                          src={bossImage}
+                          alt={boss.name}
+                          width={96}
+                          height={96}
+                          className={`w-full h-full object-cover ${boss.defeated ? 'grayscale opacity-70' : ''}`}
+                        />
+                      ) : isUnlocked ? (
                         <AlienCatBossIcon theme={boss.theme} />
                       ) : (
                         <Lock className="w-10 h-10 text-foam-600" />
