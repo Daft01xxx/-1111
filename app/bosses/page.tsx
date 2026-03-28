@@ -1,267 +1,298 @@
 'use client'
 
 import { useGameStore } from '@/lib/store'
-import { motion } from 'framer-motion'
-import { Lock, ArrowLeft, Heart, Swords, Star, Sparkles, Coins } from 'lucide-react'
+import { Skull, Lock, Check, ArrowLeft, Heart, Swords, Star, Crown } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
-
-const BOSS_IMAGES: Record<string, string> = {
-  nebula_prowler: '/bosses/nebula-prowler.jpg',
-  plasma_whisker: '/bosses/plasma-whisker.jpg',
-  void_stalker: '/bosses/void-stalker.jpg',
-  gravity_crusher: '/bosses/gravity-crusher.jpg',
-  cosmic_emperor: '/bosses/cosmic-emperor.jpg',
-}
 
 export default function BossesPage() {
-  const { bosses, bossesDefeated, coins } = useGameStore()
+  const { bossesDefeated, theme, language } = useGameStore()
+
+  const t = {
+    title: language === 'ru' ? 'Боссы' : 'Bosses',
+    defeated: language === 'ru' ? 'Побеждено' : 'Defeated',
+    available: language === 'ru' ? 'Доступен' : 'Available',
+    locked: language === 'ru' ? 'Закрыт' : 'Locked',
+    hp: language === 'ru' ? 'Здоровье' : 'HP',
+    dmg: language === 'ru' ? 'Урон' : 'DMG',
+    pts: language === 'ru' ? 'Очки' : 'PTS',
+    loreTitle: language === 'ru' ? 'История Противостояния' : 'The Story',
+    loreText:
+      language === 'ru'
+        ? 'Силы пьяного хаоса объединились против NAPIWAS. Эти боссы появляются каждую минуту, чтобы остановить твой полет. Победи их всех и забери небо себе.'
+        : 'The forces of drunk chaos have united against NAPIWAS. These bosses appear every minute to stop your flight. Defeat them all and claim the sky.',
+    bossAppears: language === 'ru' ? 'Появляется каждые 60 секунд' : 'Appears every 60 seconds',
+  }
+
+  const bosses = [
+    {
+      id: 'beer_baron',
+      name: 'Beer Baron',
+      nameRu: 'Пивной Барон',
+      description: 'A giant beer mug with a golden crown. Shoots foam bubbles.',
+      descriptionRu: 'Гигантская пивная кружка с золотой короной. Стреляет пенными пузырями.',
+      health: 100,
+      damage: 10,
+      points: 500,
+      color: '#F59E0B',
+    },
+    {
+      id: 'whiskey_wizard',
+      name: 'Whiskey Wizard',
+      nameRu: 'Виски Волшебник',
+      description: 'Magical whiskey bottle wielding fire spells.',
+      descriptionRu: 'Магическая бутылка виски, владеющая огненными заклинаниями.',
+      health: 200,
+      damage: 15,
+      points: 1000,
+      color: '#92400E',
+    },
+    {
+      id: 'vodka_vampire',
+      name: 'Vodka Vampire',
+      nameRu: 'Водочный Вампир',
+      description: 'Cold as ice, fast as lightning. Drains your health.',
+      descriptionRu: 'Холодный как лёд, быстрый как молния. Высасывает здоровье.',
+      health: 300,
+      damage: 20,
+      points: 1500,
+      color: '#60A5FA',
+    },
+    {
+      id: 'wine_witch',
+      name: 'Wine Witch',
+      nameRu: 'Винная Ведьма',
+      description: 'Elegant but deadly. Casts curses and summons minions.',
+      descriptionRu: 'Элегантная, но смертельная. Накладывает проклятия и призывает прислужников.',
+      health: 400,
+      damage: 25,
+      points: 2000,
+      color: '#7C3AED',
+    },
+    {
+      id: 'cat_emperor',
+      name: 'Cat Emperor',
+      nameRu: 'Кот-Император',
+      description: 'The ultimate boss. A giant evil cat with a crown and every attack pattern.',
+      descriptionRu: 'Финальный босс. Гигантский злой кот с короной и полным набором атак.',
+      health: 500,
+      damage: 30,
+      points: 5000,
+      color: '#EF4444',
+    },
+  ]
+
+  const isDark = theme === 'dark'
 
   return (
-    <div className="min-h-screen bg-dark-950">
-      {/* Header */}
-      <header className="sticky top-0 z-20 bg-dark-950/90 backdrop-blur-sm border-b border-dark-800 p-4">
+    <div className={`min-h-screen overflow-x-hidden ${isDark ? 'bg-[#0a0a0b]' : 'bg-[#faf9f7]'}`}>
+      <header
+        className={`sticky top-0 z-20 backdrop-blur-md border-b px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 ${
+          isDark ? 'bg-[#0a0a0b]/95 border-[#1a1a1a]' : 'bg-[#faf9f7]/95 border-[#e5e5e5]'
+        }`}
+        style={{ animation: 'fadeInDown 0.3s ease' }}
+      >
         <div className="flex items-center justify-between">
-          <Link href="/" className="p-2 -m-2 rounded-lg hover:bg-dark-800 transition-colors">
-            <ArrowLeft className="w-6 h-6 text-foam-100" />
+          <Link
+            href="/"
+            className={`w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-all ${
+              isDark ? 'bg-[#1a1a1a]' : 'bg-[#f0f0f0]'
+            }`}
+          >
+            <ArrowLeft className={`w-5 h-5 ${isDark ? 'text-white' : 'text-black'}`} />
           </Link>
-          <h1 className="text-xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-400" />
-            Alien Cat Bosses
+          <h1 className={`text-lg font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
+            <Skull className="w-5 h-5 text-red-500" />
+            {t.title}
           </h1>
-          {/* Coin balance */}
-          <Link href="/shop" className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-lg px-3 py-1.5 border border-amber-500/30 hover:border-amber-500/50 transition-colors">
-            <Coins className="w-4 h-4 text-amber-400" />
-            <span className="font-bold text-amber-400">{coins.toLocaleString()}</span>
-          </Link>
+          <div
+            className={`px-3 py-1.5 rounded-lg text-sm font-bold ${
+              isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'
+            }`}
+          >
+            {bossesDefeated}/{bosses.length}
+          </div>
         </div>
       </header>
 
       <div className="p-4 space-y-4">
-        {/* Progress */}
-        <div className="bg-dark-900 rounded-xl border border-dark-700 p-4">
+        <div
+          className={`rounded-2xl p-4 ${isDark ? 'bg-[#111] border border-[#1a1a1a]' : 'bg-white border border-[#e5e5e5]'}`}
+          style={{ animation: 'fadeInUp 0.3s ease 0.1s forwards', opacity: 0 }}
+        >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-foam-400">Bosses Defeated</span>
-            <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{bossesDefeated}/{bosses.length}</span>
+            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{t.bossAppears}</span>
+            <span className="text-lg font-bold text-amber-500">
+              {bossesDefeated}/{bosses.length}
+            </span>
           </div>
-          <div className="flex gap-1">
-            {bosses.map((boss) => (
+          <div className="flex gap-1.5">
+            {bosses.map((boss, i) => (
               <div
                 key={boss.id}
-                className={`
-                  flex-1 h-2 rounded-full transition-all
-                  ${boss.defeated ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-dark-700'}
-                `}
+                className={`flex-1 h-2.5 rounded-full transition-all ${
+                  i < bossesDefeated ? 'bg-amber-500' : isDark ? 'bg-[#1a1a1a]' : 'bg-[#e5e5e5]'
+                }`}
               />
             ))}
           </div>
         </div>
 
-        {/* Boss cards */}
-        <div className="space-y-4">
-          {bosses.map((boss, index) => {
-            const isUnlocked = index === 0 || bosses[index - 1]?.defeated
-            const bossImage = BOSS_IMAGES[boss.id]
-            
-            return (
-              <motion.div
-                key={boss.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className={`
-                  relative overflow-hidden rounded-2xl border
-                  ${boss.defeated 
-                    ? 'bg-dark-900 border-green-500/30' 
-                    : isUnlocked 
-                      ? 'bg-dark-900 border-purple-500/30' 
-                      : 'bg-dark-900/50 border-dark-800'
-                  }
-                `}
+        {bosses.map((boss, index) => {
+          const isDefeated = index < bossesDefeated
+          const isUnlocked = index <= bossesDefeated
+
+          return (
+            <div
+              key={boss.id}
+              className={`relative overflow-hidden rounded-2xl border-2 transition-all ${
+                isDefeated
+                  ? isDark
+                    ? 'bg-green-500/5 border-green-500/30'
+                    : 'bg-green-50 border-green-200'
+                  : isUnlocked
+                    ? isDark
+                      ? 'bg-[#111] border-amber-500/30'
+                      : 'bg-white border-amber-200'
+                    : isDark
+                      ? 'bg-[#0a0a0b] border-[#1a1a1a] opacity-50'
+                      : 'bg-gray-50 border-[#e5e5e5] opacity-50'
+              }`}
+              style={{
+                animation: `fadeInUp 0.4s ease ${index * 80}ms forwards`,
+                opacity: 0,
+              }}
+            >
+              <div
+                className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                  isDefeated
+                    ? 'bg-green-500/20 text-green-500'
+                    : isUnlocked
+                      ? 'bg-amber-500/20 text-amber-500'
+                      : isDark
+                        ? 'bg-[#1a1a1a] text-gray-600'
+                        : 'bg-gray-200 text-gray-400'
+                }`}
               >
-                {/* Glow effect for unlocked */}
-                {isUnlocked && !boss.defeated && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5" />
-                )}
-                
-                {/* Status badge */}
-                <div className={`
-                  absolute top-3 right-3 z-10 px-2 py-1 rounded-full text-xs font-bold
-                  ${boss.defeated 
-                    ? 'bg-green-500/20 text-green-400' 
-                    : isUnlocked 
-                      ? 'bg-purple-500/20 text-purple-400' 
-                      : 'bg-dark-700 text-foam-500'
-                  }
-                `}>
-                  {boss.defeated ? 'DEFEATED' : isUnlocked ? 'AVAILABLE' : 'LOCKED'}
-                </div>
+                {isDefeated ? t.defeated : isUnlocked ? t.available : t.locked}
+              </div>
 
-                <div className="p-4">
-                  <div className="flex gap-4">
-                    {/* Boss image */}
-                    <div className={`
-                      w-24 h-24 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden
-                      ${boss.defeated 
-                        ? 'ring-2 ring-green-500/50' 
-                        : isUnlocked 
-                          ? 'ring-2 ring-purple-500/50' 
-                          : 'bg-dark-800'
-                      }
-                    `}>
-                      {isUnlocked && bossImage ? (
-                        <Image 
-                          src={bossImage}
-                          alt={boss.name}
-                          width={96}
-                          height={96}
-                          className={`w-full h-full object-cover ${boss.defeated ? 'grayscale opacity-70' : ''}`}
-                        />
-                      ) : isUnlocked ? (
-                        <AlienCatBossIcon theme={boss.theme} />
-                      ) : (
-                        <Lock className="w-10 h-10 text-foam-600" />
-                      )}
-                    </div>
-
-                    {/* Boss info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`text-lg font-bold ${isUnlocked ? 'text-foam-100' : 'text-foam-500'}`}>
-                        {boss.name}
-                      </h3>
-                      <p className="text-sm text-purple-400 mb-2">{boss.nameRu}</p>
-                      
-                      {isUnlocked && (
-                        <p className="text-xs text-foam-500 line-clamp-2">
-                          {boss.description}
-                        </p>
-                      )}
-                    </div>
+              <div className="p-4">
+                <div className="flex gap-4">
+                  <div
+                    className="w-20 h-20 rounded-xl flex items-center justify-center flex-shrink-0 relative"
+                    style={{
+                      backgroundColor: isUnlocked ? `${boss.color}15` : isDark ? '#1a1a1a' : '#f0f0f0',
+                    }}
+                  >
+                    {isUnlocked ? (
+                      <>
+                        <div
+                          className="w-12 h-12 rounded-full flex items-center justify-center"
+                          style={{
+                            backgroundColor: boss.color,
+                            boxShadow: `0 4px 20px ${boss.color}40`,
+                          }}
+                        >
+                          {boss.id === 'cat_emperor' ? (
+                            <Crown className="w-6 h-6 text-white" />
+                          ) : (
+                            <Skull className="w-6 h-6 text-white" />
+                          )}
+                        </div>
+                        {isDefeated && (
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                            <Check className="w-4 h-4 text-white" />
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <Lock className={`w-8 h-8 ${isDark ? 'text-gray-700' : 'text-gray-300'}`} />
+                    )}
                   </div>
 
-                  {/* Stats */}
-                  {isUnlocked && (
-                    <div className="flex gap-3 mt-4 pt-4 border-t border-dark-700">
-                      <div className="flex items-center gap-1.5">
-                        <Heart className="w-4 h-4 text-red-400" />
-                        <span className="text-sm text-foam-300">{boss.maxHealth} HP</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Swords className="w-4 h-4 text-orange-400" />
-                        <span className="text-sm text-foam-300">{boss.damage} DMG</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Star className="w-4 h-4 text-yellow-400" />
-                        <span className="text-sm text-foam-300">{boss.points} PTS</span>
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3
+                      className={`text-lg font-bold ${
+                        isUnlocked ? (isDark ? 'text-white' : 'text-black') : isDark ? 'text-gray-600' : 'text-gray-400'
+                      }`}
+                    >
+                      {language === 'ru' ? boss.nameRu : boss.name}
+                    </h3>
+
+                    {isUnlocked && (
+                      <p className={`text-xs mt-1 line-clamp-2 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                        {language === 'ru' ? boss.descriptionRu : boss.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                {/* Defeated overlay */}
-                {boss.defeated && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-emerald-400" />
+                {isUnlocked && (
+                  <div className="flex gap-3 mt-4 pt-3 border-t" style={{ borderColor: isDark ? '#1a1a1a' : '#e5e5e5' }}>
+                    <div
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium ${
+                        isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500'
+                      }`}
+                    >
+                      <Heart className="w-3.5 h-3.5" />
+                      {boss.health} {t.hp}
+                    </div>
+                    <div
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium ${
+                        isDark ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-50 text-orange-500'
+                      }`}
+                    >
+                      <Swords className="w-3.5 h-3.5" />
+                      {boss.damage} {t.dmg}
+                    </div>
+                    <div
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium ${
+                        isDark ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-50 text-yellow-600'
+                      }`}
+                    >
+                      <Star className="w-3.5 h-3.5" />
+                      {boss.points} {t.pts}
+                    </div>
+                  </div>
                 )}
-              </motion.div>
-            )
-          })}
-        </div>
+              </div>
 
-        {/* Lore section */}
-        <div className="bg-dark-900 rounded-xl border border-purple-500/20 p-4 mt-6">
-          <h3 className="text-lg font-bold text-foam-100 mb-3 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-400" />
-            The Cosmic Invasion
-          </h3>
-          <p className="text-sm text-foam-400 leading-relaxed">
-            From the darkest reaches of the galaxy, five powerful alien cat overlords have 
-            descended upon Earth. Each possesses unique cosmic powers and commands legions 
-            of feline minions. Only you, piloting the legendary Orange Cat fighter, can 
-            defeat them and save the planet from their cosmic domination!
-          </p>
+              {isDefeated && <div className="absolute bottom-0 left-0 right-0 h-1 bg-green-500" />}
+            </div>
+          )
+        })}
+
+        <div
+          className={`rounded-2xl p-4 mt-6 ${isDark ? 'bg-[#111] border border-[#1a1a1a]' : 'bg-white border border-[#e5e5e5]'}`}
+          style={{ animation: 'fadeInUp 0.4s ease 0.4s forwards', opacity: 0 }}
+        >
+          <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>{t.loreTitle}</h3>
+          <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{t.loreText}</p>
         </div>
       </div>
-    </div>
-  )
-}
 
-function AlienCatBossIcon({ theme }: { theme: 'nebula' | 'plasma' | 'void' | 'gravity' | 'cosmic' }) {
-  const iconClass = "w-16 h-16"
-  
-  const colors = {
-    nebula: { primary: '#7B68EE', secondary: '#9370DB', accent: '#E6E6FA' },
-    plasma: { primary: '#FF6B35', secondary: '#FF8C42', accent: '#FFD700' },
-    void: { primary: '#4B0082', secondary: '#8B008B', accent: '#9400D3' },
-    gravity: { primary: '#708090', secondary: '#A9A9A9', accent: '#00CED1' },
-    cosmic: { primary: '#FF1493', secondary: '#9400D3', accent: '#00FFFF' },
-  }
-  
-  const color = colors[theme]
-  
-  return (
-    <svg className={iconClass} viewBox="0 0 64 64" fill="none">
-      {/* Glow effect */}
-      <defs>
-        <radialGradient id={`glow-${theme}`} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={color.secondary} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color.primary} stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id={`body-${theme}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={color.primary} />
-          <stop offset="100%" stopColor={color.secondary} />
-        </linearGradient>
-      </defs>
-      
-      {/* Outer glow */}
-      <circle cx="32" cy="32" r="28" fill={`url(#glow-${theme})`} />
-      
-      {/* Body */}
-      <ellipse cx="32" cy="36" rx="14" ry="12" fill={`url(#body-${theme})`} />
-      
-      {/* Head */}
-      <circle cx="32" cy="24" r="12" fill={`url(#body-${theme})`} />
-      
-      {/* Ears */}
-      <path d="M20 18 L16 6 L26 14 Z" fill={color.primary} />
-      <path d="M44 18 L48 6 L38 14 Z" fill={color.primary} />
-      <path d="M21 16 L18 8 L25 14 Z" fill={color.secondary} />
-      <path d="M43 16 L46 8 L39 14 Z" fill={color.secondary} />
-      
-      {/* Eyes */}
-      <ellipse cx="27" cy="23" rx="4" ry="5" fill={color.accent} />
-      <ellipse cx="37" cy="23" rx="4" ry="5" fill={color.accent} />
-      <ellipse cx="27" cy="24" rx="2" ry="3" fill="#111" />
-      <ellipse cx="37" cy="24" rx="2" ry="3" fill="#111" />
-      
-      {/* Nose */}
-      <path d="M32 28 L30 31 L34 31 Z" fill={color.accent} />
-      
-      {/* Crown/horns for cosmic emperor */}
-      {theme === 'cosmic' && (
-        <>
-          <path d="M24 10 L26 4 L28 10" stroke={color.accent} strokeWidth="2" fill="none" />
-          <path d="M30 8 L32 2 L34 8" stroke={color.accent} strokeWidth="2" fill="none" />
-          <path d="M36 10 L38 4 L40 10" stroke={color.accent} strokeWidth="2" fill="none" />
-        </>
-      )}
-      
-      {/* Circuit lines for gravity */}
-      {theme === 'gravity' && (
-        <>
-          <circle cx="32" cy="36" r="8" stroke={color.accent} strokeWidth="1" fill="none" strokeDasharray="2 2" />
-          <circle cx="32" cy="36" r="12" stroke={color.accent} strokeWidth="1" fill="none" strokeDasharray="3 3" />
-        </>
-      )}
-      
-      {/* Flame mane for plasma */}
-      {theme === 'plasma' && (
-        <path 
-          d="M20 20 Q18 14 22 12 Q20 16 24 14 Q22 18 26 16 Q24 20 28 18 Q26 22 30 20" 
-          stroke={color.accent} 
-          strokeWidth="2" 
-          fill="none"
-        />
-      )}
-    </svg>
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(16px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes fadeInDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+    </div>
   )
 }

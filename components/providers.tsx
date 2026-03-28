@@ -3,7 +3,7 @@
 import { TonConnectUIProvider } from '@tonconnect/ui-react'
 import { ReactNode } from 'react'
 
-const manifestUrl = 'https://napiwas.vercel.app/tonconnect-manifest.json'
+const manifestUrl = '/tonconnect-manifest.json'
 
 export function Providers({ children }: { children: ReactNode }) {
   return (

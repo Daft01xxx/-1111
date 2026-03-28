@@ -2,187 +2,119 @@
 
 import { useGameStore } from '@/lib/store'
 import { formatNumber, getMultiplierTier } from '@/lib/utils'
-import { Heart, Pause, Zap, Shield, Target, Flame, Coins } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Heart, Pause, Zap, Shield, Target, Flame } from 'lucide-react'
 
 export function GameHUD() {
   const {
-    score,
-    health,
-    maxHealth,
-    level,
-    experience,
-    multiplier,
-    napiwasBalance,
-    powerUps,
-    pauseGame,
-    isPlaying,
-    coins,
-    killStreak,
+    score, health, maxHealth, level, meters, multiplier,
+    napiwasBalance, powerUps, pauseGame, isPlaying, language
   } = useGameStore()
-
-  const healthPercent = (health / maxHealth) * 100
-  const expPercent = (experience / (level * 100)) * 100
-  const tier = getMultiplierTier(napiwasBalance)
-
-  const activePowerUps = powerUps.filter(p => p.active)
 
   if (!isPlaying) return null
 
+  const healthPercent = (health / maxHealth) * 100
+  const expPercent = Math.min((meters / 10000) * 100, 100)
+  const tier = getMultiplierTier(napiwasBalance)
+  const activePowerUps = powerUps.filter(p => p.active)
+
+  const healthColor = healthPercent > 50 ? '#22C55E' : healthPercent > 25 ? '#F59E0B' : '#EF4444'
+
   return (
-    <div className="absolute inset-x-0 top-0 z-20 pointer-events-none">
+    <div className="absolute inset-x-0 top-0 z-20 pointer-events-none safe-top px-3 pt-3">
       {/* Top bar */}
-      <div className="flex items-start justify-between p-3 gap-3">
-        {/* Left side - Health & Level */}
+      <div className="flex items-start justify-between gap-2">
+        {/* Left - Health & Level */}
         <div className="flex flex-col gap-2 pointer-events-auto">
-          {/* Health bar */}
-          <div className="flex items-center gap-2 bg-dark-900/80 backdrop-blur-sm rounded-xl px-3 py-2">
-            <Heart className="w-5 h-5 text-red-500 fill-red-500" />
-            <div className="w-24 h-3 bg-dark-700 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full rounded-full"
-                style={{
-                  background: healthPercent > 50 
-                    ? 'linear-gradient(90deg, #22C55E, #4ADE80)' 
-                    : healthPercent > 25 
-                      ? 'linear-gradient(90deg, #F59E0B, #FBBF24)'
-                      : 'linear-gradient(90deg, #EF4444, #F87171)',
-                }}
-                initial={{ width: '100%' }}
-                animate={{ width: `${healthPercent}%` }}
-                transition={{ duration: 0.3 }}
+          {/* Health */}
+          <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-xl px-3 py-2">
+            <Heart className="w-4 h-4 text-red-500 fill-red-500 flex-shrink-0" />
+            <div className="w-20 h-2.5 bg-white/10 rounded-full overflow-hidden">
+              <div 
+                className="h-full rounded-full transition-all duration-300"
+                style={{ width: `${healthPercent}%`, backgroundColor: healthColor }}
               />
             </div>
-            <span className="text-xs font-bold text-foam-100">{health}</span>
+            <span className="text-xs font-bold text-white w-6">{health}</span>
           </div>
 
-          {/* Level & XP */}
-          <div className="flex items-center gap-2 bg-dark-900/80 backdrop-blur-sm rounded-xl px-3 py-2">
-            <div className="w-7 h-7 rounded-lg bg-beer-500 flex items-center justify-center">
-              <span className="text-xs font-bold text-dark-950">{level}</span>
+          {/* Level */}
+          <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-xl px-3 py-2">
+            <div className="w-6 h-6 rounded-md gold-gradient flex items-center justify-center flex-shrink-0">
+              <span className="text-[10px] font-bold text-black">{level}</span>
             </div>
-            <div className="w-20 h-2 bg-dark-700 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-beer-500 to-beer-400 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${expPercent}%` }}
+            <div className="w-16 h-2 bg-white/10 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-amber-500 rounded-full transition-all"
+                style={{ width: `${expPercent}%` }}
               />
             </div>
           </div>
         </div>
 
-        {/* Center - Score & Coins */}
-        <div className="flex flex-col items-center gap-1">
-          {/* Coins display - prominent */}
-          <motion.div
-            key={coins}
-            initial={{ scale: 1.1 }}
-            animate={{ scale: 1 }}
-            className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 backdrop-blur-sm rounded-lg px-3 py-1 border border-amber-500/30"
-          >
-            <Coins className="w-4 h-4 text-amber-400" />
-            <span className="font-bold text-amber-400 text-sm">{coins.toLocaleString()}</span>
-          </motion.div>
-          
-          <motion.div
-            key={score}
-            initial={{ scale: 1.2 }}
-            animate={{ scale: 1 }}
-            className="bg-dark-900/80 backdrop-blur-sm rounded-xl px-4 py-2"
-          >
-            <div className="text-2xl font-display font-bold beer-text">
-              {formatNumber(score)}
-            </div>
-          </motion.div>
-          
-          {/* Multiplier badge */}
+        {/* Center - Score */}
+        <div className="flex flex-col items-center gap-1 min-w-0">
+          <div className="bg-black/60 backdrop-blur-sm rounded-xl px-4 py-2">
+            <div className="text-xl font-bold gold-text">{formatNumber(score)}</div>
+          </div>
           {multiplier > 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="px-2 py-0.5 rounded-full text-xs font-bold"
+            <div 
+              className="px-2 py-0.5 rounded-full text-[10px] font-bold border"
               style={{ 
                 backgroundColor: tier.color + '20', 
                 color: tier.color,
-                border: `1px solid ${tier.color}50`
+                borderColor: tier.color + '50'
               }}
             >
-              x{multiplier.toFixed(2)} {tier.tier}
-            </motion.div>
-          )}
-          
-          {/* Kill streak */}
-          {killStreak >= 5 && (
-            <motion.div
-              key={killStreak}
-              initial={{ scale: 1.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/50"
-            >
-              {killStreak}x STREAK!
-            </motion.div>
+              x{multiplier.toFixed(1)}
+            </div>
           )}
         </div>
 
-        {/* Right side - Pause */}
+        {/* Right - Pause */}
         <button
           onClick={pauseGame}
-          className="pointer-events-auto w-10 h-10 rounded-xl bg-dark-900/80 backdrop-blur-sm flex items-center justify-center hover:bg-dark-800 transition-colors"
+          className="pointer-events-auto w-10 h-10 rounded-xl bg-black/60 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
         >
-          <Pause className="w-5 h-5 text-foam-100" />
+          <Pause className="w-5 h-5 text-white" />
         </button>
       </div>
 
-      {/* Active power-ups */}
-      <AnimatePresence>
-        {activePowerUps.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="absolute left-3 top-28 flex flex-col gap-2"
-          >
-            {activePowerUps.map(powerUp => (
-              <motion.div
-                key={powerUp.id}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                className="flex items-center gap-2 bg-dark-900/80 backdrop-blur-sm rounded-lg px-2 py-1.5"
-              >
-                <PowerUpIcon type={powerUp.id} />
-                <div className="w-12 h-1.5 bg-dark-700 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-beer-500 rounded-full"
-                    initial={{ width: '100%' }}
-                    animate={{ width: `${(powerUp.timeLeft / powerUp.duration) * 100}%` }}
-                  />
-                </div>
-                <span className="text-[10px] font-bold text-foam-300 w-4">
-                  {Math.ceil(powerUp.timeLeft)}
-                </span>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Active Power-ups */}
+      {activePowerUps.length > 0 && (
+        <div className="absolute left-3 top-24 flex flex-col gap-1.5">
+          {activePowerUps.map(pu => (
+            <div key={pu.id} className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1">
+              <PowerUpIcon type={pu.id} />
+              <div className="w-10 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-amber-500 rounded-full transition-all"
+                  style={{ width: `${(pu.timeLeft / pu.duration) * 100}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-bold text-white/70 w-3">{Math.ceil(pu.timeLeft)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Meters indicator - under score */}
+      <div className="absolute top-[70px] left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5">
+        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+        <span className="text-xs text-white font-bold">
+          {formatNumber(Math.floor(meters))} {language === 'ru' ? 'м' : 'm'}
+        </span>
+      </div>
     </div>
   )
 }
 
 function PowerUpIcon({ type }: { type: string }) {
-  const iconClass = "w-4 h-4"
-  
+  const size = "w-3.5 h-3.5"
   switch (type) {
-    case 'shield':
-      return <Shield className={`${iconClass} text-blue-400`} />
-    case 'double_shot':
-      return <Target className={`${iconClass} text-amber-400`} />
-    case 'speed_boost':
-      return <Zap className={`${iconClass} text-purple-400`} />
-    case 'triple_shot':
-      return <Flame className={`${iconClass} text-red-400`} />
-    default:
-      return null
+    case 'shield': return <Shield className={`${size} text-blue-400`} />
+    case 'double_shot': return <Target className={`${size} text-amber-400`} />
+    case 'speed_boost': return <Zap className={`${size} text-purple-400`} />
+    case 'triple_shot': return <Flame className={`${size} text-red-400`} />
+    default: return null
   }
 }

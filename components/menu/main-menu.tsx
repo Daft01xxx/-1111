@@ -1,28 +1,35 @@
 'use client'
 
-import { useGameStore } from '@/lib/store'
+import { useGameStore, translations } from '@/lib/store'
 import { formatNumber, getMultiplierTier } from '@/lib/utils'
-import { motion } from 'framer-motion'
 import { 
   Play, Trophy, Calendar, Swords, Music, Users, 
-  Skull, Wallet, Crown, Info, ShoppingBag, Coins
+  Skull, Wallet, Crown, Info, ShoppingBag, Sun, Moon
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react'
-import { useEffect } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 export function MainMenu() {
   const wallet = useTonWallet()
   const [tonConnectUI] = useTonConnectUI()
-  const { highScore, level, bossesDefeated, napiwasBalance, coins, setWallet, setMultiplier } = useGameStore()
+  const { 
+    highScore, level, napiwasBalance, coins,
+    setWallet, setMultiplier, theme, setTheme, language, setLanguage
+  } = useGameStore()
+  
+  const [mounted, setMounted] = useState(false)
 
-  // Update wallet state when connected
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   useEffect(() => {
     if (wallet) {
       const address = wallet.account.address
       const mockBalance = Math.floor(Math.random() * 50000) + 1000
       setWallet(address, mockBalance)
-      
       const tier = getMultiplierTier(mockBalance)
       setMultiplier(tier.multiplier)
     } else {
@@ -31,232 +38,190 @@ export function MainMenu() {
     }
   }, [wallet, setWallet, setMultiplier])
 
-  const tier = getMultiplierTier(napiwasBalance)
+  useEffect(() => {
+    if (mounted) {
+      document.documentElement.classList.toggle('light', theme === 'light')
+    }
+  }, [theme, mounted])
 
-  const menuItems = [
-    { icon: Play, label: 'Play', href: '/play', primary: true },
-    { icon: ShoppingBag, label: 'Shop', href: '/shop' },
-    { icon: Trophy, label: 'Leaderboard', href: '/leaderboard' },
-    { icon: Calendar, label: 'Daily', href: '/daily' },
-    { icon: Swords, label: 'PvP', href: '/pvp' },
-    { icon: Skull, label: 'Bosses', href: '/bosses' },
-    { icon: Music, label: 'Music', href: '/music' },
-    { icon: Info, label: 'How to Play', href: '/guide' },
-  ]
+  const tier = getMultiplierTier(napiwasBalance)
+  const t = translations[language]
+  const isDark = theme === 'dark'
+
+  const handleWalletClick = useCallback(() => {
+    if (wallet) {
+      tonConnectUI.disconnect()
+    } else {
+      tonConnectUI.openModal()
+    }
+  }, [wallet, tonConnectUI])
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[rgb(var(--background))] flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full gold-gradient animate-pulse-subtle" />
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-dark-950 flex flex-col">
-      {/* Header with wallet */}
-      <header className="p-4">
+    <div className="min-h-screen flex flex-col bg-[rgb(var(--background))] safe-top overflow-hidden">
+      {/* Header */}
+      <header className="flex-shrink-0 px-4 py-3">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <motion.div
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="flex items-center gap-2"
+          {/* Theme Toggle */}
+          <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            className="w-10 h-10 rounded-xl bg-[rgb(var(--muted))] flex items-center justify-center active:scale-95 transition-transform"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
-              <CatIcon />
-            </div>
-            <span className="text-xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400">COSMIC CATS</span>
-          </motion.div>
+            {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
+          </button>
 
-          {/* Wallet button */}
-          <motion.button
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            onClick={() => wallet ? tonConnectUI.disconnect() : tonConnectUI.openModal()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-800 border border-dark-600 hover:border-amber-500/50 transition-colors"
+          {/* Coins */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[rgb(var(--muted))]">
+            <span className="text-amber-400 font-bold">{formatNumber(coins)}</span>
+            <span className="text-xs text-[rgb(var(--muted-foreground))]">{language === 'ru' ? 'монет' : 'coins'}</span>
+          </div>
+
+          {/* Language Toggle */}
+          <button
+            onClick={() => setLanguage(language === 'ru' ? 'en' : 'ru')}
+            className="w-10 h-10 rounded-xl bg-[rgb(var(--muted))] flex items-center justify-center active:scale-95 transition-transform"
           >
-            <Wallet className="w-4 h-4 text-amber-400" />
-            <span className="text-sm font-medium text-foam-100">
-              {wallet 
-                ? `${wallet.account.address.slice(0, 4)}...${wallet.account.address.slice(-4)}`
-                : 'Connect'
-              }
-            </span>
-          </motion.button>
+            <span className="font-bold text-sm">{language.toUpperCase()}</span>
+          </button>
         </div>
       </header>
 
-      {/* Hero section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="px-4 py-6"
-      >
-        {/* Cat hero animation */}
-        <div className="relative h-40 flex items-center justify-center mb-4">
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-            className="relative"
-          >
-            {/* Glow effect */}
-            <div className="absolute inset-0 blur-3xl bg-orange-500/30 rounded-full scale-150" />
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col px-4 pb-4 overflow-y-auto no-scrollbar">
+        {/* Hero Logo */}
+        <div className="flex flex-col items-center py-6">
+          <div className="relative mb-4">
+            {/* Glow */}
+            <div className="absolute inset-0 blur-3xl bg-amber-500/30 rounded-full scale-150" />
             
-            {/* Orange Cat SVG */}
-            <svg width="120" height="140" viewBox="0 0 120 140" className="relative z-10">
-              {/* Body */}
-              <ellipse cx="60" cy="95" rx="35" ry="30" fill="#FF8C42" stroke="#CC6B2E" strokeWidth="3"/>
-              
-              {/* Head */}
-              <circle cx="60" cy="50" r="32" fill="#FF8C42" stroke="#CC6B2E" strokeWidth="3"/>
-              
-              {/* Ears */}
-              <path d="M30 40 L20 10 L45 30 Z" fill="#FF8C42" stroke="#CC6B2E" strokeWidth="2"/>
-              <path d="M90 40 L100 10 L75 30 Z" fill="#FF8C42" stroke="#CC6B2E" strokeWidth="2"/>
-              <path d="M33 38 L26 15 L43 32 Z" fill="#FFB6C1"/>
-              <path d="M87 38 L94 15 L77 32 Z" fill="#FFB6C1"/>
-              
-              {/* Eyes */}
-              <ellipse cx="45" cy="48" rx="8" ry="10" fill="#90EE90"/>
-              <ellipse cx="75" cy="48" rx="8" ry="10" fill="#90EE90"/>
-              <ellipse cx="45" cy="50" rx="4" ry="6" fill="#111"/>
-              <ellipse cx="75" cy="50" rx="4" ry="6" fill="#111"/>
-              <circle cx="43" cy="46" r="2" fill="#fff"/>
-              <circle cx="73" cy="46" r="2" fill="#fff"/>
-              
-              {/* Nose */}
-              <path d="M60 58 L55 65 L65 65 Z" fill="#FF6B6B"/>
-              
-              {/* Mouth */}
-              <path d="M60 65 L60 72" stroke="#CC6B2E" strokeWidth="2"/>
-              <path d="M60 72 Q50 78 45 74" stroke="#CC6B2E" strokeWidth="2" fill="none"/>
-              <path d="M60 72 Q70 78 75 74" stroke="#CC6B2E" strokeWidth="2" fill="none"/>
-              
-              {/* Whiskers */}
-              <line x1="40" y1="60" x2="15" y2="55" stroke="#8B4513" strokeWidth="1.5"/>
-              <line x1="40" y1="65" x2="15" y2="65" stroke="#8B4513" strokeWidth="1.5"/>
-              <line x1="80" y1="60" x2="105" y2="55" stroke="#8B4513" strokeWidth="1.5"/>
-              <line x1="80" y1="65" x2="105" y2="65" stroke="#8B4513" strokeWidth="1.5"/>
-              
-              {/* Tail */}
-              <path d="M95 95 Q115 80 110 60 Q108 50 100 55" stroke="#FF8C42" strokeWidth="8" fill="none" strokeLinecap="round">
-                <animate attributeName="d" 
-                  values="M95 95 Q115 80 110 60 Q108 50 100 55;M95 95 Q120 85 115 65 Q112 55 105 60;M95 95 Q115 80 110 60 Q108 50 100 55" 
-                  dur="2s" repeatCount="indefinite"/>
-              </path>
-              <path d="M95 95 Q115 80 110 60 Q108 50 100 55" stroke="#CC6B2E" strokeWidth="3" fill="none" strokeLinecap="round">
-                <animate attributeName="d" 
-                  values="M95 95 Q115 80 110 60 Q108 50 100 55;M95 95 Q120 85 115 65 Q112 55 105 60;M95 95 Q115 80 110 60 Q108 50 100 55" 
-                  dur="2s" repeatCount="indefinite"/>
-              </path>
-              
-              {/* Sparkles */}
-              <circle cx="25" cy="35" r="3" fill="#FFD700">
-                <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/>
-              </circle>
-              <circle cx="95" cy="30" r="2" fill="#FFD700">
-                <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite"/>
-              </circle>
-              <circle cx="110" cy="90" r="2.5" fill="#FFD700">
-                <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
-              </circle>
-            </svg>
-          </motion.div>
+            {/* Logo */}
+            <div className="relative w-32 h-32 rounded-full overflow-hidden ring-4 ring-amber-500/50 shadow-2xl animate-float">
+              <Image 
+                src="/images/napiwas-logo.jpg" 
+                alt="NAPIWAS" 
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
+            
+            {/* Level Badge */}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 gold-gradient text-[#1a1a1a] text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+              LVL {level}
+            </div>
+          </div>
+
+          {/* Title */}
+          <h1 className="text-3xl font-bold gold-text mb-1">NAPIWAS</h1>
+          <p className="text-sm text-[rgb(var(--muted-foreground))]">{language === 'ru' ? 'Кот против Пива' : 'Cat vs Beer'}</p>
         </div>
 
-        {/* Stats card */}
-        <div className="bg-dark-900/80 rounded-2xl border border-dark-700 p-4 space-y-3">
-          {/* Coin balance */}
-          <div className="flex items-center justify-between bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-xl p-3 border border-amber-500/20">
-            <div className="flex items-center gap-2">
-              <Coins className="w-5 h-5 text-amber-400" />
-              <span className="text-sm text-foam-400">Coins</span>
-            </div>
-            <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">{formatNumber(coins)}</span>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="bg-[rgb(var(--card))] rounded-xl p-3 text-center border border-[rgb(var(--border))]">
+            <p className="text-xs text-[rgb(var(--muted-foreground))] mb-1">{t.highScore}</p>
+            <p className="text-lg font-bold gold-text">{formatNumber(highScore)}</p>
           </div>
-          
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-foam-400">High Score</span>
-            <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400">{formatNumber(highScore)}</span>
+          <div className="bg-[rgb(var(--card))] rounded-xl p-3 text-center border border-[rgb(var(--border))]">
+            <p className="text-xs text-[rgb(var(--muted-foreground))] mb-1">{t.level}</p>
+            <p className="text-lg font-bold">{level}</p>
           </div>
-          
-          <div className="flex gap-3">
-            <div className="flex-1 bg-dark-800 rounded-xl p-3 text-center">
-              <p className="text-xs text-foam-400">Level</p>
-              <p className="text-lg font-bold text-foam-100">{level}</p>
-            </div>
-            <div className="flex-1 bg-dark-800 rounded-xl p-3 text-center">
-              <p className="text-xs text-foam-400">Bosses</p>
-              <p className="text-lg font-bold text-foam-100">{bossesDefeated}/5</p>
-            </div>
-            <div className="flex-1 bg-dark-800 rounded-xl p-3 text-center">
-              <p className="text-xs text-foam-400">Multiplier</p>
-              <p className="text-lg font-bold" style={{ color: tier.color }}>x{tier.multiplier}</p>
-            </div>
+          <div className="bg-[rgb(var(--card))] rounded-xl p-3 text-center border border-[rgb(var(--border))]">
+            <p className="text-xs text-[rgb(var(--muted-foreground))] mb-1">{t.multiplier}</p>
+            <p className="text-lg font-bold" style={{ color: tier.color }}>x{tier.multiplier}</p>
           </div>
+        </div>
 
-          {/* Tier progress */}
+        {/* Play Button */}
+        <Link 
+          href="/play"
+          className="w-full py-4 rounded-2xl gold-gradient text-[#1a1a1a] font-bold text-lg flex items-center justify-center gap-2 mb-4 active:scale-[0.98] transition-transform glow-gold"
+        >
+          <Play className="w-6 h-6" />
+          {t.play}
+        </Link>
+
+        {/* Menu Grid */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <MenuLink href="/leaderboard" icon={Trophy} label={t.leaderboard} delay={50} />
+          <MenuLink href="/daily" icon={Calendar} label={t.daily} delay={100} />
+          <MenuLink href="/pvp" icon={Swords} label={t.pvp} delay={150} />
+          <MenuLink href="/bosses" icon={Skull} label={t.bosses} delay={200} />
+          <MenuLink href="/shop" icon={ShoppingBag} label={t.shop} delay={250} />
+          <MenuLink href="/music" icon={Music} label={t.music} delay={300} />
+        </div>
+
+        {/* Secondary Links */}
+        <div className="grid grid-cols-2 gap-2">
+          <MenuLink href="/partners" icon={Users} label={t.partners} small delay={350} />
+          <MenuLink href="/guide" icon={Info} label={t.guide} small delay={400} />
+        </div>
+
+        {/* Spacer */}
+        <div className="flex-1 min-h-4" />
+
+        {/* Wallet Section */}
+        <div className="mt-4 space-y-2">
+          <button
+            onClick={handleWalletClick}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgb(var(--muted))] border border-[rgb(var(--border))] active:scale-[0.98] transition-transform"
+          >
+            <Wallet className="w-5 h-5 text-amber-500" />
+            <span className="font-medium">
+              {wallet 
+                ? `${wallet.account.address.slice(0, 6)}...${wallet.account.address.slice(-4)}`
+                : t.connect
+              }
+            </span>
+          </button>
+
           {wallet && (
-            <div className="pt-2 border-t border-dark-700">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1">
-                  <Crown className="w-4 h-4" style={{ color: tier.color }} />
-                  <span className="text-xs font-bold" style={{ color: tier.color }}>{tier.tier}</span>
-                </div>
-                <span className="text-xs text-foam-400">{formatNumber(napiwasBalance)} tokens</span>
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[rgb(var(--card))] border border-[rgb(var(--border))]">
+              <div className="flex items-center gap-2">
+                <Crown className="w-4 h-4" style={{ color: tier.color }} />
+                <span className="text-sm font-medium" style={{ color: tier.color }}>{tier.tier}</span>
               </div>
-              <p className="text-[10px] text-foam-500">
-                Hold more tokens for higher score multipliers!
-              </p>
+              <span className="text-sm text-[rgb(var(--muted-foreground))]">
+                {formatNumber(napiwasBalance)} NAPIWAS
+              </span>
             </div>
           )}
         </div>
-      </motion.div>
-
-      {/* Menu grid */}
-      <div className="flex-1 px-4 pb-6">
-        <div className="grid grid-cols-2 gap-3">
-          {menuItems.map((item, index) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 + index * 0.05 }}
-            >
-              <Link
-                href={item.href}
-                className={`
-                  flex items-center gap-3 p-4 rounded-xl transition-all
-                  ${item.primary 
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-dark-950 font-bold col-span-2 justify-center py-5 shadow-lg shadow-orange-500/30'
-                    : item.label === 'Shop'
-                      ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-foam-100 border border-amber-500/30 hover:border-amber-500/50'
-                      : 'bg-dark-800 text-foam-100 hover:bg-dark-700 border border-dark-600 hover:border-amber-500/50'
-                  }
-                `}
-              >
-                <item.icon className={`w-5 h-5 ${item.primary ? '' : item.label === 'Shop' ? 'text-amber-400' : 'text-amber-400'}`} />
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Admin link (hidden) */}
-        <Link 
-          href="/admin"
-          className="block mt-4 text-center text-xs text-dark-600 hover:text-foam-400 transition-colors"
-        >
-          Admin Access
-        </Link>
-      </div>
+      </main>
     </div>
   )
 }
 
-function CatIcon() {
+function MenuLink({ 
+  href, 
+  icon: Icon, 
+  label, 
+  small,
+  delay = 0
+}: { 
+  href: string
+  icon: React.ElementType
+  label: string
+  small?: boolean
+  delay?: number
+}) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="13" r="7" fill="#0d0d0d"/>
-      <path d="M6 10 L4 4 L9 8 Z" fill="#0d0d0d"/>
-      <path d="M18 10 L20 4 L15 8 Z" fill="#0d0d0d"/>
-      <circle cx="9" cy="12" r="1.5" fill="#90EE90"/>
-      <circle cx="15" cy="12" r="1.5" fill="#90EE90"/>
-      <path d="M12 14 L11 16 L13 16 Z" fill="#FF6B6B"/>
-    </svg>
+    <Link
+      href={href}
+      style={{ animationDelay: `${delay}ms` }}
+      className={`flex items-center gap-2 rounded-xl bg-[rgb(var(--card))] border border-[rgb(var(--border))] active:scale-[0.97] transition-transform animate-fadeInUp ${
+        small ? 'py-2.5 px-3' : 'py-3.5 px-4'
+      }`}
+    >
+      <Icon className={`text-amber-500 flex-shrink-0 ${small ? 'w-4 h-4' : 'w-5 h-5'}`} />
+      <span className={`font-medium truncate ${small ? 'text-sm' : ''}`}>{label}</span>
+    </Link>
   )
 }

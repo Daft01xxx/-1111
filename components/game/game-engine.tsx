@@ -3,1054 +3,1106 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useGameStore } from '@/lib/store'
 
-interface Entity {
-  x: number
-  y: number
-  width: number
-  height: number
-  velocityX: number
-  velocityY: number
+interface Vec2 { x: number; y: number }
+interface Entity extends Vec2 { w: number; h: number }
+interface Projectile extends Entity { vx: number; vy: number; dmg: number; enemy: boolean; color: string }
+interface Enemy extends Entity { hp: number; maxHp: number; pts: number; type: number; frame: number }
+interface PowerUp extends Entity { type: 'shield' | 'double' | 'speed' | 'health' | 'weapon' }
+interface Boss extends Entity { hp: number; maxHp: number; frame: number; phase: number; level: number }
+
+const C = {
+  bg: '#0A0A0B',
+  cat: '#F97316',
+  catLight: '#FB923C',
+  catDark: '#C2410C',
+  beer: '#F59E0B',
+  beerLight: '#FCD34D',
+  beerDark: '#B45309',
+  foam: '#FEF3C7',
+  gold: '#D4AF37',
+  shield: '#3B82F6',
+  health: '#22C55E',
+  red: '#EF4444',
 }
 
-interface Projectile extends Entity {
-  damage: number
-  isEnemy: boolean
-}
-
-interface Enemy extends Entity {
-  health: number
-  maxHealth: number
-  points: number
-  type: 'small' | 'medium' | 'large' | 'boss'
-  animFrame: number
-}
-
-interface PowerUpItem extends Entity {
-  type: 'shield' | 'double_shot' | 'speed_boost' | 'triple_shot' | 'health' | 'coin'
-}
-
-interface Player extends Entity {
-  baseSpeed: number
-  animFrame: number
-  animTimer: number
-}
-
-interface Particle {
-  x: number
-  y: number
-  velocityX: number
-  velocityY: number
-  life: number
-  maxLife: number
-  color: string
-  size: number
-}
+const BOSS_INTERVAL = 60000 // Boss every 60 seconds (1 minute)
+const WEAPON_DROP_CHANCE = 0.01 // 1% from enemies
+const BOSS_WEAPON_DROP_CHANCE = 0.30 // 30% from boss
 
 export function GameEngine() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const gameLoopRef = useRef<number | null>(null)
+  const frameRef = useRef<number>(0)
   const lastTimeRef = useRef<number>(0)
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const lastFireRef = useRef<number>(0)
+  const touchRef = useRef<number | null>(null)
+  const bossSpawnTimeRef = useRef<number>(0)
   
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
+  const [size, setSize] = useState({ w: 0, h: 0 })
   
+  const store = useGameStore()
   const {
-    isPlaying,
-    isPaused,
-    gameOver,
-    score,
-    addScore,
-    takeDamage,
-    heal,
-    hasShield,
-    hasDoubleShot,
-    hasTripleShot,
-    hasSpeedBoost,
-    activatePowerUp,
-    updatePowerUpTimers,
-    weapons,
-    currentWeaponIndex,
-    endGame,
-    currentSkin,
-    incrementKills,
-    addCoins,
-    setGamePhase,
-  } = useGameStore()
+    isPlaying, isPaused, health, addScore, addMeters, checkLevelUp,
+    takeDamage, heal, hasShield, hasDoubleShot, hasTripleShot, hasSpeedBoost,
+    activatePowerUp, updatePowerUpTimers, weapons, currentWeaponIndex,
+    endGame, skins, currentSkinId, defeatBoss, lastBossTime, dropWeapon, language
+  } = store
 
-  // Game state refs (not reactive, for performance)
-  const playerRef = useRef<Player>({
-    x: 0,
-    y: 0,
-    width: 50,
-    height: 50,
-    velocityX: 0,
-    velocityY: 0,
-    baseSpeed: 450, // Increased from 300
-    animFrame: 0,
-    animTimer: 0,
-  })
-  
+  const playerRef = useRef({ x: 0, y: 0, frame: 0 })
   const projectilesRef = useRef<Projectile[]>([])
   const enemiesRef = useRef<Enemy[]>([])
-  const powerUpsRef = useRef<PowerUpItem[]>([])
-  const particlesRef = useRef<Particle[]>([])
-  const lastFireTimeRef = useRef<number>(0)
-  const spawnTimerRef = useRef<number>(0)
-  const difficultyRef = useRef<number>(1)
-  const screenShakeRef = useRef<number>(0)
-  const bossSpawnScoreRef = useRef<number>(500) // First boss at 500 points
-  const bossActiveRef = useRef<boolean>(false)
-  
-  // Draw cute orange cat player - enhanced visuals
-  const drawOrangeCat = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, hasShieldActive: boolean, skin: string, animFrame: number) => {
-    ctx.save()
-    
-    const centerX = x + width / 2
-    const centerY = y + height / 2
-    const bounce = Math.sin(animFrame * 0.15) * 2
-    const breathe = Math.sin(animFrame * 0.08) * 0.02 + 1 // Subtle breathing effect
-    
-    // Get colors based on skin
-    const skinColors = getSkinColors(skin)
-    
-    // Outer glow effect (always visible, color based on skin)
-    const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width * 1.2)
-    glowGradient.addColorStop(0, skinColors.body + '20')
-    glowGradient.addColorStop(0.5, skinColors.body + '10')
-    glowGradient.addColorStop(1, 'transparent')
-    ctx.fillStyle = glowGradient
-    ctx.beginPath()
-    ctx.arc(centerX, centerY, width * 1.2, 0, Math.PI * 2)
-    ctx.fill()
-    
-    // Shield effect
-    if (hasShieldActive) {
-      ctx.beginPath()
-      ctx.arc(centerX, centerY, width * 0.9, 0, Math.PI * 2)
-      const shieldGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width * 0.9)
-      shieldGradient.addColorStop(0, 'rgba(100, 200, 255, 0)')
-      shieldGradient.addColorStop(0.6, 'rgba(100, 200, 255, 0.15)')
-      shieldGradient.addColorStop(0.85, 'rgba(100, 200, 255, 0.4)')
-      shieldGradient.addColorStop(1, 'rgba(150, 220, 255, 0.6)')
-      ctx.fillStyle = shieldGradient
-      ctx.fill()
-      
-      // Shield ring
-      ctx.strokeStyle = 'rgba(150, 220, 255, 0.8)'
-      ctx.lineWidth = 2
-      ctx.stroke()
+  const powerUpsRef = useRef<PowerUp[]>([])
+  const bossRef = useRef<Boss | null>(null)
+  const spawnTimerRef = useRef(0.81)
+  const metersRef = useRef(0)
+  const starsRef = useRef<{x: number; y: number; size: number; speed: number}[]>([])
+  const playerSpriteRef = useRef<HTMLImageElement | null>(null)
+
+  const skin = skins.find(s => s.id === currentSkinId) || skins[0]
+  const weapon = weapons[currentWeaponIndex]
+
+  // Initialize stars
+  useEffect(() => {
+    starsRef.current = Array.from({ length: 60 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: Math.random() * 2 + 0.5,
+      speed: Math.random() * 80 + 40
+    }))
+  }, [])
+
+  useEffect(() => {
+    const sprite = new window.Image()
+    sprite.decoding = 'async'
+    sprite.src = '/images/napiwas-logo.jpg'
+    sprite.onload = () => {
+      playerSpriteRef.current = sprite
     }
-    
-    // Cat body (oval)
+    sprite.onerror = () => {
+      playerSpriteRef.current = null
+    }
+  }, [])
+
+  // Resize handler - make player higher to not be covered by controls
+  useEffect(() => {
+    const resize = () => {
+      const w = window.innerWidth
+      const h = window.innerHeight
+      setSize({ w, h })
+      playerRef.current.x = w / 2 - 30
+      playerRef.current.y = h - 280 // Much higher position - well above weapon panel and controls
+    }
+    resize()
+    window.addEventListener('resize', resize)
+    return () => window.removeEventListener('resize', resize)
+  }, [])
+
+  // Draw a more detailed hero cat
+  const drawCat = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, frame: number, shielded: boolean) => {
+    const glide = Math.sin(frame * 0.1) * 3
+    const pawMove = Math.sin(frame * 0.15) * 5
+    const flameKick = Math.sin(frame * 0.35) * 4
+    const color = skin.color || C.cat
+    const colorLight = color === C.cat ? C.catLight : color
+    const sprite = playerSpriteRef.current
+
+    ctx.save()
+
     ctx.beginPath()
-    ctx.ellipse(centerX, centerY + bounce, width * 0.35, height * 0.4, 0, 0, Math.PI * 2)
-    ctx.fillStyle = skinColors.body
+    ctx.ellipse(x + 30, y + 60, 26, 10, 0, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(0,0,0,0.28)'
     ctx.fill()
-    ctx.strokeStyle = skinColors.outline
-    ctx.lineWidth = 2
-    ctx.stroke()
-    
-    // Cat head
+
+    if (shielded) {
+      ctx.beginPath()
+      ctx.arc(x + 30, y + 25, 50, 0, Math.PI * 2)
+      const grad = ctx.createRadialGradient(x + 30, y + 25, 20, x + 30, y + 25, 50)
+      grad.addColorStop(0, 'rgba(59,130,246,0)')
+      grad.addColorStop(0.7, 'rgba(59,130,246,0.25)')
+      grad.addColorStop(1, 'rgba(59,130,246,0.6)')
+      ctx.fillStyle = grad
+      ctx.fill()
+    }
+
+    if (sprite?.complete) {
+      ctx.fillStyle = '#DC2626'
+      ctx.beginPath()
+      ctx.moveTo(x + 14, y + 24)
+      ctx.quadraticCurveTo(x + 30, y + 58 + glide, x + 10, y + 72 + glide * 2)
+      ctx.quadraticCurveTo(x + 30, y + 66 + glide, x + 50, y + 72 + glide * 2)
+      ctx.quadraticCurveTo(x + 30, y + 58 + glide, x + 46, y + 24)
+      ctx.fill()
+
+      const jetGrad = ctx.createLinearGradient(x + 30, y + 52, x + 30, y + 88)
+      jetGrad.addColorStop(0, 'rgba(255,255,255,0.92)')
+      jetGrad.addColorStop(0.35, '#FDE68A')
+      jetGrad.addColorStop(0.7, '#FB923C')
+      jetGrad.addColorStop(1, 'rgba(251,146,60,0)')
+      ctx.fillStyle = jetGrad
+      ctx.beginPath()
+      ctx.moveTo(x + 22, y + 46)
+      ctx.quadraticCurveTo(x + 30, y + 76 + flameKick, x + 38, y + 46)
+      ctx.closePath()
+      ctx.fill()
+
+      ctx.beginPath()
+      ctx.arc(x + 30, y + 24 + glide, 31, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(249,115,22,0.16)'
+      ctx.fill()
+
+      ctx.beginPath()
+      ctx.arc(x + 30, y + 24 + glide, 29, 0, Math.PI * 2)
+      ctx.fillStyle = '#120D0A'
+      ctx.fill()
+
+      ctx.beginPath()
+      ctx.arc(x + 30, y + 24 + glide, 30, 0, Math.PI * 2)
+      ctx.strokeStyle = color
+      ctx.lineWidth = 3
+      ctx.stroke()
+
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(x + 30, y + 24 + glide, 27, 0, Math.PI * 2)
+      ctx.clip()
+      ctx.drawImage(sprite, x + 3, y - 3 + glide, 54, 54)
+      ctx.restore()
+
+      ctx.beginPath()
+      ctx.arc(x + 22, y + 15 + glide, 6, 0, Math.PI * 2)
+      const sheen = ctx.createRadialGradient(x + 20, y + 13 + glide, 0, x + 22, y + 15 + glide, 10)
+      sheen.addColorStop(0, 'rgba(255,255,255,0.35)')
+      sheen.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.fillStyle = sheen
+      ctx.fill()
+
+      ctx.restore()
+      return
+    }
+
+    ctx.fillStyle = '#DC2626'
     ctx.beginPath()
-    ctx.arc(centerX, y + height * 0.3 + bounce, width * 0.32, 0, Math.PI * 2)
-    ctx.fillStyle = skinColors.body
+    ctx.moveTo(x + 15, y + 20)
+    ctx.quadraticCurveTo(x + 30, y + 60 + glide, x + 10, y + 70 + glide * 2)
+    ctx.quadraticCurveTo(x + 30, y + 65 + glide, x + 50, y + 70 + glide * 2)
+    ctx.quadraticCurveTo(x + 30, y + 60 + glide, x + 45, y + 20)
     ctx.fill()
-    ctx.strokeStyle = skinColors.outline
-    ctx.lineWidth = 2
-    ctx.stroke()
-    
-    // Ears
-    const earSize = width * 0.15
-    // Left ear
+
+    const jetGrad = ctx.createLinearGradient(x + 30, y + 48, x + 30, y + 78)
+    jetGrad.addColorStop(0, 'rgba(255,255,255,0.9)')
+    jetGrad.addColorStop(0.35, '#FDE68A')
+    jetGrad.addColorStop(0.7, '#FB923C')
+    jetGrad.addColorStop(1, 'rgba(251,146,60,0)')
+    ctx.fillStyle = jetGrad
     ctx.beginPath()
-    ctx.moveTo(centerX - width * 0.22, y + height * 0.15 + bounce)
-    ctx.lineTo(centerX - width * 0.35, y - height * 0.05 + bounce)
-    ctx.lineTo(centerX - width * 0.08, y + height * 0.12 + bounce)
+    ctx.moveTo(x + 24, y + 42)
+    ctx.quadraticCurveTo(x + 30, y + 68 + flameKick, x + 36, y + 42)
     ctx.closePath()
-    ctx.fillStyle = skinColors.body
     ctx.fill()
-    ctx.strokeStyle = skinColors.outline
-    ctx.stroke()
-    // Inner ear
+
     ctx.beginPath()
-    ctx.moveTo(centerX - width * 0.2, y + height * 0.15 + bounce)
-    ctx.lineTo(centerX - width * 0.28, y + height * 0.02 + bounce)
-    ctx.lineTo(centerX - width * 0.12, y + height * 0.13 + bounce)
-    ctx.closePath()
-    ctx.fillStyle = skinColors.innerEar
-    ctx.fill()
-    
-    // Right ear
-    ctx.beginPath()
-    ctx.moveTo(centerX + width * 0.22, y + height * 0.15 + bounce)
-    ctx.lineTo(centerX + width * 0.35, y - height * 0.05 + bounce)
-    ctx.lineTo(centerX + width * 0.08, y + height * 0.12 + bounce)
-    ctx.closePath()
-    ctx.fillStyle = skinColors.body
-    ctx.fill()
-    ctx.strokeStyle = skinColors.outline
-    ctx.stroke()
-    // Inner ear
-    ctx.beginPath()
-    ctx.moveTo(centerX + width * 0.2, y + height * 0.15 + bounce)
-    ctx.lineTo(centerX + width * 0.28, y + height * 0.02 + bounce)
-    ctx.lineTo(centerX + width * 0.12, y + height * 0.13 + bounce)
-    ctx.closePath()
-    ctx.fillStyle = skinColors.innerEar
-    ctx.fill()
-    
-    // Eyes
-    const eyeY = y + height * 0.28 + bounce
-    const eyeSpacing = width * 0.12
-    
-    // Left eye
-    ctx.beginPath()
-    ctx.ellipse(centerX - eyeSpacing, eyeY, width * 0.08, height * 0.1, 0, 0, Math.PI * 2)
-    ctx.fillStyle = skinColors.eyes
-    ctx.fill()
-    // Pupil
-    ctx.beginPath()
-    ctx.ellipse(centerX - eyeSpacing, eyeY + 1, width * 0.04, height * 0.06, 0, 0, Math.PI * 2)
-    ctx.fillStyle = '#111'
-    ctx.fill()
-    // Eye shine
-    ctx.beginPath()
-    ctx.arc(centerX - eyeSpacing - 2, eyeY - 2, width * 0.02, 0, Math.PI * 2)
-    ctx.fillStyle = '#fff'
-    ctx.fill()
-    
-    // Right eye
-    ctx.beginPath()
-    ctx.ellipse(centerX + eyeSpacing, eyeY, width * 0.08, height * 0.1, 0, 0, Math.PI * 2)
-    ctx.fillStyle = skinColors.eyes
-    ctx.fill()
-    // Pupil
-    ctx.beginPath()
-    ctx.ellipse(centerX + eyeSpacing, eyeY + 1, width * 0.04, height * 0.06, 0, 0, Math.PI * 2)
-    ctx.fillStyle = '#111'
-    ctx.fill()
-    // Eye shine
-    ctx.beginPath()
-    ctx.arc(centerX + eyeSpacing - 2, eyeY - 2, width * 0.02, 0, Math.PI * 2)
-    ctx.fillStyle = '#fff'
-    ctx.fill()
-    
-    // Nose
-    ctx.beginPath()
-    ctx.moveTo(centerX, y + height * 0.38 + bounce)
-    ctx.lineTo(centerX - width * 0.04, y + height * 0.42 + bounce)
-    ctx.lineTo(centerX + width * 0.04, y + height * 0.42 + bounce)
-    ctx.closePath()
-    ctx.fillStyle = skinColors.nose
-    ctx.fill()
-    
-    // Mouth
-    ctx.beginPath()
-    ctx.moveTo(centerX, y + height * 0.42 + bounce)
-    ctx.lineTo(centerX, y + height * 0.46 + bounce)
-    ctx.quadraticCurveTo(centerX - width * 0.08, y + height * 0.5 + bounce, centerX - width * 0.12, y + height * 0.46 + bounce)
-    ctx.strokeStyle = skinColors.outline
-    ctx.lineWidth = 1.5
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(centerX, y + height * 0.46 + bounce)
-    ctx.quadraticCurveTo(centerX + width * 0.08, y + height * 0.5 + bounce, centerX + width * 0.12, y + height * 0.46 + bounce)
-    ctx.stroke()
-    
-    // Whiskers
-    ctx.strokeStyle = skinColors.whiskers
-    ctx.lineWidth = 1
-    // Left whiskers
-    ctx.beginPath()
-    ctx.moveTo(centerX - width * 0.15, y + height * 0.4 + bounce)
-    ctx.lineTo(centerX - width * 0.4, y + height * 0.35 + bounce)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(centerX - width * 0.15, y + height * 0.43 + bounce)
-    ctx.lineTo(centerX - width * 0.4, y + height * 0.43 + bounce)
-    ctx.stroke()
-    // Right whiskers
-    ctx.beginPath()
-    ctx.moveTo(centerX + width * 0.15, y + height * 0.4 + bounce)
-    ctx.lineTo(centerX + width * 0.4, y + height * 0.35 + bounce)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(centerX + width * 0.15, y + height * 0.43 + bounce)
-    ctx.lineTo(centerX + width * 0.4, y + height * 0.43 + bounce)
-    ctx.stroke()
-    
-    // Tail (animated)
-    const tailWag = Math.sin(animFrame * 0.2) * 15
-    ctx.beginPath()
-    ctx.moveTo(centerX + width * 0.25, centerY + height * 0.25 + bounce)
-    ctx.quadraticCurveTo(
-      centerX + width * 0.5 + tailWag * 0.5, centerY + height * 0.1 + bounce,
-      centerX + width * 0.4 + tailWag, centerY - height * 0.2 + bounce
-    )
-    ctx.strokeStyle = skinColors.body
+    ctx.moveTo(x + 30, y + 45)
+    ctx.quadraticCurveTo(x + 30 + Math.sin(frame * 0.2) * 10, y + 65, x + 25 + Math.sin(frame * 0.15) * 8, y + 75)
+    ctx.strokeStyle = color
     ctx.lineWidth = 6
     ctx.lineCap = 'round'
     ctx.stroke()
-    ctx.strokeStyle = skinColors.outline
+
+    ctx.beginPath()
+    ctx.ellipse(x + 30, y + 31 + glide, 23, 13, 0, 0, Math.PI * 2)
+    const bodyGrad = ctx.createRadialGradient(x + 25, y + 25 + glide, 0, x + 30, y + 30 + glide, 24)
+    bodyGrad.addColorStop(0, '#FFD6A8')
+    bodyGrad.addColorStop(0.35, colorLight)
+    bodyGrad.addColorStop(1, color)
+    ctx.fillStyle = bodyGrad
+    ctx.fill()
+    ctx.strokeStyle = C.catDark
+    ctx.lineWidth = 1.75
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.moveTo(x + 14, y + 30 + glide)
+    ctx.quadraticCurveTo(x + 30, y + 24 + glide, x + 46, y + 30 + glide)
+    ctx.strokeStyle = 'rgba(255,240,220,0.55)'
+    ctx.lineWidth = 3
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.ellipse(x + 30, y + 35 + glide, 14, 7, 0, 0, Math.PI * 2)
+    ctx.fillStyle = C.foam
+    ctx.fill()
+
+    ctx.fillStyle = color
+    ctx.beginPath()
+    ctx.ellipse(x + 8 - pawMove, y + 15 + glide, 6, 4, -0.5, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.moveTo(x + 15, y + 25 + glide)
+    ctx.quadraticCurveTo(x + 5, y + 20 + glide, x + 8 - pawMove, y + 15 + glide)
+    ctx.strokeStyle = color
+    ctx.lineWidth = 8
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.ellipse(x + 52 + pawMove, y + 15 + glide, 6, 4, 0.5, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.moveTo(x + 45, y + 25 + glide)
+    ctx.quadraticCurveTo(x + 55, y + 20 + glide, x + 52 + pawMove, y + 15 + glide)
+    ctx.strokeStyle = color
+    ctx.lineWidth = 8
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.ellipse(x + 15, y + 48 + glide, 5, 4, -0.3, 0, Math.PI * 2)
+    ctx.ellipse(x + 45, y + 48 + glide, 5, 4, 0.3, 0, Math.PI * 2)
+    ctx.fillStyle = color
+    ctx.fill()
+
+    ctx.beginPath()
+    ctx.ellipse(x + 30, y + 8 + glide, 15, 12, 0, 0, Math.PI * 2)
+    const headGrad = ctx.createRadialGradient(x + 25, y + 4 + glide, 0, x + 30, y + 8 + glide, 15)
+    headGrad.addColorStop(0, '#FFE7C7')
+    headGrad.addColorStop(0.35, colorLight)
+    headGrad.addColorStop(1, color)
+    ctx.fillStyle = headGrad
+    ctx.fill()
+    ctx.strokeStyle = C.catDark
+    ctx.lineWidth = 1.75
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.ellipse(x + 30, y + 10 + glide, 13, 8, 0, Math.PI, 0, true)
+    ctx.fillStyle = 'rgba(110,50,20,0.22)'
+    ctx.fill()
+
+    const drawEar = (ex: number, flip: number) => {
+      ctx.beginPath()
+      ctx.moveTo(ex, y + 4 + glide)
+      ctx.lineTo(ex + flip * 4, y - 10 + glide)
+      ctx.lineTo(ex + flip * 12, y + 2 + glide)
+      ctx.closePath()
+      ctx.fillStyle = color
+      ctx.fill()
+      ctx.strokeStyle = C.catDark
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+
+      ctx.beginPath()
+      ctx.moveTo(ex + flip * 2, y + 2 + glide)
+      ctx.lineTo(ex + flip * 4, y - 6 + glide)
+      ctx.lineTo(ex + flip * 10, y + 1 + glide)
+      ctx.closePath()
+      ctx.fillStyle = '#FFB6C1'
+      ctx.fill()
+    }
+    drawEar(x + 18, -1)
+    drawEar(x + 42, 1)
+
+    const blink = frame % 150 < 5
+    ctx.fillStyle = '#FFF'
+    ctx.beginPath()
+    ctx.ellipse(x + 23, y + 7 + glide, 5.2, blink ? 0.5 : 4.5, 0, 0, Math.PI * 2)
+    ctx.ellipse(x + 37, y + 7 + glide, 5.2, blink ? 0.5 : 4.5, 0, 0, Math.PI * 2)
+    ctx.fill()
+
+    if (!blink) {
+      ctx.fillStyle = '#2DD4BF'
+      ctx.beginPath()
+      ctx.ellipse(x + 23, y + 7 + glide, 3.1, 3.8, 0, 0, Math.PI * 2)
+      ctx.ellipse(x + 37, y + 7 + glide, 3.1, 3.8, 0, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = '#000'
+      ctx.beginPath()
+      ctx.ellipse(x + 23, y + 7 + glide, 1.4, 2.7, 0, 0, Math.PI * 2)
+      ctx.ellipse(x + 37, y + 7 + glide, 1.4, 2.7, 0, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = '#FFF'
+      ctx.beginPath()
+      ctx.arc(x + 21, y + 5 + glide, 1.4, 0, Math.PI * 2)
+      ctx.arc(x + 35, y + 5 + glide, 1.4, 0, Math.PI * 2)
+      ctx.fill()
+    }
+
+    ctx.fillStyle = '#FF69B4'
+    ctx.beginPath()
+    ctx.ellipse(x + 30, y + 13 + glide, 2.5, 2, 0, 0, Math.PI * 2)
+    ctx.fill()
+
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)'
+    ctx.lineWidth = 0.5
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath()
+      ctx.moveTo(x + 15, y + 12 + i * 2 + glide)
+      ctx.lineTo(x + 2, y + 10 + i * 3 + glide)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(x + 45, y + 12 + i * 2 + glide)
+      ctx.lineTo(x + 58, y + 10 + i * 3 + glide)
+      ctx.stroke()
+    }
+
+    ctx.strokeStyle = '#7C2D12'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(x + 30, y + 14 + glide)
+    ctx.lineTo(x + 30, y + 17 + glide)
+    ctx.moveTo(x + 30, y + 17 + glide)
+    ctx.quadraticCurveTo(x + 27, y + 19 + glide, x + 24, y + 17 + glide)
+    ctx.moveTo(x + 30, y + 17 + glide)
+    ctx.quadraticCurveTo(x + 33, y + 19 + glide, x + 36, y + 17 + glide)
+    ctx.stroke()
+
+    ctx.restore()
+  }, [skin.color])
+
+  const drawMeteorite = useCallback((ctx: CanvasRenderingContext2D, e: Enemy) => {
+    const { x, y, w, h, frame, hp, maxHp } = e
+    const spin = frame * 0.04
+    const cx = x + w / 2
+    const cy = y + h / 2
+
+    ctx.save()
+    ctx.translate(cx, cy)
+    ctx.rotate(spin)
+
+    const tailGrad = ctx.createLinearGradient(-w * 0.6, h * 0.1, 0, 0)
+    tailGrad.addColorStop(0, 'rgba(249,115,22,0)')
+    tailGrad.addColorStop(0.45, 'rgba(249,115,22,0.18)')
+    tailGrad.addColorStop(1, 'rgba(251,191,36,0.45)')
+    ctx.fillStyle = tailGrad
+    ctx.beginPath()
+    ctx.moveTo(-w * 0.55, h * 0.08)
+    ctx.quadraticCurveTo(-w * 0.95, h * 0.22, -w * 1.05, 0)
+    ctx.quadraticCurveTo(-w * 0.92, -h * 0.18, -w * 0.5, -h * 0.04)
+    ctx.closePath()
+    ctx.fill()
+
+    ctx.beginPath()
+    ctx.moveTo(-w * 0.34, -h * 0.22)
+    ctx.lineTo(w * 0.04, -h * 0.42)
+    ctx.lineTo(w * 0.33, -h * 0.18)
+    ctx.lineTo(w * 0.39, h * 0.12)
+    ctx.lineTo(w * 0.18, h * 0.38)
+    ctx.lineTo(-w * 0.18, h * 0.34)
+    ctx.lineTo(-w * 0.4, h * 0.06)
+    ctx.closePath()
+    const rockGrad = ctx.createRadialGradient(-w * 0.12, -h * 0.18, 0, 0, 0, w * 0.55)
+    rockGrad.addColorStop(0, '#FDE68A')
+    rockGrad.addColorStop(0.18, '#FB923C')
+    rockGrad.addColorStop(0.6, '#7C2D12')
+    rockGrad.addColorStop(1, '#29180F')
+    ctx.fillStyle = rockGrad
+    ctx.fill()
+    ctx.strokeStyle = '#F59E0B'
+    ctx.lineWidth = 2
+    ctx.stroke()
+
+    const crater = (craterX: number, craterY: number, rx: number, ry: number) => {
+      ctx.beginPath()
+      ctx.ellipse(craterX, craterY, rx, ry, 0, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(20,12,10,0.35)'
+      ctx.fill()
+      ctx.strokeStyle = 'rgba(255,237,213,0.08)'
+      ctx.lineWidth = 1
+      ctx.stroke()
+    }
+
+    crater(-w * 0.06, -h * 0.14, 6, 5)
+    crater(w * 0.18, h * 0.04, 5, 4)
+    crater(-w * 0.18, h * 0.15, 4, 3)
+
+    if (hp < maxHp) {
+      ctx.fillStyle = 'rgba(0,0,0,0.6)'
+      ctx.fillRect(-w * 0.32, h * 0.46, w * 0.64, 4)
+      ctx.fillStyle = hp / maxHp > 0.5 ? C.health : hp / maxHp > 0.25 ? C.beer : C.red
+      ctx.fillRect(-w * 0.32, h * 0.46, w * 0.64 * (hp / maxHp), 4)
+    }
+
+    ctx.restore()
+  }, [])
+
+  // Draw enemy
+  const drawBeerMug = useCallback((ctx: CanvasRenderingContext2D, e: Enemy) => {
+    if (e.type === 3) {
+      drawMeteorite(ctx, e)
+      return
+    }
+
+    const wobble = Math.sin(e.frame * 0.12) * 2
+    const { x, y, w, h, type, hp, maxHp } = e
+    const scale = 0.9 + type * 0.1
+    
+    ctx.save()
+    ctx.translate(x + w/2, y + h/2)
+    ctx.rotate(Math.sin(e.frame * 0.06) * 0.08)
+    ctx.scale(scale, scale)
+    ctx.translate(-w/2, -h/2)
+    
+    // Handle
+    ctx.beginPath()
+    ctx.moveTo(w - 2, h * 0.28)
+    ctx.quadraticCurveTo(w + 12, h * 0.38, w + 12, h * 0.52)
+    ctx.quadraticCurveTo(w + 12, h * 0.66, w - 2, h * 0.72)
+    ctx.strokeStyle = C.beerDark
+    ctx.lineWidth = 6
+    ctx.stroke()
+    ctx.strokeStyle = C.beer
+    ctx.lineWidth = 4
+    ctx.stroke()
+    
+    // Mug body
+    ctx.beginPath()
+    ctx.roundRect(4, h * 0.2, w - 8, h * 0.76, 4)
+    const mugGrad = ctx.createLinearGradient(0, 0, w, 0)
+    mugGrad.addColorStop(0, '#FCD34D')
+    mugGrad.addColorStop(0.4, '#F59E0B')
+    mugGrad.addColorStop(0.8, '#D97706')
+    ctx.fillStyle = mugGrad
+    ctx.fill()
+    ctx.strokeStyle = '#92400E'
     ctx.lineWidth = 2
     ctx.stroke()
     
-    // Speed boost trail effect
-    if (hasSpeedBoost) {
-      ctx.globalAlpha = 0.3
-      for (let i = 1; i <= 3; i++) {
-        ctx.beginPath()
-        ctx.ellipse(centerX, centerY + i * 15 + bounce, width * 0.3 - i * 3, height * 0.35 - i * 3, 0, 0, Math.PI * 2)
-        ctx.fillStyle = skinColors.body
-        ctx.fill()
-      }
-      ctx.globalAlpha = 1
+    // Beer liquid
+    ctx.beginPath()
+    ctx.roundRect(7, h * 0.35, w - 14, h * 0.58, 3)
+    const beerGrad = ctx.createLinearGradient(0, h * 0.35, 0, h * 0.93)
+    beerGrad.addColorStop(0, '#FCD34D')
+    beerGrad.addColorStop(0.4, '#F59E0B')
+    beerGrad.addColorStop(1, '#B45309')
+    ctx.fillStyle = beerGrad
+    ctx.fill()
+    
+    // Foam
+    ctx.fillStyle = C.foam
+    const foamY = h * 0.18 + wobble
+    ctx.beginPath()
+    ctx.ellipse(10, foamY, 8, 6, 0, 0, Math.PI * 2)
+    ctx.ellipse(w/2, foamY - 3, 9, 7, 0, 0, Math.PI * 2)
+    ctx.ellipse(w - 10, foamY, 8, 6, 0, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // Glass shine
+    ctx.fillStyle = 'rgba(255,255,255,0.22)'
+    ctx.beginPath()
+    ctx.roundRect(10, h * 0.28, 7, h * 0.48, 3)
+    ctx.fill()
+
+    // Foam bubbles
+    ctx.fillStyle = 'rgba(255,255,255,0.75)'
+    ctx.beginPath()
+    ctx.arc(w * 0.34, h * 0.17, 2.2, 0, Math.PI * 2)
+    ctx.arc(w * 0.52, h * 0.12, 2.5, 0, Math.PI * 2)
+    ctx.arc(w * 0.68, h * 0.17, 2, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // HP bar
+    if (hp < maxHp) {
+      ctx.fillStyle = 'rgba(0,0,0,0.6)'
+      ctx.fillRect(4, h + 3, w - 8, 4)
+      ctx.fillStyle = hp/maxHp > 0.5 ? C.health : hp/maxHp > 0.25 ? C.beer : C.red
+      ctx.fillRect(4, h + 3, (w - 8) * (hp/maxHp), 4)
     }
     
     ctx.restore()
-  }, [])
-  
-  // Get skin colors
-  const getSkinColors = (skin: string) => {
-    switch (skin) {
-      case 'space_suit':
-        return {
-          body: '#E8E8E8',
-          outline: '#666',
-          innerEar: '#FFB6C1',
-          eyes: '#87CEEB',
-          nose: '#FF6B6B',
-          whiskers: '#888',
-        }
-      case 'neon_glow':
-        return {
-          body: '#1a1a2e',
-          outline: '#00ff88',
-          innerEar: '#ff00ff',
-          eyes: '#00ffff',
-          nose: '#ff00ff',
-          whiskers: '#00ff88',
-        }
-      case 'golden_cat':
-        return {
-          body: '#FFD700',
-          outline: '#B8860B',
-          innerEar: '#FFF8DC',
-          eyes: '#4169E1',
-          nose: '#CD853F',
-          whiskers: '#B8860B',
-        }
-      case 'shadow_hunter':
-        return {
-          body: '#2d2d2d',
-          outline: '#111',
-          innerEar: '#444',
-          eyes: '#ff3333',
-          nose: '#333',
-          whiskers: '#555',
-        }
-      case 'cosmic_avatar':
-        return {
-          body: 'linear-gradient(#1a0033, #330066)',
-          outline: '#9933ff',
-          innerEar: '#ff66cc',
-          eyes: '#ffffff',
-          nose: '#cc33ff',
-          whiskers: '#9933ff',
-        }
-      default: // orange_default
-        return {
-          body: '#FF8C42',
-          outline: '#CC6B2E',
-          innerEar: '#FFB6C1',
-          eyes: '#90EE90',
-          nose: '#FF6B6B',
-          whiskers: '#8B4513',
-        }
-    }
-  }
-  
-  // Draw projectile (paw-shaped)
-  const drawProjectile = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number) => {
+  }, [drawMeteorite])
+
+  // Draw Boss Cat (appears every minute!)
+  const drawBoss = useCallback((ctx: CanvasRenderingContext2D, b: Boss) => {
+    const { x, y, w, h, frame, hp, maxHp, phase, level } = b
+    const pulse = Math.sin(frame * 0.06) * 6
+    const breathe = Math.sin(frame * 0.04) * 4
+    const isEnraged = hp < maxHp * 0.3
+    const color = isEnraged ? '#DC2626' : '#F97316'
+    
     ctx.save()
     
-    const centerX = x + width / 2
-    const centerY = y + height / 2
-    
-    // Glow effect
-    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width)
-    gradient.addColorStop(0, '#FFE66D')
-    gradient.addColorStop(0.5, '#FF8C42')
-    gradient.addColorStop(1, 'rgba(255, 140, 66, 0)')
-    
+    // Epic aura
     ctx.beginPath()
-    ctx.arc(centerX, centerY, width * 0.8, 0, Math.PI * 2)
-    ctx.fillStyle = gradient
+    ctx.arc(x + w/2, y + h/2, w * 0.7 + pulse, 0, Math.PI * 2)
+    const auraGrad = ctx.createRadialGradient(x + w/2, y + h/2, 0, x + w/2, y + h/2, w * 0.7 + pulse)
+    auraGrad.addColorStop(0, 'rgba(239,68,68,0)')
+    auraGrad.addColorStop(0.6, `rgba(239,68,68,${isEnraged ? 0.4 : 0.2})`)
+    auraGrad.addColorStop(1, 'rgba(239,68,68,0)')
+    ctx.fillStyle = auraGrad
     ctx.fill()
     
-    // Core
-    ctx.beginPath()
-    ctx.arc(centerX, centerY, width * 0.4, 0, Math.PI * 2)
-    ctx.fillStyle = '#FFF'
-    ctx.fill()
-    
-    ctx.restore()
-  }, [])
-  
-  // Draw alien cat enemy
-  const drawAlienCatEnemy = useCallback((ctx: CanvasRenderingContext2D, enemy: Enemy) => {
-    ctx.save()
-    
-    const { x, y, width, height, type, animFrame } = enemy
-    const centerX = x + width / 2
-    const centerY = y + height / 2
-    const hover = Math.sin(animFrame * 0.1) * 3
-    
-    // Colors based on enemy type
-    const colors = {
-      small: { body: '#7B68EE', glow: '#9370DB', eyes: '#FF4444' },
-      medium: { body: '#20B2AA', glow: '#48D1CC', eyes: '#FFD700' },
-      large: { body: '#DC143C', glow: '#FF6B6B', eyes: '#00FF00' },
-      boss: { body: '#8B008B', glow: '#DA70D6', eyes: '#FFFFFF' },
+    // Particles
+    for (let i = 0; i < 6; i++) {
+      const angle = (frame * 0.02 + i * Math.PI / 3) % (Math.PI * 2)
+      const dist = w * 0.55 + Math.sin(frame * 0.08 + i) * 8
+      const px = x + w/2 + Math.cos(angle) * dist
+      const py = y + h/2 + Math.sin(angle) * dist
+      ctx.fillStyle = `rgba(255,150,50,${0.5 + Math.sin(frame * 0.1 + i) * 0.3})`
+      ctx.beginPath()
+      ctx.arc(px, py, 5, 0, Math.PI * 2)
+      ctx.fill()
     }
-    
-    const color = colors[type]
-    
-    // Alien glow
-    ctx.beginPath()
-    ctx.arc(centerX, centerY + hover, width * 0.6, 0, Math.PI * 2)
-    const glowGradient = ctx.createRadialGradient(centerX, centerY + hover, 0, centerX, centerY + hover, width * 0.6)
-    glowGradient.addColorStop(0, color.glow + '40')
-    glowGradient.addColorStop(1, 'transparent')
-    ctx.fillStyle = glowGradient
-    ctx.fill()
     
     // Body
     ctx.beginPath()
-    ctx.ellipse(centerX, centerY + hover, width * 0.4, height * 0.35, 0, 0, Math.PI * 2)
-    ctx.fillStyle = color.body
+    ctx.ellipse(x + w/2, y + h * 0.6 + breathe, w * 0.35, h * 0.28, 0, 0, Math.PI * 2)
+    const bodyGrad = ctx.createRadialGradient(x + w * 0.4, y + h * 0.5, 0, x + w/2, y + h * 0.6, w * 0.4)
+    bodyGrad.addColorStop(0, isEnraged ? '#F87171' : '#FB923C')
+    bodyGrad.addColorStop(1, color)
+    ctx.fillStyle = bodyGrad
     ctx.fill()
-    ctx.strokeStyle = color.glow
+    ctx.strokeStyle = '#000'
+    ctx.lineWidth = 3
+    ctx.stroke()
+    
+    // Belly
+    ctx.beginPath()
+    ctx.ellipse(x + w/2, y + h * 0.65 + breathe, w * 0.18, h * 0.15, 0, 0, Math.PI * 2)
+    ctx.fillStyle = C.foam
+    ctx.fill()
+    
+    // Head
+    ctx.beginPath()
+    ctx.ellipse(x + w/2, y + h * 0.28 + breathe, w * 0.28, h * 0.2, 0, 0, Math.PI * 2)
+    ctx.fillStyle = bodyGrad
+    ctx.fill()
+    ctx.strokeStyle = '#000'
+    ctx.lineWidth = 3
+    ctx.stroke()
+    
+    // Crown
+    ctx.fillStyle = C.gold
+    ctx.beginPath()
+    ctx.moveTo(x + w * 0.28, y + h * 0.15 + breathe)
+    ctx.lineTo(x + w * 0.32, y + breathe)
+    ctx.lineTo(x + w * 0.42, y + h * 0.1 + breathe)
+    ctx.lineTo(x + w * 0.5, y - h * 0.02 + breathe)
+    ctx.lineTo(x + w * 0.58, y + h * 0.1 + breathe)
+    ctx.lineTo(x + w * 0.68, y + breathe)
+    ctx.lineTo(x + w * 0.72, y + h * 0.15 + breathe)
+    ctx.closePath()
+    ctx.fill()
+    ctx.strokeStyle = '#92400E'
     ctx.lineWidth = 2
     ctx.stroke()
     
-    // Alien ears (pointed and angular)
-    // Left ear
+    // Crown jewel
+    ctx.fillStyle = '#EF4444'
     ctx.beginPath()
-    ctx.moveTo(centerX - width * 0.25, centerY - height * 0.1 + hover)
-    ctx.lineTo(centerX - width * 0.4, centerY - height * 0.5 + hover)
-    ctx.lineTo(centerX - width * 0.1, centerY - height * 0.15 + hover)
-    ctx.closePath()
-    ctx.fillStyle = color.body
-    ctx.fill()
-    ctx.stroke()
-    
-    // Right ear
-    ctx.beginPath()
-    ctx.moveTo(centerX + width * 0.25, centerY - height * 0.1 + hover)
-    ctx.lineTo(centerX + width * 0.4, centerY - height * 0.5 + hover)
-    ctx.lineTo(centerX + width * 0.1, centerY - height * 0.15 + hover)
-    ctx.closePath()
-    ctx.fillStyle = color.body
-    ctx.fill()
-    ctx.stroke()
-    
-    // Alien eyes (large, glowing)
-    const eyeY = centerY - height * 0.05 + hover
-    
-    // Left eye
-    ctx.beginPath()
-    ctx.ellipse(centerX - width * 0.15, eyeY, width * 0.12, height * 0.15, 0, 0, Math.PI * 2)
-    ctx.fillStyle = color.eyes
-    ctx.fill()
-    ctx.beginPath()
-    ctx.ellipse(centerX - width * 0.15, eyeY, width * 0.06, height * 0.08, 0, 0, Math.PI * 2)
-    ctx.fillStyle = '#000'
+    ctx.arc(x + w * 0.5, y + h * 0.06 + breathe, 6, 0, Math.PI * 2)
     ctx.fill()
     
-    // Right eye
-    ctx.beginPath()
-    ctx.ellipse(centerX + width * 0.15, eyeY, width * 0.12, height * 0.15, 0, 0, Math.PI * 2)
-    ctx.fillStyle = color.eyes
-    ctx.fill()
-    ctx.beginPath()
-    ctx.ellipse(centerX + width * 0.15, eyeY, width * 0.06, height * 0.08, 0, 0, Math.PI * 2)
-    ctx.fillStyle = '#000'
-    ctx.fill()
-    
-    // Antenna (for small enemies)
-    if (type === 'small') {
+    // Ears
+    const drawEar = (ex: number, flip: number) => {
       ctx.beginPath()
-      ctx.moveTo(centerX, centerY - height * 0.3 + hover)
-      ctx.lineTo(centerX, centerY - height * 0.5 + hover)
-      ctx.strokeStyle = color.glow
+      ctx.moveTo(ex, y + h * 0.18 + breathe)
+      ctx.lineTo(ex + flip * 6, y + breathe)
+      ctx.lineTo(ex + flip * 20, y + h * 0.12 + breathe)
+      ctx.closePath()
+      ctx.fillStyle = color
+      ctx.fill()
+      ctx.strokeStyle = '#000'
       ctx.lineWidth = 2
       ctx.stroke()
+    }
+    drawEar(x + w * 0.25, -1)
+    drawEar(x + w * 0.75, 1)
+    
+    // Evil glowing eyes
+    ctx.shadowColor = isEnraged ? '#FF0000' : '#EF4444'
+    ctx.shadowBlur = 15
+    ctx.fillStyle = `rgba(${isEnraged ? '255,0,0' : '239,68,68'},${0.7 + Math.sin(frame * 0.1) * 0.3})`
+    ctx.beginPath()
+    ctx.ellipse(x + w * 0.38, y + h * 0.26 + breathe, 10, 12, 0, 0, Math.PI * 2)
+    ctx.ellipse(x + w * 0.62, y + h * 0.26 + breathe, 10, 12, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.shadowBlur = 0
+    
+    // Pupils
+    ctx.fillStyle = '#000'
+    ctx.beginPath()
+    ctx.ellipse(x + w * 0.38, y + h * 0.26 + breathe, 4, 8, 0, 0, Math.PI * 2)
+    ctx.ellipse(x + w * 0.62, y + h * 0.26 + breathe, 4, 8, 0, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // Fangs
+    ctx.fillStyle = '#FFF'
+    ctx.beginPath()
+    ctx.moveTo(x + w * 0.42, y + h * 0.38 + breathe)
+    ctx.lineTo(x + w * 0.4, y + h * 0.48 + breathe)
+    ctx.lineTo(x + w * 0.44, y + h * 0.38 + breathe)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.moveTo(x + w * 0.58, y + h * 0.38 + breathe)
+    ctx.lineTo(x + w * 0.6, y + h * 0.48 + breathe)
+    ctx.lineTo(x + w * 0.56, y + h * 0.38 + breathe)
+    ctx.fill()
+    
+    // Paws
+    ctx.fillStyle = color
+    ctx.beginPath()
+    ctx.ellipse(x + w * 0.35, y + h * 0.85, 12, 8, -0.3, 0, Math.PI * 2)
+    ctx.ellipse(x + w * 0.65, y + h * 0.85, 12, 8, 0.3, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // Boss level text
+    ctx.fillStyle = C.gold
+    ctx.font = 'bold 16px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText(language === 'ru' ? `БОСС УР.${level}` : `BOSS LVL ${level}`, x + w/2, y - 35)
+    
+    // HP bar
+    ctx.fillStyle = 'rgba(0,0,0,0.7)'
+    ctx.fillRect(x + 10, y - 22, w - 20, 14)
+    const hpPct = hp / maxHp
+    ctx.fillStyle = hpPct > 0.5 ? C.health : hpPct > 0.25 ? C.beer : C.red
+    ctx.fillRect(x + 12, y - 20, (w - 24) * hpPct, 10)
+    ctx.fillStyle = '#FFF'
+    ctx.font = 'bold 10px sans-serif'
+    ctx.fillText(`${Math.ceil(hp)}/${maxHp}`, x + w/2, y - 12)
+    
+    ctx.restore()
+  }, [language])
+
+  // Draw projectile
+  const drawProjectile = useCallback((ctx: CanvasRenderingContext2D, p: Projectile, frame: number) => {
+    ctx.save()
+    
+    if (p.enemy) {
+      // Enemy projectile - foam ball
+      const grad = ctx.createRadialGradient(p.x + p.w/2, p.y + p.h/2, 0, p.x + p.w/2, p.y + p.h/2, p.w/2)
+      grad.addColorStop(0, '#FFF')
+      grad.addColorStop(1, '#F59E0B')
+      ctx.fillStyle = grad
       ctx.beginPath()
-      ctx.arc(centerX, centerY - height * 0.5 + hover, 4, 0, Math.PI * 2)
-      ctx.fillStyle = color.glow
+      ctx.arc(p.x + p.w/2, p.y + p.h/2, p.w/2, 0, Math.PI * 2)
+      ctx.fill()
+    } else {
+      // Player projectile with weapon color
+      const rot = frame * 0.3
+      ctx.translate(p.x + p.w/2, p.y + p.h/2)
+      ctx.rotate(rot)
+      
+      const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.w/2 + 2)
+      grad.addColorStop(0, '#FFF')
+      grad.addColorStop(0.5, p.color)
+      grad.addColorStop(1, p.color)
+      ctx.fillStyle = grad
+      ctx.beginPath()
+      ctx.arc(0, 0, p.w/2, 0, Math.PI * 2)
+      ctx.fill()
+      
+      // Glow
+      ctx.shadowColor = p.color
+      ctx.shadowBlur = 8
+      ctx.beginPath()
+      ctx.arc(0, 0, p.w/2 - 2, 0, Math.PI * 2)
       ctx.fill()
     }
     
-    // Health bar
-    const healthPercent = enemy.health / enemy.maxHealth
-    ctx.fillStyle = '#1a1a1a'
-    ctx.fillRect(x, y + height + 5, width, 5)
-    ctx.fillStyle = healthPercent > 0.5 ? '#22C55E' : healthPercent > 0.25 ? '#F59E0B' : '#EF4444'
-    ctx.fillRect(x + 1, y + height + 6, (width - 2) * healthPercent, 3)
-    
     ctx.restore()
   }, [])
-  
+
   // Draw power-up
-  const drawPowerUp = useCallback((ctx: CanvasRenderingContext2D, powerUp: PowerUpItem) => {
+  const drawPowerUp = useCallback((ctx: CanvasRenderingContext2D, p: PowerUp, frame: number) => {
+    const pulse = Math.sin(frame * 0.1) * 3
+    const colors: Record<string, string> = {
+      shield: C.shield,
+      double: '#F59E0B',
+      speed: '#22C55E',
+      health: '#EF4444',
+      weapon: '#9333EA'
+    }
+    const color = colors[p.type]
+    
     ctx.save()
     
-    const { x, y, width, height, type } = powerUp
-    const time = Date.now() / 1000
-    const pulse = Math.sin(time * 4) * 0.2 + 1
-    const centerX = x + width / 2
-    const centerY = y + height / 2
-    
-    // Glow effect
-    ctx.shadowBlur = 15
-    
-    const colors: Record<string, { bg: string; glow: string; icon: string }> = {
-      shield: { bg: '#3B82F6', glow: '#60A5FA', icon: 'S' },
-      double_shot: { bg: '#F59E0B', glow: '#FBBF24', icon: 'D' },
-      speed_boost: { bg: '#8B5CF6', glow: '#A78BFA', icon: 'Z' },
-      triple_shot: { bg: '#EF4444', glow: '#F87171', icon: 'T' },
-      health: { bg: '#22C55E', glow: '#4ADE80', icon: '+' },
-      coin: { bg: '#FFD700', glow: '#FFF8DC', icon: 'C' },
-    }
-    
-    const color = colors[type]
-    ctx.shadowColor = color.glow
-    
-    // Circle background
+    // Glow
     ctx.beginPath()
-    ctx.arc(centerX, centerY, (width / 2) * pulse, 0, Math.PI * 2)
-    ctx.fillStyle = color.bg
+    ctx.arc(p.x + p.w/2, p.y + p.h/2, p.w/2 + pulse + 5, 0, Math.PI * 2)
+    const glowGrad = ctx.createRadialGradient(p.x + p.w/2, p.y + p.h/2, 0, p.x + p.w/2, p.y + p.h/2, p.w/2 + pulse + 5)
+    glowGrad.addColorStop(0, `${color}40`)
+    glowGrad.addColorStop(1, 'transparent')
+    ctx.fillStyle = glowGrad
     ctx.fill()
     
-    // Inner circle
+    // Main circle
     ctx.beginPath()
-    ctx.arc(centerX, centerY, (width / 3) * pulse, 0, Math.PI * 2)
-    ctx.fillStyle = color.glow
+    ctx.arc(p.x + p.w/2, p.y + p.h/2, p.w/2 + pulse, 0, Math.PI * 2)
+    const mainGrad = ctx.createRadialGradient(p.x + p.w/2 - 5, p.y + p.h/2 - 5, 0, p.x + p.w/2, p.y + p.h/2, p.w/2 + pulse)
+    mainGrad.addColorStop(0, '#FFF')
+    mainGrad.addColorStop(0.3, color)
+    mainGrad.addColorStop(1, color)
+    ctx.fillStyle = mainGrad
     ctx.fill()
     
-    // Icon text
-    ctx.font = `bold ${14 * pulse}px sans-serif`
+    // Icon
+    ctx.fillStyle = '#FFF'
+    ctx.font = 'bold 14px sans-serif'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillStyle = '#fff'
-    ctx.fillText(color.icon, centerX, centerY)
+    const icons: Record<string, string> = { shield: 'S', double: '2x', speed: '>', health: '+', weapon: 'W' }
+    ctx.fillText(icons[p.type], p.x + p.w/2, p.y + p.h/2)
     
     ctx.restore()
   }, [])
-  
-  // Draw particle
-  const drawParticle = useCallback((ctx: CanvasRenderingContext2D, particle: Particle) => {
-    ctx.save()
-    const alpha = particle.life / particle.maxLife
-    ctx.globalAlpha = alpha
-    ctx.fillStyle = particle.color
-    ctx.beginPath()
-    ctx.arc(particle.x, particle.y, particle.size * alpha, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.restore()
-  }, [])
-  
-  // Spawn particle burst
-  const spawnParticles = useCallback((x: number, y: number, color: string, count: number) => {
-    for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5
-      const speed = 50 + Math.random() * 100
-      particlesRef.current.push({
-        x,
-        y,
-        velocityX: Math.cos(angle) * speed,
-        velocityY: Math.sin(angle) * speed,
-        life: 1,
-        maxLife: 1,
-        color,
-        size: 3 + Math.random() * 4,
+
+  // Spawn enemies and check boss timer
+  const spawnEnemies = useCallback((dt: number) => {
+    spawnTimerRef.current += dt
+    if (spawnTimerRef.current > 0.8) { // Spawn every 0.8 seconds
+      spawnTimerRef.current = 0
+      const { w, h } = size
+      const roll = Math.random()
+      const type = roll < 0.18 ? 3 : roll < 0.38 ? 2 : roll < 0.66 ? 1 : 0
+      const isMeteor = type === 3
+      const ew = isMeteor ? 44 + Math.random() * 10 : 36 + type * 6
+      const eh = isMeteor ? 44 + Math.random() * 12 : 44 + type * 8
+      const hp = isMeteor ? 42 : 20 + type * 15
+      const pts = isMeteor ? 35 : 10 + type * 10
+      enemiesRef.current.push({
+        x: Math.random() * (w - ew - 20) + 10,
+        y: -eh - 10,
+        w: ew,
+        h: eh,
+        hp,
+        maxHp: hp,
+        pts,
+        type,
+        frame: 0
       })
     }
-  }, [])
-
-  // Initialize canvas
-  useEffect(() => {
-    const updateSize = () => {
-      const container = canvasRef.current?.parentElement
-      if (container) {
-        const width = container.clientWidth
-        const height = container.clientHeight
-        setCanvasSize({ width, height })
-        
-        // Initialize player position
-        playerRef.current.x = width / 2 - playerRef.current.width / 2
-        playerRef.current.y = height - 120
-      }
-    }
     
-    updateSize()
-    window.addEventListener('resize', updateSize)
-    return () => window.removeEventListener('resize', updateSize)
-  }, [])
-
-  // Touch controls
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    
-    const handleTouchStart = (e: TouchEvent) => {
-      e.preventDefault()
-      const touch = e.touches[0]
-      const rect = canvas.getBoundingClientRect()
-      touchStartRef.current = {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top,
-      }
-    }
-    
-    const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault()
-      if (!touchStartRef.current || !isPlaying || isPaused) return
-      
-      const touch = e.touches[0]
-      const rect = canvas.getBoundingClientRect()
-      const touchX = touch.clientX - rect.left
-      
-      const targetX = touchX - playerRef.current.width / 2
-      playerRef.current.x = Math.max(0, Math.min(canvasSize.width - playerRef.current.width, targetX))
-    }
-    
-    const handleTouchEnd = () => {
-      touchStartRef.current = null
-    }
-    
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
-    canvas.addEventListener('touchend', handleTouchEnd)
-    
-    return () => {
-      canvas.removeEventListener('touchstart', handleTouchStart)
-      canvas.removeEventListener('touchmove', handleTouchMove)
-      canvas.removeEventListener('touchend', handleTouchEnd)
-    }
-  }, [canvasSize.width, isPlaying, isPaused])
-
-  // Mouse controls for desktop
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isPlaying || isPaused) return
-      
-      const rect = canvas.getBoundingClientRect()
-      const mouseX = e.clientX - rect.left
-      
-      const targetX = mouseX - playerRef.current.width / 2
-      playerRef.current.x = Math.max(0, Math.min(canvasSize.width - playerRef.current.width, targetX))
-    }
-    
-    canvas.addEventListener('mousemove', handleMouseMove)
-    return () => canvas.removeEventListener('mousemove', handleMouseMove)
-  }, [canvasSize.width, isPlaying, isPaused])
-
-  // Spawn boss enemy
-  const spawnBoss = useCallback(() => {
-    if (bossActiveRef.current) return
-    
-    bossActiveRef.current = true
-    setGamePhase('boss')
-    
-    const boss: Enemy = {
-      x: canvasSize.width / 2 - 50,
-      y: -100,
-      width: 80,
-      height: 100,
-      velocityX: 60,
-      velocityY: 40,
-      health: 200 + difficultyRef.current * 50,
-      maxHealth: 200 + difficultyRef.current * 50,
-      points: 200,
-      type: 'boss',
-      animFrame: 0,
-    }
-    
-    enemiesRef.current.push(boss)
-  }, [canvasSize.width, setGamePhase])
-  
-  // Spawn enemies
-  const spawnEnemy = useCallback(() => {
-    // Check if boss should spawn
-    if (score >= bossSpawnScoreRef.current && !bossActiveRef.current) {
-      spawnBoss()
-      bossSpawnScoreRef.current += 500 // Next boss every 500 points
-      return
-    }
-    
-    const types: Array<'small' | 'medium' | 'large'> = ['small', 'medium', 'large']
-    const typeIndex = Math.min(Math.floor(Math.random() * (1 + difficultyRef.current / 3)), 2)
-    const type = types[typeIndex]
-    
-    const sizes = {
-      small: { width: 35, height: 45, health: 25, points: 15, speed: 120 },
-      medium: { width: 45, height: 55, health: 50, points: 30, speed: 100 },
-      large: { width: 55, height: 70, health: 100, points: 60, speed: 80 },
-    }
-    
-    const size = sizes[type]
-    
-    const enemy: Enemy = {
-      x: Math.random() * (canvasSize.width - size.width),
-      y: -size.height,
-      width: size.width,
-      height: size.height,
-      velocityX: (Math.random() - 0.5) * 80,
-      velocityY: size.speed + difficultyRef.current * 15,
-      health: size.health * (1 + difficultyRef.current * 0.1),
-      maxHealth: size.health * (1 + difficultyRef.current * 0.1),
-      points: size.points,
-      type,
-      animFrame: Math.random() * 100,
-    }
-    
-    enemiesRef.current.push(enemy)
-  }, [canvasSize.width])
-
-  // Spawn power-up
-  const spawnPowerUp = useCallback(() => {
-    const types: PowerUpItem['type'][] = ['shield', 'double_shot', 'speed_boost', 'triple_shot', 'health', 'coin']
-    const weights = [1, 1, 1, 1, 2, 3] // Coins more common
-    const totalWeight = weights.reduce((a, b) => a + b, 0)
-    let random = Math.random() * totalWeight
-    let typeIndex = 0
-    for (let i = 0; i < weights.length; i++) {
-      random -= weights[i]
-      if (random <= 0) {
-        typeIndex = i
-        break
-      }
-    }
-    const type = types[typeIndex]
-    
-    const powerUp: PowerUpItem = {
-      x: Math.random() * (canvasSize.width - 30),
-      y: -30,
-      width: 30,
-      height: 30,
-      velocityX: 0,
-      velocityY: 100,
-      type,
-    }
-    
-    powerUpsRef.current.push(powerUp)
-  }, [canvasSize.width])
-
-  // Fire projectile
-  const fireProjectile = useCallback(() => {
-    const weapon = weapons[currentWeaponIndex]
-    if (!weapon) return
-    
+    // Check boss spawn (every 60 seconds)
     const now = Date.now()
-    const fireInterval = 1000 / weapon.fireRate
-    
-    if (now - lastFireTimeRef.current < fireInterval) return
-    lastFireTimeRef.current = now
-    
-    const player = playerRef.current
-    let projectileCount = weapon.projectileCount
-    
-    if (hasDoubleShot) projectileCount *= 2
-    if (hasTripleShot) projectileCount *= 3
-    
-    const spreadAngle = projectileCount > 1 ? 30 : 0
-    const angleStep = projectileCount > 1 ? spreadAngle / (projectileCount - 1) : 0
-    const startAngle = -spreadAngle / 2
-    
-    for (let i = 0; i < projectileCount; i++) {
-      const angle = (startAngle + angleStep * i) * (Math.PI / 180)
-      const velocityX = Math.sin(angle) * weapon.projectileSpeed * 0.3
-      const velocityY = -weapon.projectileSpeed
-      
-      const projectile: Projectile = {
-        x: player.x + player.width / 2 - 6,
-        y: player.y,
-        width: 12,
-        height: 12,
-        velocityX,
-        velocityY,
-        damage: weapon.damage,
-        isEnemy: false,
+    if (!bossRef.current && now - bossSpawnTimeRef.current > BOSS_INTERVAL) {
+      bossSpawnTimeRef.current = now
+      const bossLevel = Math.floor(metersRef.current / 5000) + 1
+      const bw = 120 + bossLevel * 10
+      const bh = 140 + bossLevel * 10
+      bossRef.current = {
+        x: size.w / 2 - bw / 2,
+        y: -bh - 20,
+        w: bw,
+        h: bh,
+        hp: 300 + bossLevel * 150,
+        maxHp: 300 + bossLevel * 150,
+        frame: 0,
+        phase: 1,
+        level: bossLevel
       }
-      
-      projectilesRef.current.push(projectile)
     }
-  }, [weapons, currentWeaponIndex, hasDoubleShot, hasTripleShot])
+  }, [size])
 
-  // Collision detection
-  const checkCollision = useCallback((a: Entity, b: Entity): boolean => {
-    return (
-      a.x < b.x + b.width &&
-      a.x + a.width > b.x &&
-      a.y < b.y + b.height &&
-      a.y + a.height > b.y
-    )
-  }, [])
+  // Try to drop weapon from enemy/boss
+  const tryDropWeapon = useCallback((isBoss: boolean) => {
+    const chance = isBoss ? BOSS_WEAPON_DROP_CHANCE : WEAPON_DROP_CHANCE
+    if (Math.random() > chance) return
+    
+    const lockedWeapons = weapons.filter(w => !w.unlocked)
+    if (lockedWeapons.length === 0) return
+    
+    const randomWeapon = lockedWeapons[Math.floor(Math.random() * lockedWeapons.length)]
+    dropWeapon(randomWeapon.id)
+  }, [weapons, dropWeapon])
 
-  // Game loop
+  // Main game loop
   useEffect(() => {
-    if (!isPlaying || isPaused || gameOver) {
-      if (gameLoopRef.current !== null) {
-        cancelAnimationFrame(gameLoopRef.current)
-      }
-      return
-    }
-    
     const canvas = canvasRef.current
-    const ctx = canvas?.getContext('2d')
-    if (!canvas || !ctx) return
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    
+    // Reset timers when game starts
+    if (isPlaying && !isPaused) {
+      if (bossSpawnTimeRef.current === 0) {
+        bossSpawnTimeRef.current = Date.now()
+      }
+    }
     
     const gameLoop = (timestamp: number) => {
-      const deltaTime = Math.min((timestamp - lastTimeRef.current) / 1000, 0.1)
-      lastTimeRef.current = timestamp
+      // Still render background when paused/not playing
+      const { w, h } = size
+      if (w === 0 || h === 0) {
+        frameRef.current = requestAnimationFrame(gameLoop)
+        return
+      }
       
-      // Update player animation
-      playerRef.current.animFrame++
-      playerRef.current.animTimer += deltaTime
+      // Clear and draw background
+      ctx.fillStyle = C.bg
+      ctx.fillRect(0, 0, w, h)
       
-      // Screen shake decay
-      screenShakeRef.current *= 0.9
-      const shakeX = (Math.random() - 0.5) * screenShakeRef.current
-      const shakeY = (Math.random() - 0.5) * screenShakeRef.current
-      
-      // Clear canvas
-      ctx.save()
-      ctx.translate(shakeX, shakeY)
-      
-      // Background gradient
-      const bgGradient = ctx.createLinearGradient(0, 0, 0, canvasSize.height)
-      bgGradient.addColorStop(0, '#0a0a1a')
-      bgGradient.addColorStop(0.5, '#0d0d20')
-      bgGradient.addColorStop(1, '#0a0a1a')
-      ctx.fillStyle = bgGradient
-      ctx.fillRect(-10, -10, canvasSize.width + 20, canvasSize.height + 20)
-      
-      // Draw starfield background
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'
-      for (let i = 0; i < 60; i++) {
-        const x = (i * 73 + timestamp * 0.02) % canvasSize.width
-        const y = (i * 37 + timestamp * 0.015) % canvasSize.height
-        const size = (i % 3 === 0) ? 2 : 1
+      // Always draw stars
+      starsRef.current.forEach(star => {
+        if (isPlaying && !isPaused) {
+          star.y += star.speed * 0.016
+          if (star.y > h) { star.y = 0; star.x = Math.random() * w }
+        }
+        ctx.fillStyle = `rgba(255,255,255,${0.3 + star.size * 0.2})`
         ctx.beginPath()
-        ctx.arc(x, y, size, 0, Math.PI * 2)
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2)
         ctx.fill()
+      })
+      
+      const player = playerRef.current
+      
+      // Only run game logic when playing and not paused
+      if (!isPlaying || isPaused) {
+        // Just draw the cat even when paused
+        player.frame++
+        drawCat(ctx, player.x, player.y, player.frame, hasShield)
+        frameRef.current = requestAnimationFrame(gameLoop)
+        return
       }
       
-      // Colorful nebula effects
-      ctx.globalAlpha = 0.1
-      ctx.fillStyle = '#8B5CF6'
-      ctx.beginPath()
-      ctx.arc(canvasSize.width * 0.2, canvasSize.height * 0.3, 100, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.fillStyle = '#3B82F6'
-      ctx.beginPath()
-      ctx.arc(canvasSize.width * 0.8, canvasSize.height * 0.6, 80, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.globalAlpha = 1
+      if (!lastTimeRef.current) lastTimeRef.current = timestamp
+      const dt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.05)
+      lastTimeRef.current = timestamp
+      player.frame++
       
-      // Auto-fire
-      fireProjectile()
+      // Update meters
+      const metersGained = 50 * dt * (hasSpeedBoost ? 1.5 : 1)
+      metersRef.current += metersGained
+      addMeters(metersGained)
+      checkLevelUp()
       
-      // Spawn enemies (faster spawn rate for more frequent encounters)
-      spawnTimerRef.current += deltaTime
-      const spawnInterval = 0.7 / (1 + difficultyRef.current * 0.25) // Much faster spawning
-      if (spawnTimerRef.current > spawnInterval) {
-        spawnEnemy()
-        spawnTimerRef.current = 0
-        
-        // Spawn additional enemy at higher difficulties
-        if (difficultyRef.current > 2 && Math.random() < 0.3) {
-          spawnEnemy()
-        }
-        
-        if (Math.random() < 0.25) {
-          spawnPowerUp()
+      // Spawn enemies
+      spawnEnemies(dt)
+      
+      // Update player position (touch)
+      if (touchRef.current !== null) {
+        const targetX = touchRef.current - 30
+        player.x += (targetX - player.x) * 0.15
+      }
+      player.x = Math.max(5, Math.min(w - 65, player.x))
+      
+      // Fire projectiles
+      const fireRate = weapon.fireRate * (hasSpeedBoost ? 1.5 : 1)
+      const fireInterval = 1000 / fireRate
+      if (timestamp - lastFireRef.current > fireInterval) {
+        lastFireRef.current = timestamp
+        const projCount = weapon.projectileCount + (hasDoubleShot ? 1 : 0) + (hasTripleShot ? 2 : 0)
+        const spread = projCount > 1 ? 30 : 0
+        for (let i = 0; i < projCount; i++) {
+          const angle = -Math.PI/2 + (i - (projCount-1)/2) * (spread * Math.PI/180)
+          projectilesRef.current.push({
+            x: player.x + 25,
+            y: player.y,
+            w: 10 + weapon.damage / 10,
+            h: 10 + weapon.damage / 10,
+            vx: Math.cos(angle) * weapon.projectileSpeed,
+            vy: Math.sin(angle) * weapon.projectileSpeed,
+            dmg: weapon.damage,
+            enemy: false,
+            color: weapon.color
+          })
         }
       }
       
-      // Increase difficulty over time (faster scaling)
-      difficultyRef.current = 1 + score / 300
+      // Update projectiles
+      projectilesRef.current = projectilesRef.current.filter(p => {
+        p.x += p.vx * dt
+        p.y += p.vy * dt
+        return p.y > -20 && p.y < h + 20 && p.x > -20 && p.x < w + 20
+      })
+      
+      // Update enemies
+      enemiesRef.current = enemiesRef.current.filter(e => {
+        const fallSpeed = e.type === 3 ? 185 : 100 + e.type * 30
+        e.y += fallSpeed * dt
+        e.frame++
+        
+        // Enemy shooting
+        if (e.type !== 3 && Math.random() < 0.003) {
+          projectilesRef.current.push({
+            x: e.x + e.w/2 - 5,
+            y: e.y + e.h,
+            w: 10,
+            h: 10,
+            vx: 0,
+            vy: 300,
+            dmg: 10 + e.type * 5,
+            enemy: true,
+            color: C.beer
+          })
+        }
+        
+        return e.y < h + 50 && e.hp > 0
+      })
+      
+      // Update boss
+      const boss = bossRef.current
+      if (boss) {
+        boss.frame++
+        if (boss.y < 50) {
+          boss.y += 80 * dt
+        } else {
+          // Boss movement
+          boss.x += Math.sin(boss.frame * 0.02) * 2
+          // Boss shooting
+          if (boss.frame % 40 === 0) {
+            const angles = boss.phase > 1 ? [-0.3, 0, 0.3] : [0]
+            angles.forEach(a => {
+              projectilesRef.current.push({
+                x: boss.x + boss.w/2 - 8,
+                y: boss.y + boss.h,
+                w: 16,
+                h: 16,
+                vx: Math.sin(a) * 150,
+                vy: 250,
+                dmg: 20 + boss.level * 5,
+                enemy: true,
+                color: '#EF4444'
+              })
+            })
+          }
+        }
+        if (boss.hp < boss.maxHp * 0.5 && boss.phase === 1) {
+          boss.phase = 2
+        }
+      }
+      
+      // Collision: player projectiles vs enemies
+      projectilesRef.current = projectilesRef.current.filter(p => {
+        if (p.enemy) return true
+        
+        for (let i = enemiesRef.current.length - 1; i >= 0; i--) {
+          const e = enemiesRef.current[i]
+          if (p.x < e.x + e.w && p.x + p.w > e.x && p.y < e.y + e.h && p.y + p.h > e.y) {
+            e.hp -= p.dmg
+            if (e.hp <= 0) {
+              addScore(e.pts)
+              if (e.type !== 3) {
+                tryDropWeapon(false)
+              }
+              // Power-up drop
+              if (e.type !== 3 && Math.random() < 0.15) {
+                const types: PowerUp['type'][] = ['shield', 'double', 'speed', 'health']
+                powerUpsRef.current.push({
+                  x: e.x + e.w/2 - 12,
+                  y: e.y,
+                  w: 24,
+                  h: 24,
+                  type: types[Math.floor(Math.random() * types.length)]
+                })
+              }
+              enemiesRef.current.splice(i, 1)
+            }
+            return false
+          }
+        }
+        
+        // Check boss hit
+        if (boss && p.x < boss.x + boss.w && p.x + p.w > boss.x && p.y < boss.y + boss.h && p.y + p.h > boss.y) {
+          boss.hp -= p.dmg
+          if (boss.hp <= 0) {
+            addScore(500 + boss.level * 200)
+            defeatBoss()
+            tryDropWeapon(true)
+            bossRef.current = null
+          }
+          return false
+        }
+        
+        return true
+      })
+      
+      // Collision: enemy projectiles vs player
+      const px = player.x, py = player.y
+      projectilesRef.current = projectilesRef.current.filter(p => {
+        if (!p.enemy) return true
+        if (p.x < px + 60 && p.x + p.w > px && p.y < py + 50 && p.y + p.h > py) {
+          takeDamage(p.dmg)
+          return false
+        }
+        return true
+      })
+      
+      // Collision: enemies vs player
+      enemiesRef.current.forEach(e => {
+        if (e.x < px + 50 && e.x + e.w > px + 10 && e.y < py + 45 && e.y + e.h > py + 5) {
+          takeDamage(e.type === 3 ? 32 : 20)
+          e.hp = 0
+        }
+      })
+      
+      // Collision: power-ups vs player
+      powerUpsRef.current = powerUpsRef.current.filter(p => {
+        p.y += 120 * dt
+        if (p.y > h + 30) return false
+        
+        if (p.x < px + 55 && p.x + p.w > px + 5 && p.y < py + 50 && p.y + p.h > py) {
+          if (p.type === 'health') {
+            heal(25)
+          } else if (p.type === 'shield') {
+            activatePowerUp('shield')
+          } else if (p.type === 'double') {
+            activatePowerUp('double_shot')
+          } else if (p.type === 'speed') {
+            activatePowerUp('speed_boost')
+          }
+          return false
+        }
+        return true
+      })
       
       // Update power-up timers
-      updatePowerUpTimers(deltaTime)
+      updatePowerUpTimers(dt)
       
-      // Update and draw particles
-      particlesRef.current = particlesRef.current.filter(particle => {
-        particle.x += particle.velocityX * deltaTime
-        particle.y += particle.velocityY * deltaTime
-        particle.life -= deltaTime * 2
-        
-        if (particle.life <= 0) return false
-        
-        drawParticle(ctx, particle)
-        return true
-      })
+      // Check game over
+      if (health <= 0) {
+        endGame()
+        return
+      }
       
-      // Update and draw projectiles
-      projectilesRef.current = projectilesRef.current.filter(proj => {
-        proj.x += proj.velocityX * deltaTime
-        proj.y += proj.velocityY * deltaTime
-        
-        if (proj.y < -20 || proj.y > canvasSize.height + 20) return false
-        
-        if (!proj.isEnemy) {
-          drawProjectile(ctx, proj.x, proj.y, proj.width, proj.height)
-        } else {
-          ctx.fillStyle = '#EF4444'
-          ctx.beginPath()
-          ctx.arc(proj.x + proj.width/2, proj.y + proj.height/2, proj.width/2, 0, Math.PI * 2)
-          ctx.fill()
-        }
-        
-        return true
-      })
+      // Draw everything
+      // Power-ups
+      powerUpsRef.current.forEach(p => drawPowerUp(ctx, p, frameRef.current))
       
-      // Update and draw enemies
-      enemiesRef.current = enemiesRef.current.filter(enemy => {
-        enemy.x += enemy.velocityX * deltaTime
-        enemy.y += enemy.velocityY * deltaTime
-        enemy.animFrame++
-        
-        // Bounce off walls
-        if (enemy.x <= 0 || enemy.x >= canvasSize.width - enemy.width) {
-          enemy.velocityX *= -1
-        }
-        
-        if (enemy.y > canvasSize.height + 50) {
-          return false
-        }
-        
-        // Check collision with player projectiles
-        for (let i = projectilesRef.current.length - 1; i >= 0; i--) {
-          const proj = projectilesRef.current[i]
-          if (!proj.isEnemy && checkCollision(proj, enemy)) {
-            enemy.health -= proj.damage
-            projectilesRef.current.splice(i, 1)
-            
-            // Hit particles
-            spawnParticles(proj.x, proj.y, '#FFE66D', 5)
-            
-if (enemy.health <= 0) {
-                              addScore(enemy.points)
-                              incrementKills()
-                              
-                              // Handle boss defeat
-                              if (enemy.type === 'boss') {
-                                bossActiveRef.current = false
-                                setGamePhase('gameplay')
-                                addCoins(50) // Bonus coins for boss defeat
-                                spawnParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#FFD700', 25)
-                                screenShakeRef.current = 20
-                              } else {
-                                spawnParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#FF6B6B', 12)
-                                screenShakeRef.current = 5
-                              }
-                              
-                              return false
-                            }
-          }
-        }
-        
-        // Check collision with player
-        if (checkCollision(enemy, playerRef.current)) {
-          takeDamage(20)
-          screenShakeRef.current = 10
-          spawnParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#EF4444', 8)
-          return false
-        }
-        
-        drawAlienCatEnemy(ctx, enemy)
-        return true
-      })
+      // Enemies
+      enemiesRef.current.forEach(e => drawBeerMug(ctx, e))
       
-      // Update and draw power-ups
-      powerUpsRef.current = powerUpsRef.current.filter(powerUp => {
-        powerUp.y += powerUp.velocityY * deltaTime
-        
-        if (powerUp.y > canvasSize.height + 50) return false
-        
-        // Check collision with player
-        if (checkCollision(powerUp, playerRef.current)) {
-          if (powerUp.type === 'health') {
-            heal(25)
-            spawnParticles(powerUp.x, powerUp.y, '#22C55E', 8)
-          } else if (powerUp.type === 'coin') {
-            addCoins(5)
-            spawnParticles(powerUp.x, powerUp.y, '#FFD700', 8)
-          } else {
-            activatePowerUp(powerUp.type)
-            spawnParticles(powerUp.x, powerUp.y, '#60A5FA', 8)
-          }
-          return false
-        }
-        
-        drawPowerUp(ctx, powerUp)
-        return true
-      })
+      // Boss
+      if (boss) drawBoss(ctx, boss)
       
-      // Draw player
-      drawOrangeCat(
-        ctx, 
-        playerRef.current.x, 
-        playerRef.current.y, 
-        playerRef.current.width, 
-        playerRef.current.height, 
-        hasShield,
-        currentSkin,
-        playerRef.current.animFrame
-      )
+      // Projectiles
+      projectilesRef.current.forEach(p => drawProjectile(ctx, p, frameRef.current))
       
-      ctx.restore()
+      // Player
+      drawCat(ctx, player.x, player.y, player.frame, hasShield)
       
-      // Continue loop
-      gameLoopRef.current = requestAnimationFrame(gameLoop)
+      frameRef.current = requestAnimationFrame(gameLoop)
     }
     
-    lastTimeRef.current = performance.now()
-    gameLoopRef.current = requestAnimationFrame(gameLoop)
+    frameRef.current = requestAnimationFrame(gameLoop)
     
     return () => {
-      if (gameLoopRef.current !== null) {
-        cancelAnimationFrame(gameLoopRef.current)
-      }
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
     }
-  }, [
-    isPlaying, isPaused, gameOver, canvasSize, score,
-    fireProjectile, spawnEnemy, spawnPowerUp, spawnBoss, checkCollision,
-    drawOrangeCat, drawProjectile, drawAlienCatEnemy, drawPowerUp, drawParticle,
-    addScore, takeDamage, heal, activatePowerUp, updatePowerUpTimers,
-    hasShield, currentSkin, incrementKills, addCoins, spawnParticles, setGamePhase,
-  ])
+  }, [isPlaying, isPaused, size, weapon, hasShield, hasDoubleShot, hasTripleShot, hasSpeedBoost,
+      addScore, addMeters, checkLevelUp, takeDamage, heal, activatePowerUp, updatePowerUpTimers,
+      endGame, defeatBoss, health, spawnEnemies, drawCat, drawBeerMug, drawBoss, drawProjectile,
+      drawPowerUp, tryDropWeapon])
 
-  // Check game over
-  useEffect(() => {
-    if (useGameStore.getState().health <= 0 && isPlaying) {
-      endGame()
-    }
-  }, [isPlaying, endGame])
+  // Touch handlers
+  const handleTouchMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault()
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    touchRef.current = clientX
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    touchRef.current = null
+  }, [])
 
   return (
     <canvas
       ref={canvasRef}
-      width={canvasSize.width}
-      height={canvasSize.height}
-      className="game-canvas touch-none w-full h-full"
-      style={{ display: 'block' }}
+      width={size.w}
+      height={size.h}
+      className="absolute inset-0 touch-none"
+      onTouchStart={handleTouchMove}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseMove={handleTouchMove}
+      onMouseUp={handleTouchEnd}
+      onMouseLeave={handleTouchEnd}
     />
   )
 }

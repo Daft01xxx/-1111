@@ -15,10 +15,10 @@ const russo = Russo_One({
 })
 
 export const metadata: Metadata = {
-  title: 'Cosmic Cats - Alien Cat Boss Shooter',
-  description: 'Battle alien cat bosses as a cute orange cat in this fast-paced space shooter! Earn coins, unlock skins, and climb the leaderboard!',
-  keywords: ['game', 'cats', 'shooter', 'alien', 'space', 'arcade'],
-  authors: [{ name: 'Cosmic Cats Team' }],
+  title: 'NAPIWAS - Cat vs Beer',
+  description: 'The ultimate beer-themed shooter game with TON wallet integration',
+  keywords: ['game', 'TON', 'NAPIWAS', 'crypto', 'shooter', 'beer', 'cat'],
+  authors: [{ name: 'NAPIWAS Team' }],
 }
 
 export const viewport: Viewport = {
@@ -26,7 +26,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#fb923c',
+  viewportFit: 'cover',
+  themeColor: '#D4AF37',
 }
 
 export default function RootLayout({
@@ -36,7 +37,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" className={`${inter.variable} ${russo.variable}`}>
-      <body className="min-h-screen bg-dark-950 text-foam-100 font-sans antialiased">
+      <body className="min-h-screen bg-[rgb(var(--background))] text-[rgb(var(--foreground))] font-sans antialiased">
         <Providers>
           {children}
         </Providers>

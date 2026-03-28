@@ -927,3 +927,7 @@ Original prompt: Rewrite the NaPiwas battle game from scratch in a new folder an
   - inspect: https://vercel.com/daft01xxxs-projects/napiwas-game-from-scratch/E69vyeK6WpW92x1mBASVyvAgTGi7
   - production: https://napiwas-game-from-scratch-od38epubo-daft01xxxs-projects.vercel.app
   - alias: https://v0-napiwasgame.vercel.app
+- 2026-03-27: Fixed a persisted-state hydration regression in the Next.js app that could crash `/shop` with `TypeError: Cannot read properties of null (reading ''filter'')` and leave `/play` looking empty for users carrying stale `napiwas-game-storage` data from older releases.
+- Root cause: `zustand/persist` was shallow-merging unvalidated localStorage data into the live store; `weapons: null`, `skins: null`, invalid numeric values, or malformed JSON could survive hydration and break client rendering on mobile browsers.
+- Fix: added safe persist storage in `lib/store.ts` that catches bad JSON and clears invalid storage, plus a merge-time sanitizer that rebuilds weapons/skins from current defaults while preserving unlocked ids and clamping persisted numbers/theme/language.
+- Validation: reproduced the crash against production by manually poisoning `localStorage` in Playwright, confirmed `/shop` crashed before the fix, then verified both local `http://127.0.0.1:3001/shop` and production `https://v0-napiwasgame.vercel.app/shop` load cleanly with the same poisoned storage after the fix; `/play` also remains live and advances meters after hydration.
