@@ -8,6 +8,7 @@ import { WeaponPanel } from './weapon-panel'
 import { TouchControls } from './touch-controls'
 import { GameOver } from './game-over'
 import { PauseMenu } from './pause-menu'
+import { MusicManager } from './music-manager'
 
 export function GameContainer() {
   const { startGame, isPlaying } = useGameStore()
@@ -40,6 +41,9 @@ export function GameContainer() {
 
       {/* Game over screen */}
       <GameOver />
+
+      {/* Music manager (invisible) */}
+      <MusicManager />
     </div>
   )
 }

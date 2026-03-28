@@ -18,7 +18,6 @@ export function WeaponPanel() {
     if (nextIndex !== -1) {
       selectWeapon(nextIndex)
     } else {
-      // Loop to first unlocked
       const firstUnlocked = weapons.findIndex(w => w.unlocked)
       if (firstUnlocked !== -1) selectWeapon(firstUnlocked)
     }
@@ -35,7 +34,6 @@ export function WeaponPanel() {
     if (prevIndex !== -1) {
       selectWeapon(prevIndex)
     } else {
-      // Loop to last unlocked
       for (let i = weapons.length - 1; i >= 0; i--) {
         if (weapons[i].unlocked) {
           selectWeapon(i)
@@ -64,11 +62,11 @@ export function WeaponPanel() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="pointer-events-auto flex items-center gap-3 bg-dark-900/90 backdrop-blur-sm rounded-xl px-4 py-2 border border-beer-500/30"
+            className="pointer-events-auto flex items-center gap-3 bg-dark-900/90 backdrop-blur-sm rounded-xl px-4 py-2 border border-orange-500/30"
           >
             {/* Weapon icon */}
-            <div className="relative w-10 h-10 rounded-lg bg-gradient-to-br from-beer-500/20 to-beer-600/20 flex items-center justify-center">
-              <WeaponIcon weaponId={currentWeapon.id} />
+            <div className="relative w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500/20 to-amber-500/20 flex items-center justify-center">
+              <WeaponIcon weaponId={currentWeapon.icon} />
               {!currentWeapon.unlocked && (
                 <div className="absolute inset-0 bg-dark-900/80 rounded-lg flex items-center justify-center">
                   <Lock className="w-4 h-4 text-foam-400" />
@@ -94,7 +92,7 @@ export function WeaponPanel() {
                   className={cn(
                     "w-1.5 h-1.5 rounded-full transition-colors",
                     i === currentWeaponIndex
-                      ? "bg-beer-500"
+                      ? "bg-orange-500"
                       : w.unlocked
                         ? "bg-foam-400/50"
                         : "bg-dark-600"
@@ -131,48 +129,57 @@ export function WeaponPanel() {
 }
 
 function WeaponIcon({ weaponId }: { weaponId: string }) {
-  // SVG icons for each weapon
   switch (weaponId) {
-    case 'foam_cannon':
+    case 'paw':
       return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-beer-400">
-          <circle cx="12" cy="8" r="4" fill="currentColor" opacity="0.8" />
-          <circle cx="8" cy="12" r="3" fill="currentColor" opacity="0.6" />
-          <circle cx="16" cy="12" r="3" fill="currentColor" opacity="0.6" />
-          <circle cx="12" cy="16" r="4" fill="currentColor" />
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-orange-400">
+          <circle cx="12" cy="16" r="6" fill="currentColor" />
+          <circle cx="6" cy="10" r="3" fill="currentColor" />
+          <circle cx="12" cy="6" r="3" fill="currentColor" />
+          <circle cx="18" cy="10" r="3" fill="currentColor" />
         </svg>
       )
-    case 'hop_blaster':
+    case 'claw':
       return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-green-400">
-          <ellipse cx="12" cy="12" rx="6" ry="8" fill="currentColor" opacity="0.8" />
-          <ellipse cx="12" cy="12" rx="3" ry="4" fill="currentColor" />
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-red-400">
+          <path d="M6 20 L10 6 L12 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M10 20 L12 4 L14 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M12 20 L14 6 L18 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       )
-    case 'malt_missile':
+    case 'missile':
       return (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-amber-500">
-          <path d="M12 4L16 20H8L12 4Z" fill="currentColor" />
-          <circle cx="12" cy="18" r="2" fill="currentColor" opacity="0.5" />
+          <path d="M12 2 L16 10 L16 18 L12 22 L8 18 L8 10 Z" fill="currentColor" />
+          <path d="M8 18 L4 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M16 18 L20 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="12" cy="10" r="2" fill="#0d0d0d" />
         </svg>
       )
-    case 'barley_beam':
+    case 'laser':
       return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-yellow-400">
-          <rect x="10" y="4" width="4" height="16" fill="currentColor" />
-          <rect x="8" y="8" width="8" height="2" fill="currentColor" opacity="0.5" />
-          <rect x="8" y="14" width="8" height="2" fill="currentColor" opacity="0.5" />
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-cyan-400">
+          <rect x="10" y="2" width="4" height="20" fill="currentColor" />
+          <rect x="6" y="8" width="12" height="3" fill="currentColor" opacity="0.6" />
+          <circle cx="12" cy="6" r="3" fill="currentColor" />
         </svg>
       )
-    case 'lager_laser':
+    case 'cosmic':
       return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-blue-400">
-          <path d="M12 2L14 10H10L12 2Z" fill="currentColor" />
-          <path d="M8 12L10 20H6L8 12Z" fill="currentColor" opacity="0.7" />
-          <path d="M16 12L18 20H14L16 12Z" fill="currentColor" opacity="0.7" />
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-purple-400">
+          <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
+          <circle cx="12" cy="12" r="4" fill="currentColor" />
+          <circle cx="12" cy="2" r="2" fill="currentColor" />
+          <circle cx="12" cy="22" r="2" fill="currentColor" />
+          <circle cx="2" cy="12" r="2" fill="currentColor" />
+          <circle cx="22" cy="12" r="2" fill="currentColor" />
         </svg>
       )
     default:
-      return null
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-foam-400">
+          <circle cx="12" cy="12" r="8" fill="currentColor" opacity="0.5" />
+        </svg>
+      )
   }
 }

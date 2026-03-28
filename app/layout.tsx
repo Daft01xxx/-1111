@@ -15,10 +15,10 @@ const russo = Russo_One({
 })
 
 export const metadata: Metadata = {
-  title: 'NAPIWAS - Beer Space Shooter',
-  description: 'The ultimate beer-themed space shooter game with TON wallet integration. Shoot foam, defeat bosses, and climb the leaderboard!',
-  keywords: ['game', 'TON', 'NAPIWAS', 'crypto', 'shooter', 'beer'],
-  authors: [{ name: 'NAPIWAS Team' }],
+  title: 'Cosmic Cats - Alien Cat Boss Shooter',
+  description: 'Battle alien cat bosses as a cute orange cat in this fast-paced space shooter! Earn coins, unlock skins, and climb the leaderboard!',
+  keywords: ['game', 'cats', 'shooter', 'alien', 'space', 'arcade'],
+  authors: [{ name: 'Cosmic Cats Team' }],
 }
 
 export const viewport: Viewport = {
@@ -26,7 +26,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#f98407',
+  themeColor: '#fb923c',
 }
 
 export default function RootLayout({

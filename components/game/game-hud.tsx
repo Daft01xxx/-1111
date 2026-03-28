@@ -2,7 +2,7 @@
 
 import { useGameStore } from '@/lib/store'
 import { formatNumber, getMultiplierTier } from '@/lib/utils'
-import { Heart, Pause, Zap, Shield, Target, Flame } from 'lucide-react'
+import { Heart, Pause, Zap, Shield, Target, Flame, Coins } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export function GameHUD() {
@@ -17,6 +17,8 @@ export function GameHUD() {
     powerUps,
     pauseGame,
     isPlaying,
+    coins,
+    killStreak,
   } = useGameStore()
 
   const healthPercent = (health / maxHealth) * 100
@@ -95,6 +97,18 @@ export function GameHUD() {
               }}
             >
               x{multiplier.toFixed(2)} {tier.tier}
+            </motion.div>
+          )}
+          
+          {/* Kill streak */}
+          {killStreak >= 5 && (
+            <motion.div
+              key={killStreak}
+              initial={{ scale: 1.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/50"
+            >
+              {killStreak}x STREAK!
             </motion.div>
           )}
         </div>

@@ -50,11 +50,19 @@ body {
   }
   
   .beer-gradient {
-    @apply bg-gradient-to-br from-beer-500 via-beer-600 to-beer-700;
+    @apply bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600;
   }
   
   .beer-text {
-    @apply bg-gradient-to-r from-beer-400 to-beer-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent;
+  }
+  
+  .cat-gradient {
+    @apply bg-gradient-to-br from-orange-400 via-amber-500 to-orange-500;
+  }
+  
+  .cat-text {
+    @apply bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent;
   }
   
   .foam-glow {
@@ -62,7 +70,15 @@ body {
   }
   
   .beer-glow {
-    box-shadow: 0 0 30px rgba(249, 132, 7, 0.5);
+    box-shadow: 0 0 30px rgba(251, 146, 60, 0.5);
+  }
+  
+  .cat-glow {
+    box-shadow: 0 0 30px rgba(251, 146, 60, 0.4);
+  }
+  
+  .cosmic-glow {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
   }
   
   .game-container {
@@ -156,4 +172,58 @@ body {
 
 .animate-bounce-in {
   animation: bounce-in 0.5s ease-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(251, 146, 60, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(251, 146, 60, 0.7);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+.animate-sparkle {
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+@keyframes coin-spin {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+.animate-coin-spin {
+  animation: coin-spin 2s linear infinite;
 }

@@ -2,7 +2,7 @@
 
 import { useGameStore } from '@/lib/store'
 import { motion } from 'framer-motion'
-import { Skull, Lock, Check, ArrowLeft, Heart, Swords, Star } from 'lucide-react'
+import { Lock, ArrowLeft, Heart, Swords, Star, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 export default function BossesPage() {
@@ -16,9 +16,9 @@ export default function BossesPage() {
           <Link href="/" className="p-2 -m-2 rounded-lg hover:bg-dark-800 transition-colors">
             <ArrowLeft className="w-6 h-6 text-foam-100" />
           </Link>
-          <h1 className="text-xl font-display font-bold beer-text flex items-center gap-2">
-            <Skull className="w-5 h-5 text-beer-400" />
-            Boss Roster
+          <h1 className="text-xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-400" />
+            Alien Cat Bosses
           </h1>
           <div className="w-10" />
         </div>
@@ -29,15 +29,15 @@ export default function BossesPage() {
         <div className="bg-dark-900 rounded-xl border border-dark-700 p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-foam-400">Bosses Defeated</span>
-            <span className="text-lg font-bold beer-text">{bossesDefeated}/{bosses.length}</span>
+            <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{bossesDefeated}/{bosses.length}</span>
           </div>
           <div className="flex gap-1">
             {bosses.map((boss) => (
               <div
                 key={boss.id}
                 className={`
-                  flex-1 h-2 rounded-full
-                  ${boss.defeated ? 'bg-beer-500' : 'bg-dark-700'}
+                  flex-1 h-2 rounded-full transition-all
+                  ${boss.defeated ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-dark-700'}
                 `}
               />
             ))}
@@ -60,18 +60,23 @@ export default function BossesPage() {
                   ${boss.defeated 
                     ? 'bg-dark-900 border-green-500/30' 
                     : isUnlocked 
-                      ? 'bg-dark-900 border-dark-700' 
+                      ? 'bg-dark-900 border-purple-500/30' 
                       : 'bg-dark-900/50 border-dark-800'
                   }
                 `}
               >
+                {/* Glow effect for unlocked */}
+                {isUnlocked && !boss.defeated && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5" />
+                )}
+                
                 {/* Status badge */}
                 <div className={`
                   absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-bold
                   ${boss.defeated 
                     ? 'bg-green-500/20 text-green-400' 
                     : isUnlocked 
-                      ? 'bg-beer-500/20 text-beer-400' 
+                      ? 'bg-purple-500/20 text-purple-400' 
                       : 'bg-dark-700 text-foam-500'
                   }
                 `}>
@@ -80,18 +85,18 @@ export default function BossesPage() {
 
                 <div className="p-4">
                   <div className="flex gap-4">
-                    {/* Boss image placeholder */}
+                    {/* Boss image */}
                     <div className={`
-                      w-24 h-24 rounded-xl flex items-center justify-center flex-shrink-0
+                      w-24 h-24 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden
                       ${boss.defeated 
                         ? 'bg-green-500/10' 
                         : isUnlocked 
-                          ? 'bg-beer-500/10' 
+                          ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20' 
                           : 'bg-dark-800'
                       }
                     `}>
                       {isUnlocked ? (
-                        <BossIcon bossId={boss.id} />
+                        <AlienCatBossIcon theme={boss.theme} />
                       ) : (
                         <Lock className="w-10 h-10 text-foam-600" />
                       )}
@@ -102,7 +107,7 @@ export default function BossesPage() {
                       <h3 className={`text-lg font-bold ${isUnlocked ? 'text-foam-100' : 'text-foam-500'}`}>
                         {boss.name}
                       </h3>
-                      <p className="text-sm text-beer-400 mb-2">{boss.nameRu}</p>
+                      <p className="text-sm text-purple-400 mb-2">{boss.nameRu}</p>
                       
                       {isUnlocked && (
                         <p className="text-xs text-foam-500 line-clamp-2">
@@ -133,7 +138,7 @@ export default function BossesPage() {
 
                 {/* Defeated overlay */}
                 {boss.defeated && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-green-500" />
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-emerald-400" />
                 )}
               </motion.div>
             )
@@ -141,13 +146,16 @@ export default function BossesPage() {
         </div>
 
         {/* Lore section */}
-        <div className="bg-dark-900 rounded-xl border border-dark-700 p-4 mt-6">
-          <h3 className="text-lg font-bold text-foam-100 mb-3">The Enemy Alliance</h3>
+        <div className="bg-dark-900 rounded-xl border border-purple-500/20 p-4 mt-6">
+          <h3 className="text-lg font-bold text-foam-100 mb-3 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-400" />
+            The Cosmic Invasion
+          </h3>
           <p className="text-sm text-foam-400 leading-relaxed">
-            The forces of hard liquor have united against NAPIWAS! Led by the infamous 
-            Absinthe Overlord, these villains seek to destroy the beer culture. Only you, 
-            piloting the legendary Beer Mug spaceship, can stop them. Defeat all five 
-            bosses to save the brew!
+            From the darkest reaches of the galaxy, five powerful alien cat overlords have 
+            descended upon Earth. Each possesses unique cosmic powers and commands legions 
+            of feline minions. Only you, piloting the legendary Orange Cat fighter, can 
+            defeat them and save the planet from their cosmic domination!
           </p>
         </div>
       </div>
@@ -155,60 +163,83 @@ export default function BossesPage() {
   )
 }
 
-function BossIcon({ bossId }: { bossId: string }) {
-  const iconClass = "w-12 h-12"
+function AlienCatBossIcon({ theme }: { theme: 'nebula' | 'plasma' | 'void' | 'gravity' | 'cosmic' }) {
+  const iconClass = "w-16 h-16"
   
-  switch (bossId) {
-    case 'vodka_king':
-      return (
-        <svg className={iconClass} viewBox="0 0 48 48" fill="none">
-          <rect x="14" y="8" width="20" height="32" rx="4" fill="#94A3B8" />
-          <rect x="18" y="4" width="12" height="8" rx="2" fill="#64748B" />
-          <rect x="17" y="20" width="14" height="10" rx="2" fill="#E2E8F0" />
-          <text x="24" y="28" textAnchor="middle" fontSize="6" fill="#475569">V</text>
-        </svg>
-      )
-    case 'whiskey_wizard':
-      return (
-        <svg className={iconClass} viewBox="0 0 48 48" fill="none">
-          <rect x="12" y="12" width="24" height="28" rx="4" fill="#92400E" />
-          <rect x="16" y="6" width="16" height="10" rx="3" fill="#78350F" />
-          <rect x="15" y="22" width="18" height="12" rx="2" fill="#FCD34D" />
-          <text x="24" y="31" textAnchor="middle" fontSize="6" fill="#78350F">W</text>
-        </svg>
-      )
-    case 'wine_witch':
-      return (
-        <svg className={iconClass} viewBox="0 0 48 48" fill="none">
-          <path d="M18 44 L24 16 L30 44 Z" fill="#7C3AED" />
-          <circle cx="24" cy="12" r="8" fill="#7C3AED" />
-          <rect x="22" y="4" width="4" height="4" rx="1" fill="#5B21B6" />
-          <circle cx="24" cy="12" r="5" fill="#A78BFA" />
-        </svg>
-      )
-    case 'tequila_titan':
-      return (
-        <svg className={iconClass} viewBox="0 0 48 48" fill="none">
-          <rect x="14" y="10" width="20" height="30" rx="4" fill="#059669" />
-          <rect x="18" y="5" width="12" height="8" rx="2" fill="#047857" />
-          <rect x="16" y="20" width="16" height="14" rx="2" fill="#34D399" />
-          <path d="M8 20 L14 18 L14 28 L8 26 Z" fill="#059669" />
-          <path d="M40 20 L34 18 L34 28 L40 26 Z" fill="#059669" />
-        </svg>
-      )
-    case 'absinthe_overlord':
-      return (
-        <svg className={iconClass} viewBox="0 0 48 48" fill="none">
-          <path d="M14 44 L20 14 L28 14 L34 44 Z" fill="#059669" />
-          <ellipse cx="24" cy="12" rx="10" ry="6" fill="#10B981" />
-          <rect x="22" y="4" width="4" height="4" rx="1" fill="#047857" />
-          <circle cx="20" cy="10" r="2" fill="#6EE7B7" opacity="0.8" />
-          <circle cx="28" cy="10" r="2" fill="#6EE7B7" opacity="0.8" />
-          {/* Crown */}
-          <path d="M16 6 L18 2 L24 5 L30 2 L32 6 Z" fill="#FFD700" />
-        </svg>
-      )
-    default:
-      return <Skull className={`${iconClass} text-foam-500`} />
+  const colors = {
+    nebula: { primary: '#7B68EE', secondary: '#9370DB', accent: '#E6E6FA' },
+    plasma: { primary: '#FF6B35', secondary: '#FF8C42', accent: '#FFD700' },
+    void: { primary: '#4B0082', secondary: '#8B008B', accent: '#9400D3' },
+    gravity: { primary: '#708090', secondary: '#A9A9A9', accent: '#00CED1' },
+    cosmic: { primary: '#FF1493', secondary: '#9400D3', accent: '#00FFFF' },
   }
+  
+  const color = colors[theme]
+  
+  return (
+    <svg className={iconClass} viewBox="0 0 64 64" fill="none">
+      {/* Glow effect */}
+      <defs>
+        <radialGradient id={`glow-${theme}`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={color.secondary} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color.primary} stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id={`body-${theme}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={color.primary} />
+          <stop offset="100%" stopColor={color.secondary} />
+        </linearGradient>
+      </defs>
+      
+      {/* Outer glow */}
+      <circle cx="32" cy="32" r="28" fill={`url(#glow-${theme})`} />
+      
+      {/* Body */}
+      <ellipse cx="32" cy="36" rx="14" ry="12" fill={`url(#body-${theme})`} />
+      
+      {/* Head */}
+      <circle cx="32" cy="24" r="12" fill={`url(#body-${theme})`} />
+      
+      {/* Ears */}
+      <path d="M20 18 L16 6 L26 14 Z" fill={color.primary} />
+      <path d="M44 18 L48 6 L38 14 Z" fill={color.primary} />
+      <path d="M21 16 L18 8 L25 14 Z" fill={color.secondary} />
+      <path d="M43 16 L46 8 L39 14 Z" fill={color.secondary} />
+      
+      {/* Eyes */}
+      <ellipse cx="27" cy="23" rx="4" ry="5" fill={color.accent} />
+      <ellipse cx="37" cy="23" rx="4" ry="5" fill={color.accent} />
+      <ellipse cx="27" cy="24" rx="2" ry="3" fill="#111" />
+      <ellipse cx="37" cy="24" rx="2" ry="3" fill="#111" />
+      
+      {/* Nose */}
+      <path d="M32 28 L30 31 L34 31 Z" fill={color.accent} />
+      
+      {/* Crown/horns for cosmic emperor */}
+      {theme === 'cosmic' && (
+        <>
+          <path d="M24 10 L26 4 L28 10" stroke={color.accent} strokeWidth="2" fill="none" />
+          <path d="M30 8 L32 2 L34 8" stroke={color.accent} strokeWidth="2" fill="none" />
+          <path d="M36 10 L38 4 L40 10" stroke={color.accent} strokeWidth="2" fill="none" />
+        </>
+      )}
+      
+      {/* Circuit lines for gravity */}
+      {theme === 'gravity' && (
+        <>
+          <circle cx="32" cy="36" r="8" stroke={color.accent} strokeWidth="1" fill="none" strokeDasharray="2 2" />
+          <circle cx="32" cy="36" r="12" stroke={color.accent} strokeWidth="1" fill="none" strokeDasharray="3 3" />
+        </>
+      )}
+      
+      {/* Flame mane for plasma */}
+      {theme === 'plasma' && (
+        <path 
+          d="M20 20 Q18 14 22 12 Q20 16 24 14 Q22 18 26 16 Q24 20 28 18 Q26 22 30 20" 
+          stroke={color.accent} 
+          strokeWidth="2" 
+          fill="none"
+        />
+      )}
+    </svg>
+  )
 }
