@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
@@ -35,14 +35,14 @@ export default function LeaderboardPage() {
     () =>
       language === 'ru'
         ? {
-            title: 'Лидерборд',
-            subtitle: 'Топ 20 по кружкам пива',
-            mugs: 'Кружки',
-            yourMugs: 'Ваши кружки',
-            noData: 'Пока нет данных рейтинга',
-            you: 'Вы',
-            level: 'Ур.',
-            bosses: 'боссов',
+            title: 'Р›РёРґРµСЂР±РѕСЂРґ',
+            subtitle: 'РўРѕРї 20 РїРѕ РєСЂСѓР¶РєР°Рј РїРёРІР°',
+            mugs: 'РљСЂСѓР¶РєРё',
+            yourMugs: 'Р’Р°С€Рё РєСЂСѓР¶РєРё',
+            noData: 'РџРѕРєР° РЅРµС‚ РґР°РЅРЅС‹С… СЂРµР№С‚РёРЅРіР°',
+            you: 'Р’С‹',
+            level: 'РЈСЂ.',
+            bosses: 'Р±РѕСЃСЃРѕРІ',
           }
         : {
             title: 'Leaderboard',
@@ -100,10 +100,10 @@ export default function LeaderboardPage() {
   }, [])
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Crown className="h-5 w-5 text-yellow-400" />
+    if (rank === 1) return <Crown className="h-5 w-5 text-orange-400" />
     if (rank === 2) return <Medal className="h-5 w-5 text-zinc-300" />
-    if (rank === 3) return <Medal className="h-5 w-5 text-amber-600" />
-    return <span className="text-sm font-bold text-amber-500">{rank}</span>
+    if (rank === 3) return <Medal className="h-5 w-5 text-orange-600" />
+    return <span className="text-sm font-bold text-orange-500">{rank}</span>
   }
 
   const visibleEntries = useMemo(() => {
@@ -113,7 +113,7 @@ export default function LeaderboardPage() {
       {
         id: userId,
         wallet_address: effectiveWalletAddress,
-        username: language === 'ru' ? 'Вы' : 'You',
+        username: language === 'ru' ? 'Р’С‹' : 'You',
         score: coins,
         level,
         bosses_defeated: bossesDefeated,
@@ -125,14 +125,14 @@ export default function LeaderboardPage() {
     <div className={`min-h-screen pb-[calc(108px+env(safe-area-inset-bottom))] ${isDark ? 'bg-[#070708]' : 'bg-[#f8f4ea]'}`}>
       <AppPageHeader
         title={t.title}
-        icon={<Trophy className="h-5 w-5 text-amber-500" />}
+        icon={<Trophy className="h-5 w-5 text-orange-500" />}
         rightSlot={
           <button
             onClick={fetchLeaderboard}
             className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all active:scale-95 ${
               isDark
-                ? 'border-amber-500/35 bg-black/45 backdrop-blur-md'
-                : 'border-amber-400/45 bg-white/75 backdrop-blur-md'
+                ? 'border-orange-500/35 bg-black/45 backdrop-blur-md'
+                : 'border-orange-400/45 bg-white/75 backdrop-blur-md'
             }`}
             aria-label="Refresh leaderboard"
           >
@@ -142,17 +142,17 @@ export default function LeaderboardPage() {
       />
 
       <div className="px-4 pt-3">
-        <div className={`rounded-2xl border p-3 backdrop-blur-lg ${isDark ? 'border-amber-500/25 bg-black/45' : 'border-amber-400/35 bg-white/75'}`}>
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.12em] text-amber-500">{t.subtitle}</p>
+        <div className={`rounded-2xl border p-3 backdrop-blur-lg ${isDark ? 'border-orange-500/25 bg-black/45' : 'border-orange-400/35 bg-white/75'}`}>
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.12em] text-orange-500">{t.subtitle}</p>
           <div className="mt-2 flex justify-center">
-            <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-amber-500/35">
+            <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-orange-500/35">
               <Image src="/images/kitten-named-woof.gif" alt="Leaderboard mascot" fill className="object-cover" unoptimized />
             </div>
           </div>
           <div className="mt-3 flex items-center justify-center gap-2 text-sm">
-            <Beer className="h-4 w-4 text-amber-500" />
+            <Beer className="h-4 w-4 text-orange-500" />
             <span className={isDark ? 'text-white/75' : 'text-[#433822]'}>
-              {t.yourMugs}: <strong className="text-amber-500">{formatNumber(coins)}</strong>
+              {t.yourMugs}: <strong className="text-orange-500">{formatNumber(coins)}</strong>
             </span>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function LeaderboardPage() {
             <div key={i} className={`h-16 animate-pulse rounded-xl ${isDark ? 'bg-[#121212]' : 'bg-[#ece5d6]'}`} />
           ))
         ) : visibleEntries.length === 0 ? (
-          <div className={`rounded-2xl border p-6 text-center ${isDark ? 'border-amber-500/20 bg-black/45 text-white/70' : 'border-amber-400/35 bg-white/75 text-[#5a4b32]'}`}>
+          <div className={`rounded-2xl border p-6 text-center ${isDark ? 'border-orange-500/20 bg-black/45 text-white/70' : 'border-orange-400/35 bg-white/75 text-[#5a4b32]'}`}>
             {t.noData}
           </div>
         ) : (
@@ -182,22 +182,22 @@ export default function LeaderboardPage() {
               <div
                 key={entry.id ?? `${entry.wallet_address}-${rank}`}
                 className={`rounded-xl border px-3 py-2.5 backdrop-blur-lg transition-all ${
-                  isDark ? 'border-amber-500/20 bg-black/45' : 'border-amber-400/30 bg-white/75'
-                } ${isMe ? 'ring-1 ring-amber-500/55' : ''}`}
+                  isDark ? 'border-orange-500/20 bg-black/45' : 'border-orange-400/30 bg-white/75'
+                } ${isMe ? 'ring-1 ring-orange-500/55' : ''}`}
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/35">{getRankIcon(rank)}</div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className={`truncate text-sm font-semibold ${isDark ? 'text-white' : 'text-[#1f1a12]'}`}>{displayName}</p>
-                      {isMe && <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-500">{t.you}</span>}
+                      {isMe && <span className="rounded bg-orange-500/20 px-1.5 py-0.5 text-[10px] font-bold text-orange-500">{t.you}</span>}
                     </div>
                     <p className={`text-[11px] ${isDark ? 'text-white/55' : 'text-[#6f6147]'}`}>
-                      {t.level} {lvl} · {bosses} {t.bosses}
+                      {t.level} {lvl} В· {bosses} {t.bosses}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-black text-amber-500">{formatNumber(mugs)}</p>
+                    <p className="text-lg font-black text-orange-500">{formatNumber(mugs)}</p>
                     <p className={`text-[10px] uppercase ${isDark ? 'text-white/50' : 'text-[#7a6c53]'}`}>{t.mugs}</p>
                   </div>
                 </div>

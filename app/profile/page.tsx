@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
@@ -46,17 +46,17 @@ export default function ProfilePage() {
     () =>
       language === 'ru'
         ? {
-            title: 'Профиль',
-            myProfile: 'Мой профиль',
-            leaderboard: 'Рейтинг',
-            beerMugs: 'Кружки пива',
-            tokenBalance: 'Токены NAPIWAS',
-            level: 'Уровень',
-            score: 'Рекорд',
-            meters: 'Метры',
-            wallet: 'Кошелёк',
-            notConnected: 'Не подключен',
-            fetchError: 'Рейтинг временно недоступен',
+            title: 'РџСЂРѕС„РёР»СЊ',
+            myProfile: 'РњРѕР№ РїСЂРѕС„РёР»СЊ',
+            leaderboard: 'Р РµР№С‚РёРЅРі',
+            beerMugs: 'РљСЂСѓР¶РєРё РїРёРІР°',
+            tokenBalance: 'РўРѕРєРµРЅС‹ NAPIWAS',
+            level: 'РЈСЂРѕРІРµРЅСЊ',
+            score: 'Р РµРєРѕСЂРґ',
+            meters: 'РњРµС‚СЂС‹',
+            wallet: 'РљРѕС€РµР»С‘Рє',
+            notConnected: 'РќРµ РїРѕРґРєР»СЋС‡РµРЅ',
+            fetchError: 'Р РµР№С‚РёРЅРі РІСЂРµРјРµРЅРЅРѕ РЅРµРґРѕСЃС‚СѓРїРµРЅ',
           }
         : {
             title: 'Profile',
@@ -73,7 +73,7 @@ export default function ProfilePage() {
           },
     [language]
   )
-  const copyWalletLabel = language === 'ru' ? 'Копировать' : 'Copy'
+  const copyWalletLabel = language === 'ru' ? 'РљРѕРїРёСЂРѕРІР°С‚СЊ' : 'Copy'
 
   const visibleEntries = useMemo(() => {
     if (entries.length > 0) return entries
@@ -82,7 +82,7 @@ export default function ProfilePage() {
       {
         id: userId,
         wallet_address: effectiveWalletAddress,
-        username: language === 'ru' ? 'Вы' : 'You',
+        username: language === 'ru' ? 'Р’С‹' : 'You',
         meters: totalMeters,
         score: coins,
         level,
@@ -148,7 +148,7 @@ export default function ProfilePage() {
 
   return (
     <div className={`min-h-screen pb-[calc(108px+env(safe-area-inset-bottom))] ${isDark ? 'bg-[#060606]' : 'bg-[#f7f4ec]'}`}>
-      <AppPageHeader title={t.title} icon={<UserRound className="h-5 w-5 text-amber-500" />} />
+      <AppPageHeader title={t.title} icon={<UserRound className="h-5 w-5 text-orange-500" />} />
 
       <div className="px-4 pt-4">
         <div className={`grid grid-cols-2 gap-2 rounded-2xl p-2 ${isDark ? 'bg-[#111111]' : 'bg-white border border-[#e9e2d1]'}`}>
@@ -156,7 +156,7 @@ export default function ProfilePage() {
             onClick={() => setTab('profile')}
             className={`h-10 rounded-xl text-sm font-semibold transition-colors ${
               tab === 'profile'
-                ? 'bg-amber-500 text-black'
+                ? 'bg-orange-500 text-black'
                 : isDark
                   ? 'bg-[#1a1a1a] text-white/75 hover:text-white'
                   : 'bg-[#f1ebdb] text-[#5f5134]'
@@ -168,7 +168,7 @@ export default function ProfilePage() {
             onClick={() => setTab('leaderboard')}
             className={`h-10 rounded-xl text-sm font-semibold transition-colors ${
               tab === 'leaderboard'
-                ? 'bg-amber-500 text-black'
+                ? 'bg-orange-500 text-black'
                 : isDark
                   ? 'bg-[#1a1a1a] text-white/75 hover:text-white'
                   : 'bg-[#f1ebdb] text-[#5f5134]'
@@ -183,7 +183,7 @@ export default function ProfilePage() {
         <div className="space-y-3 p-4">
           <div className={`rounded-2xl p-4 ${isDark ? 'bg-[#111111]' : 'bg-white border border-[#e9e2d1]'}`}>
             <div className="flex items-center gap-3">
-              <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-amber-500/35 bg-black">
+              <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-orange-500/35 bg-black">
                 <Image src="/images/kitten-reading.gif" alt="Kitten avatar" fill className="object-cover" />
               </div>
               <div className="min-w-0 flex-1">
@@ -197,7 +197,7 @@ export default function ProfilePage() {
                 disabled={!friendlyWalletAddress}
                 className={`inline-flex h-9 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-semibold transition-colors ${
                   isDark
-                    ? 'border-amber-500/35 bg-black/45 text-amber-300 hover:bg-black/70 disabled:opacity-45'
+                    ? 'border-orange-500/35 bg-black/45 text-orange-300 hover:bg-black/70 disabled:opacity-45'
                     : 'border-[#e2c98f] bg-[#f7ecd0] text-[#7a5a1d] hover:bg-[#f2e2ba] disabled:opacity-45'
                 }`}
                 title={copyWalletLabel}
@@ -213,9 +213,9 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className={`text-sm ${isDark ? 'text-white/55' : 'text-[#7a6a4b]'}`}>{t.beerMugs}</p>
-                <p className="text-3xl font-black text-amber-500">{formatNumber(coins)}</p>
+                <p className="text-3xl font-black text-orange-500">{formatNumber(coins)}</p>
               </div>
-              <Beer className="h-7 w-7 text-amber-500" />
+              <Beer className="h-7 w-7 text-orange-500" />
             </div>
           </div>
 
@@ -225,7 +225,7 @@ export default function ProfilePage() {
                 <p className={`text-sm ${isDark ? 'text-white/55' : 'text-[#7a6a4b]'}`}>{t.tokenBalance}</p>
                 <p className={`text-3xl font-black ${isDark ? 'text-white' : 'text-[#222]'}`}>{formatNumber(Math.floor(napiwasBalance))}</p>
               </div>
-              <Wallet className="h-7 w-7 text-amber-500" />
+              <Wallet className="h-7 w-7 text-orange-500" />
             </div>
           </div>
 
@@ -267,18 +267,18 @@ export default function ProfilePage() {
                   key={entry.id}
                   className={`flex items-center gap-3 rounded-xl px-3 py-3 ${
                     isDark ? 'bg-[#111111]' : 'bg-white border border-[#e9e2d1]'
-                  } ${isMe ? 'ring-1 ring-amber-500/50' : ''}`}
+                  } ${isMe ? 'ring-1 ring-orange-500/50' : ''}`}
                 >
-                  <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${isDark ? 'bg-black/55 text-amber-500' : 'bg-[#f3eddd] text-amber-700'}`}>
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${isDark ? 'bg-black/55 text-orange-500' : 'bg-[#f3eddd] text-orange-700'}`}>
                     {index === 0 ? <Crown className="h-4 w-4" /> : index + 1}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className={`truncate text-sm font-semibold ${isDark ? 'text-white' : 'text-[#222]'}`}>{displayName}</p>
                     <p className={`text-xs ${isDark ? 'text-white/55' : 'text-[#7a6a4b]'}`}>
-                      {formatNumber(safeMeters)} m · {formatNumber(safeScore)}
+                      {formatNumber(safeMeters)} m В· {formatNumber(safeScore)}
                     </p>
                   </div>
-                  <Trophy className="h-4 w-4 text-amber-500" />
+                  <Trophy className="h-4 w-4 text-orange-500" />
                 </div>
               )
             })

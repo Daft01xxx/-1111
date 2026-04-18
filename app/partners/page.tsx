@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -25,17 +25,17 @@ export default function PartnersPage() {
   const { language } = useGameStore()
 
   const t = {
-    title: language === 'ru' ? 'Партнеры' : 'Partners',
-    subtitle: language === 'ru' ? 'Наши партнеры' : 'Our Amazing Partners',
+    title: language === 'ru' ? 'РџР°СЂС‚РЅРµСЂС‹' : 'Partners',
+    subtitle: language === 'ru' ? 'РќР°С€Рё РїР°СЂС‚РЅРµСЂС‹' : 'Our Amazing Partners',
     description: language === 'ru' 
-      ? 'NAPIWAS существует благодаря этим невероятным проектам.' 
+      ? 'NAPIWAS СЃСѓС‰РµСЃС‚РІСѓРµС‚ Р±Р»Р°РіРѕРґР°СЂСЏ СЌС‚РёРј РЅРµРІРµСЂРѕСЏС‚РЅС‹Рј РїСЂРѕРµРєС‚Р°Рј.' 
       : 'NAPIWAS is made possible thanks to these incredible projects.',
-    featured: language === 'ru' ? 'Главные' : 'Featured',
-    become: language === 'ru' ? 'Стать партнером' : 'Become a Partner',
+    featured: language === 'ru' ? 'Р“Р»Р°РІРЅС‹Рµ' : 'Featured',
+    become: language === 'ru' ? 'РЎС‚Р°С‚СЊ РїР°СЂС‚РЅРµСЂРѕРј' : 'Become a Partner',
     becomeDesc: language === 'ru' 
-      ? 'Хотите сотрудничать с NAPIWAS? Мы всегда открыты!' 
+      ? 'РҐРѕС‚РёС‚Рµ СЃРѕС‚СЂСѓРґРЅРёС‡Р°С‚СЊ СЃ NAPIWAS? РњС‹ РІСЃРµРіРґР° РѕС‚РєСЂС‹С‚С‹!' 
       : 'Want to partner with NAPIWAS? We are always looking for exciting collaborations!',
-    contact: language === 'ru' ? 'Связаться' : 'Contact Us',
+    contact: language === 'ru' ? 'РЎРІСЏР·Р°С‚СЊСЃСЏ' : 'Contact Us',
   }
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function PartnersPage() {
       name: 'v0 by Vercel',
       logo_url: '',
       website_url: 'https://v0.dev',
-      description: language === 'ru' ? 'AI-платформа разработки, создавшая эту игру.' : 'AI-powered development platform that helped build this game.',
+      description: language === 'ru' ? 'AI-РїР»Р°С‚С„РѕСЂРјР° СЂР°Р·СЂР°Р±РѕС‚РєРё, СЃРѕР·РґР°РІС€Р°СЏ СЌС‚Сѓ РёРіСЂСѓ.' : 'AI-powered development platform that helped build this game.',
       sort_order: 0,
       is_active: true,
       is_featured: true,
@@ -71,7 +71,7 @@ export default function PartnersPage() {
       name: 'TON Blockchain',
       logo_url: '',
       website_url: 'https://ton.org',
-      description: language === 'ru' ? 'The Open Network - быстрый, безопасный, децентрализованный.' : 'The Open Network - fast, secure, and decentralized.',
+      description: language === 'ru' ? 'The Open Network - Р±С‹СЃС‚СЂС‹Р№, Р±РµР·РѕРїР°СЃРЅС‹Р№, РґРµС†РµРЅС‚СЂР°Р»РёР·РѕРІР°РЅРЅС‹Р№.' : 'The Open Network - fast, secure, and decentralized.',
       sort_order: 1,
       is_active: true,
       is_featured: true,
@@ -114,7 +114,7 @@ export default function PartnersPage() {
             {featuredPartners.length > 0 && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Star className="w-4 h-4 text-yellow-400" />
+                  <Star className="w-4 h-4 text-orange-400" />
                   {t.featured}
                 </h3>
                 {featuredPartners.map((partner, index) => (
@@ -127,7 +127,7 @@ export default function PartnersPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                     whileTap={{ scale: 0.98 }}
-                    className="block bg-gradient-to-r from-beer-500/10 to-amber-500/10 rounded-xl border border-beer-500/30 p-4 hover:border-beer-500/50 transition-all group"
+                    className="block bg-gradient-to-r from-beer-500/10 to-orange-500/10 rounded-xl border border-beer-500/30 p-4 hover:border-beer-500/50 transition-all group"
                   >
                     <div className="flex items-start gap-4">
                       <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">

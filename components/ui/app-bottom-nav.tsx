@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -24,12 +24,12 @@ export function AppBottomNav() {
   const labels =
     language === 'ru'
       ? {
-          main: 'Главная',
-          game: 'Игра',
-          tasks: 'Задания',
-          withdraw: 'Вывод',
-          shop: 'Магазин',
-          profile: 'Профиль',
+          main: 'Р“Р»Р°РІРЅР°СЏ',
+          game: 'РРіСЂР°',
+          tasks: 'Р—Р°РґР°РЅРёСЏ',
+          withdraw: 'Р’С‹РІРѕРґ',
+          shop: 'РњР°РіР°Р·РёРЅ',
+          profile: 'РџСЂРѕС„РёР»СЊ',
         }
       : {
           main: 'Main',
@@ -53,8 +53,8 @@ export function AppBottomNav() {
         <div
           className={`mx-auto grid grid-cols-6 gap-1 rounded-2xl border px-2 py-1.5 ${
             isDark
-              ? 'border-amber-400/30 bg-[#121214]/95'
-              : 'border-amber-500/30 bg-[#fff9ee]/95'
+              ? 'border-orange-400/30 bg-[#121214]/95'
+              : 'border-orange-500/30 bg-[#fff9ee]/95'
           }`}
         >
           {navItems.map((item) => {
@@ -67,8 +67,8 @@ export function AppBottomNav() {
                 className={`flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl py-1.5 transition-colors ${
                   active
                     ? isDark
-                      ? 'bg-amber-500/22 text-amber-200'
-                      : 'bg-amber-500/26 text-amber-700'
+                      ? 'bg-orange-500/22 text-orange-200'
+                      : 'bg-orange-500/26 text-orange-700'
                     : isDark
                       ? 'text-white/60 hover:bg-white/8 hover:text-white'
                       : 'text-[#786a4d] hover:bg-black/5 hover:text-[#2b2416]'

@@ -441,7 +441,7 @@ const activeWeapons: Weapon[] = [
     unlocked: true,
     price: 0,
     rarity: 'common',
-    color: '#FFD93D',
+    color: '#F97316',
   },
   {
     id: 'spread',

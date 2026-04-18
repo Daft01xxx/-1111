@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
 
@@ -13,7 +13,7 @@ export function AppPageHeader({ title, icon, rightSlot, backHref = '/' }: AppPag
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-[calc(env(safe-area-inset-top)+10px)] pb-2 pointer-events-none">
-        <div className="pointer-events-auto rounded-2xl border border-amber-400/30 bg-[rgb(var(--card))]/90 backdrop-blur-xl supports-[backdrop-filter]:bg-[rgb(var(--card))]/80 px-2 py-1.5">
+        <div className="pointer-events-auto rounded-2xl border border-orange-400/30 bg-[rgb(var(--card))]/90 backdrop-blur-xl supports-[backdrop-filter]:bg-[rgb(var(--card))]/80 px-2 py-1.5">
           <div className="flex items-center justify-between gap-3">
             <Link
               href={backHref}

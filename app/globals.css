@@ -11,11 +11,11 @@
   --muted: 32 32 36;
   --muted-foreground: 140 135 125;
   --border: 45 43 40;
-  --primary: 212 175 55;
+  --primary: 249 115 22;
   --primary-foreground: 12 12 14;
-  --secondary: 234 137 47;
+  --secondary: 251 146 60;
   --secondary-foreground: 12 12 14;
-  --accent: 255 191 0;
+  --accent: 234 88 12;
   --accent-foreground: 12 12 14;
   --destructive: 220 38 38;
   --destructive-foreground: 255 255 255;
@@ -31,7 +31,7 @@
   --muted: 245 240 230;
   --muted-foreground: 90 85 75;
   --border: 225 215 195;
-  --primary: 180 140 40;
+  --primary: 234 88 12;
   --primary-foreground: 255 255 255;
 }
 
@@ -60,11 +60,11 @@ body {
 
 @layer utilities {
   .gold-gradient {
-    background: linear-gradient(145deg, #d4af37 0%, #f5d742 50%, #d4af37 100%);
+    background: linear-gradient(145deg, #ea580c 0%, #fb923c 50%, #f97316 100%);
   }
   
   .gold-text {
-    background: linear-gradient(145deg, #d4af37, #f5d742, #d4af37);
+    background: linear-gradient(145deg, #ea580c, #fb923c, #f97316);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -76,7 +76,7 @@ body {
   }
   
   .glow-gold {
-    box-shadow: 0 0 24px rgba(212, 175, 55, 0.35);
+    box-shadow: 0 0 24px rgba(249, 115, 22, 0.35);
   }
   
   .glow-orange {
@@ -104,7 +104,7 @@ body {
   }
 
   .menu-play-button {
-    @apply gold-gradient shadow-[0_10px_22px_rgba(245,158,11,0.34)] active:scale-[0.98] transition-all duration-150;
+    @apply gold-gradient shadow-[0_10px_22px_rgba(249,115,22,0.36)] active:scale-[0.98] transition-all duration-150;
   }
 }
 

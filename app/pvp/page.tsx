@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -120,38 +120,38 @@ export default function PvPPage() {
   }, [connectedWalletAddress])
 
   const t = {
-    title: language === 'ru' ? 'PvP Битва' : 'PvP Battle',
-    createMatch: language === 'ru' ? 'Создать матч' : 'Create Match',
-    myMatches: language === 'ru' ? 'Мои матчи' : 'My Matches',
-    available: language === 'ru' ? 'Доступные матчи' : 'Available Matches',
-    noMatches: language === 'ru' ? 'Нет доступных матчей' : 'No matches available',
-    createOrWait: language === 'ru' ? 'Создайте матч или подождите соперника' : 'Create a match or wait for opponents',
-    scoreBattle: language === 'ru' ? 'Битва очков' : 'Score Battle',
-    bossRush: language === 'ru' ? 'Охота на боссов' : 'Boss Rush',
-    highestScore: language === 'ru' ? 'Побеждает больший счёт' : 'Highest score wins',
-    mostBosses: language === 'ru' ? 'Побеждает больше боссов' : 'Most bosses wins',
-    matchType: language === 'ru' ? 'Тип матча' : 'Match Type',
-    betAmount: language === 'ru' ? 'Ставка (кружки)' : 'Bet Amount (Mugs)',
-    winnerTakes: language === 'ru' ? 'Победитель получает' : 'Winner takes',
-    points: language === 'ru' ? 'кружек' : 'mugs',
-    joinMatch: language === 'ru' ? 'Присоединиться' : 'Join Match',
-    playNow: language === 'ru' ? 'Играть' : 'Play Now',
-    victory: language === 'ru' ? 'Победа' : 'Victory',
-    defeat: language === 'ru' ? 'Поражение' : 'Defeat',
-    yourScore: language === 'ru' ? 'Ваш счёт' : 'Your score',
-    opponent: language === 'ru' ? 'Противник' : 'Opponent',
-    creating: language === 'ru' ? 'Создание...' : 'Creating...',
-    pending: language === 'ru' ? 'Ожидание' : 'PENDING',
-    active: language === 'ru' ? 'Активен' : 'ACTIVE',
-    completed: language === 'ru' ? 'Завершён' : 'COMPLETED',
-    youCreated: language === 'ru' ? 'Вы создали' : 'You created',
-    youJoined: language === 'ru' ? 'Вы присоединились' : 'You joined',
-    result: language === 'ru' ? 'Результат' : 'Result',
-    runSaved: language === 'ru' ? 'Ран сохранён' : 'Run submitted',
-    checking: language === 'ru' ? 'Проверка…' : 'Checking…',
-    loading: language === 'ru' ? 'Загрузка PvP…' : 'Loading PvP…',
-    modeRemote: language === 'ru' ? 'Онлайн PvP активен' : 'Online PvP is active',
-    modeLocal: language === 'ru' ? 'Локальный тестовый режим PvP' : 'Local PvP test mode',
+    title: language === 'ru' ? 'PvP Р‘РёС‚РІР°' : 'PvP Battle',
+    createMatch: language === 'ru' ? 'РЎРѕР·РґР°С‚СЊ РјР°С‚С‡' : 'Create Match',
+    myMatches: language === 'ru' ? 'РњРѕРё РјР°С‚С‡Рё' : 'My Matches',
+    available: language === 'ru' ? 'Р”РѕСЃС‚СѓРїРЅС‹Рµ РјР°С‚С‡Рё' : 'Available Matches',
+    noMatches: language === 'ru' ? 'РќРµС‚ РґРѕСЃС‚СѓРїРЅС‹С… РјР°С‚С‡РµР№' : 'No matches available',
+    createOrWait: language === 'ru' ? 'РЎРѕР·РґР°Р№С‚Рµ РјР°С‚С‡ РёР»Рё РїРѕРґРѕР¶РґРёС‚Рµ СЃРѕРїРµСЂРЅРёРєР°' : 'Create a match or wait for opponents',
+    scoreBattle: language === 'ru' ? 'Р‘РёС‚РІР° РѕС‡РєРѕРІ' : 'Score Battle',
+    bossRush: language === 'ru' ? 'РћС…РѕС‚Р° РЅР° Р±РѕСЃСЃРѕРІ' : 'Boss Rush',
+    highestScore: language === 'ru' ? 'РџРѕР±РµР¶РґР°РµС‚ Р±РѕР»СЊС€РёР№ СЃС‡С‘С‚' : 'Highest score wins',
+    mostBosses: language === 'ru' ? 'РџРѕР±РµР¶РґР°РµС‚ Р±РѕР»СЊС€Рµ Р±РѕСЃСЃРѕРІ' : 'Most bosses wins',
+    matchType: language === 'ru' ? 'РўРёРї РјР°С‚С‡Р°' : 'Match Type',
+    betAmount: language === 'ru' ? 'РЎС‚Р°РІРєР° (РєСЂСѓР¶РєРё)' : 'Bet Amount (Mugs)',
+    winnerTakes: language === 'ru' ? 'РџРѕР±РµРґРёС‚РµР»СЊ РїРѕР»СѓС‡Р°РµС‚' : 'Winner takes',
+    points: language === 'ru' ? 'РєСЂСѓР¶РµРє' : 'mugs',
+    joinMatch: language === 'ru' ? 'РџСЂРёСЃРѕРµРґРёРЅРёС‚СЊСЃСЏ' : 'Join Match',
+    playNow: language === 'ru' ? 'РРіСЂР°С‚СЊ' : 'Play Now',
+    victory: language === 'ru' ? 'РџРѕР±РµРґР°' : 'Victory',
+    defeat: language === 'ru' ? 'РџРѕСЂР°Р¶РµРЅРёРµ' : 'Defeat',
+    yourScore: language === 'ru' ? 'Р’Р°С€ СЃС‡С‘С‚' : 'Your score',
+    opponent: language === 'ru' ? 'РџСЂРѕС‚РёРІРЅРёРє' : 'Opponent',
+    creating: language === 'ru' ? 'РЎРѕР·РґР°РЅРёРµ...' : 'Creating...',
+    pending: language === 'ru' ? 'РћР¶РёРґР°РЅРёРµ' : 'PENDING',
+    active: language === 'ru' ? 'РђРєС‚РёРІРµРЅ' : 'ACTIVE',
+    completed: language === 'ru' ? 'Р—Р°РІРµСЂС€С‘РЅ' : 'COMPLETED',
+    youCreated: language === 'ru' ? 'Р’С‹ СЃРѕР·РґР°Р»Рё' : 'You created',
+    youJoined: language === 'ru' ? 'Р’С‹ РїСЂРёСЃРѕРµРґРёРЅРёР»РёСЃСЊ' : 'You joined',
+    result: language === 'ru' ? 'Р РµР·СѓР»СЊС‚Р°С‚' : 'Result',
+    runSaved: language === 'ru' ? 'Р Р°РЅ СЃРѕС…СЂР°РЅС‘РЅ' : 'Run submitted',
+    checking: language === 'ru' ? 'РџСЂРѕРІРµСЂРєР°вЂ¦' : 'CheckingвЂ¦',
+    loading: language === 'ru' ? 'Р—Р°РіСЂСѓР·РєР° PvPвЂ¦' : 'Loading PvPвЂ¦',
+    modeRemote: language === 'ru' ? 'РћРЅР»Р°Р№РЅ PvP Р°РєС‚РёРІРµРЅ' : 'Online PvP is active',
+    modeLocal: language === 'ru' ? 'Р›РѕРєР°Р»СЊРЅС‹Р№ С‚РµСЃС‚РѕРІС‹Р№ СЂРµР¶РёРј PvP' : 'Local PvP test mode',
   }
 
   const cardBorderClass = isDark ? 'border-[#8a4e12]/70' : 'border-border'
@@ -276,7 +276,7 @@ export default function PvPPage() {
 
     const participantId = userId ?? playerAddress
     if (participantId && hasOpenMatch(myMatches, participantId)) {
-      setPvpError(language === 'ru' ? 'Сначала завершите текущий матч' : 'Finish your current match first')
+      setPvpError(language === 'ru' ? 'РЎРЅР°С‡Р°Р»Р° Р·Р°РІРµСЂС€РёС‚Рµ С‚РµРєСѓС‰РёР№ РјР°С‚С‡' : 'Finish your current match first')
       return
     }
 
@@ -289,7 +289,7 @@ export default function PvPPage() {
         OPEN_MATCH_STATUSES.includes(entry.status as (typeof OPEN_MATCH_STATUSES)[number])
       )
       if (hasAnyOpenLocalMatch) {
-        setPvpError(language === 'ru' ? 'Сейчас уже есть активный матч' : 'There is already an active match')
+        setPvpError(language === 'ru' ? 'РЎРµР№С‡Р°СЃ СѓР¶Рµ РµСЃС‚СЊ Р°РєС‚РёРІРЅС‹Р№ РјР°С‚С‡' : 'There is already an active match')
         setCreating(false)
         return
       }
@@ -329,7 +329,7 @@ export default function PvPPage() {
 
     const participantId = userId ?? playerAddress
     if (participantId && hasOpenMatch(myMatches, participantId)) {
-      setPvpError(language === 'ru' ? 'Сначала завершите текущий матч' : 'Finish your current match first')
+      setPvpError(language === 'ru' ? 'РЎРЅР°С‡Р°Р»Р° Р·Р°РІРµСЂС€РёС‚Рµ С‚РµРєСѓС‰РёР№ РјР°С‚С‡' : 'Finish your current match first')
       return
     }
 
@@ -386,7 +386,7 @@ export default function PvPPage() {
     switch (status) {
       case 'waiting':
       case 'pending':
-        return 'text-yellow-400 bg-yellow-400/20'
+        return 'text-orange-400 bg-orange-400/20'
       case 'active':
       case 'in_progress':
         return 'text-blue-400 bg-blue-400/20'
@@ -413,7 +413,7 @@ export default function PvPPage() {
   }
 
   const renderMetric = (value: number | null) => {
-    if (value === null || value === undefined) return '—'
+    if (value === null || value === undefined) return 'вЂ”'
     return String(value)
   }
 
@@ -421,7 +421,7 @@ export default function PvPPage() {
     <div className="min-h-screen overflow-x-hidden bg-[rgb(var(--background))] pb-[calc(108px+env(safe-area-inset-bottom))]">
       <AppPageHeader
         title={t.title}
-        icon={<Swords className="h-5 w-5 text-amber-500" />}
+        icon={<Swords className="h-5 w-5 text-orange-500" />}
       />
 
       <div className="p-4 space-y-6">
@@ -438,20 +438,20 @@ export default function PvPPage() {
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowCreateModal(true)}
               disabled={creating || ((userId ?? playerAddress) ? hasOpenMatch(myMatches, (userId ?? playerAddress) as string) : false)}
-              className="w-full p-4 rounded-2xl bg-amber-500 hover:bg-amber-400 border border-amber-300 flex items-center justify-center gap-3 font-bold text-black shadow-[0_10px_30px_rgba(245,158,11,0.35)] transition-colors disabled:cursor-not-allowed disabled:opacity-55"
+              className="w-full p-4 rounded-2xl bg-orange-500 hover:bg-orange-400 border border-orange-300 flex items-center justify-center gap-3 font-bold text-black shadow-[0_10px_30px_rgba(245,158,11,0.35)] transition-colors disabled:cursor-not-allowed disabled:opacity-55"
             >
               <Plus className="w-6 h-6" />
               {t.createMatch}
             </motion.button>
 
-            <div className="rounded-xl border border-amber-300/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+            <div className="rounded-xl border border-orange-300/40 bg-orange-500/10 px-3 py-2 text-xs text-orange-300">
               {pvpError ? pvpError : pvpMode === 'local' ? t.modeLocal : t.modeRemote}
             </div>
 
             {myMatches.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-amber-500" />
+                  <Users className="w-5 h-5 text-orange-500" />
                   {t.myMatches}
                 </h2>
                 <div className="space-y-3">
@@ -476,7 +476,7 @@ export default function PvPPage() {
                           <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(match.status)}`}>
                             {getStatusText(match.status)}
                           </span>
-                          <div className="flex items-center gap-1 text-amber-500">
+                          <div className="flex items-center gap-1 text-orange-500">
                             <Coins className="w-4 h-4" />
                             <span className="font-bold">{formatNumber(match.bet_amount)}</span>
                           </div>
@@ -499,7 +499,7 @@ export default function PvPPage() {
                           {!canStartRun && myScoreSubmitted && match.status !== 'completed' && (
                             <div className="text-right">
                               <p className="text-xs text-muted-foreground">{t.checking}</p>
-                              <p className="text-xs font-semibold text-amber-400">{t.runSaved}</p>
+                              <p className="text-xs font-semibold text-orange-400">{t.runSaved}</p>
                             </div>
                           )}
 
@@ -538,7 +538,7 @@ export default function PvPPage() {
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-amber-500" />
+                <Trophy className="w-5 h-5 text-orange-500" />
                 {t.available}
               </h2>
 
@@ -566,7 +566,7 @@ export default function PvPPage() {
                         <p className="font-medium text-foreground">
                           {match.match_type === 'score' ? t.scoreBattle : t.bossRush}
                         </p>
-                        <div className="flex items-center gap-1 text-amber-500">
+                        <div className="flex items-center gap-1 text-orange-500">
                           <Coins className="w-5 h-5" />
                           <span className="text-lg font-bold">{formatNumber(match.bet_amount)}</span>
                         </div>
@@ -575,7 +575,7 @@ export default function PvPPage() {
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleJoinMatch(match)}
-                        className="w-full py-3 rounded-lg bg-amber-500 hover:bg-amber-400 border border-amber-300 text-black font-bold transition-colors shadow-[0_8px_22px_rgba(245,158,11,0.3)]"
+                        className="w-full py-3 rounded-lg bg-orange-500 hover:bg-orange-400 border border-orange-300 text-black font-bold transition-colors shadow-[0_8px_22px_rgba(245,158,11,0.3)]"
                       >
                         {t.joinMatch}
                       </motion.button>
@@ -622,7 +622,7 @@ export default function PvPPage() {
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setMatchType('score')}
-                      className={`p-3 rounded-xl border-2 transition-colors text-left ${matchType === 'score' ? 'border-beer-500 bg-beer-500/10' : `${cardBorderClass} bg-muted hover:border-amber-500/55`}`}
+                      className={`p-3 rounded-xl border-2 transition-colors text-left ${matchType === 'score' ? 'border-beer-500 bg-beer-500/10' : `${cardBorderClass} bg-muted hover:border-orange-500/55`}`}
                     >
                       <p className="font-bold text-foreground">{t.scoreBattle}</p>
                       <p className="text-xs text-muted-foreground">{t.highestScore}</p>
@@ -630,7 +630,7 @@ export default function PvPPage() {
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setMatchType('bosses')}
-                      className={`p-3 rounded-xl border-2 transition-colors text-left ${matchType === 'bosses' ? 'border-beer-500 bg-beer-500/10' : `${cardBorderClass} bg-muted hover:border-amber-500/55`}`}
+                      className={`p-3 rounded-xl border-2 transition-colors text-left ${matchType === 'bosses' ? 'border-beer-500 bg-beer-500/10' : `${cardBorderClass} bg-muted hover:border-orange-500/55`}`}
                     >
                       <p className="font-bold text-foreground">{t.bossRush}</p>
                       <p className="text-xs text-muted-foreground">{t.mostBosses}</p>
@@ -668,7 +668,7 @@ export default function PvPPage() {
                         if (Number.isFinite(next)) setBetAmount(next)
                       }}
                       className={`w-full rounded-lg border px-3 py-2 text-sm bg-[rgb(var(--card))] text-foreground ${cardBorderClass}`}
-                      placeholder={language === 'ru' ? 'Своя ставка' : 'Custom bet'}
+                      placeholder={language === 'ru' ? 'РЎРІРѕСЏ СЃС‚Р°РІРєР°' : 'Custom bet'}
                     />
                   </div>
                 </div>
@@ -683,7 +683,7 @@ export default function PvPPage() {
                   whileTap={{ scale: 0.95 }}
                   onClick={handleCreateMatch}
                   disabled={creating}
-                  className="w-full py-4 rounded-xl bg-amber-500 hover:bg-amber-400 border border-amber-300 text-black font-bold disabled:opacity-50 transition-colors"
+                  className="w-full py-4 rounded-xl bg-orange-500 hover:bg-orange-400 border border-orange-300 text-black font-bold disabled:opacity-50 transition-colors"
                 >
                   {creating ? t.creating : t.createMatch}
                 </motion.button>

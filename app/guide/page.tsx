@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { 
   Info, Gamepad2, Target, Shield, Zap, 
@@ -13,60 +13,60 @@ export default function GuidePage() {
   const isDark = theme === 'dark'
 
   const t = {
-    title: language === 'ru' ? 'Как играть' : 'How to Play',
-    welcome: language === 'ru' ? 'Добро пожаловать в NAPIWAS!' : 'Welcome to NAPIWAS!',
+    title: language === 'ru' ? 'РљР°Рє РёРіСЂР°С‚СЊ' : 'How to Play',
+    welcome: language === 'ru' ? 'Р”РѕР±СЂРѕ РїРѕР¶Р°Р»РѕРІР°С‚СЊ РІ NAPIWAS!' : 'Welcome to NAPIWAS!',
     welcomeDesc: language === 'ru' 
-      ? 'Космический шутер с котиком против пивных кружек. Побеждай врагов, собирай бонусы и стань чемпионом!'
+      ? 'РљРѕСЃРјРёС‡РµСЃРєРёР№ С€СѓС‚РµСЂ СЃ РєРѕС‚РёРєРѕРј РїСЂРѕС‚РёРІ РїРёРІРЅС‹С… РєСЂСѓР¶РµРє. РџРѕР±РµР¶РґР°Р№ РІСЂР°РіРѕРІ, СЃРѕР±РёСЂР°Р№ Р±РѕРЅСѓСЃС‹ Рё СЃС‚Р°РЅСЊ С‡РµРјРїРёРѕРЅРѕРј!'
       : 'The ultimate cat vs beer space shooter. Defeat enemies, collect power-ups, and become the champion!',
-    startPlaying: language === 'ru' ? 'Начать играть' : 'Start Playing',
-    quickActions: language === 'ru' ? 'Быстрые действия' : 'Quick Actions',
+    startPlaying: language === 'ru' ? 'РќР°С‡Р°С‚СЊ РёРіСЂР°С‚СЊ' : 'Start Playing',
+    quickActions: language === 'ru' ? 'Р‘С‹СЃС‚СЂС‹Рµ РґРµР№СЃС‚РІРёСЏ' : 'Quick Actions',
   }
 
   const sections = language === 'ru' ? [
     {
       icon: Gamepad2,
-      title: 'Управление',
-      content: 'Проведите пальцем влево или вправо для перемещения котика. Корабль стреляет автоматически. Уклоняйтесь от пивных снарядов!',
+      title: 'РЈРїСЂР°РІР»РµРЅРёРµ',
+      content: 'РџСЂРѕРІРµРґРёС‚Рµ РїР°Р»СЊС†РµРј РІР»РµРІРѕ РёР»Рё РІРїСЂР°РІРѕ РґР»СЏ РїРµСЂРµРјРµС‰РµРЅРёСЏ РєРѕС‚РёРєР°. РљРѕСЂР°Р±Р»СЊ СЃС‚СЂРµР»СЏРµС‚ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё. РЈРєР»РѕРЅСЏР№С‚РµСЃСЊ РѕС‚ РїРёРІРЅС‹С… СЃРЅР°СЂСЏРґРѕРІ!',
     },
     {
       icon: Target,
-      title: 'Оружие',
-      content: 'Начните с базовой пушки. Открывайте мощное оружие побеждая боссов или покупая в магазине. 10 видов оружия с уникальными характеристиками!',
+      title: 'РћСЂСѓР¶РёРµ',
+      content: 'РќР°С‡РЅРёС‚Рµ СЃ Р±Р°Р·РѕРІРѕР№ РїСѓС€РєРё. РћС‚РєСЂС‹РІР°Р№С‚Рµ РјРѕС‰РЅРѕРµ РѕСЂСѓР¶РёРµ РїРѕР±РµР¶РґР°СЏ Р±РѕСЃСЃРѕРІ РёР»Рё РїРѕРєСѓРїР°СЏ РІ РјР°РіР°Р·РёРЅРµ. 10 РІРёРґРѕРІ РѕСЂСѓР¶РёСЏ СЃ СѓРЅРёРєР°Р»СЊРЅС‹РјРё С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРєР°РјРё!',
     },
     {
       icon: Shield,
-      title: 'Бонусы',
-      content: 'Собирайте бонусы с побежденных врагов: Щит (блокирует урон), Двойной выстрел, Скорострельность, Лечение. Бонусы складываются!',
+      title: 'Р‘РѕРЅСѓСЃС‹',
+      content: 'РЎРѕР±РёСЂР°Р№С‚Рµ Р±РѕРЅСѓСЃС‹ СЃ РїРѕР±РµР¶РґРµРЅРЅС‹С… РІСЂР°РіРѕРІ: Р©РёС‚ (Р±Р»РѕРєРёСЂСѓРµС‚ СѓСЂРѕРЅ), Р”РІРѕР№РЅРѕР№ РІС‹СЃС‚СЂРµР», РЎРєРѕСЂРѕСЃС‚СЂРµР»СЊРЅРѕСЃС‚СЊ, Р›РµС‡РµРЅРёРµ. Р‘РѕРЅСѓСЃС‹ СЃРєР»Р°РґС‹РІР°СЋС‚СЃСЏ!',
     },
     {
       icon: Trophy,
-      title: 'Очки',
-      content: 'Побеждайте врагов чтобы заработать очки. Большие враги дают больше очков. За боссов дают огромные бонусы. Множитель увеличивает заработок!',
+      title: 'РћС‡РєРё',
+      content: 'РџРѕР±РµР¶РґР°Р№С‚Рµ РІСЂР°РіРѕРІ С‡С‚РѕР±С‹ Р·Р°СЂР°Р±РѕС‚Р°С‚СЊ РѕС‡РєРё. Р‘РѕР»СЊС€РёРµ РІСЂР°РіРё РґР°СЋС‚ Р±РѕР»СЊС€Рµ РѕС‡РєРѕРІ. Р—Р° Р±РѕСЃСЃРѕРІ РґР°СЋС‚ РѕРіСЂРѕРјРЅС‹Рµ Р±РѕРЅСѓСЃС‹. РњРЅРѕР¶РёС‚РµР»СЊ СѓРІРµР»РёС‡РёРІР°РµС‚ Р·Р°СЂР°Р±РѕС‚РѕРє!',
     },
     {
       icon: Wallet,
-      title: 'Токены NAPIWAS',
-      content: 'Подключите TON кошелек с токенами NAPIWAS для множителей: 1000+ = 1.25x, 10000+ = 1.5x, 50000+ = 1.75x, 100000+ = 2.0x!',
+      title: 'РўРѕРєРµРЅС‹ NAPIWAS',
+      content: 'РџРѕРґРєР»СЋС‡РёС‚Рµ TON РєРѕС€РµР»РµРє СЃ С‚РѕРєРµРЅР°РјРё NAPIWAS РґР»СЏ РјРЅРѕР¶РёС‚РµР»РµР№: 1000+ = 1.25x, 10000+ = 1.5x, 50000+ = 1.75x, 100000+ = 2.0x!',
     },
     {
       icon: Flame,
-      title: 'Ежедневные награды',
-      content: 'Заходите каждый день для бонусных очков. Создавайте серию для больших наград! Выполняйте задания DEX для дополнительных бонусов.',
+      title: 'Р•Р¶РµРґРЅРµРІРЅС‹Рµ РЅР°РіСЂР°РґС‹',
+      content: 'Р—Р°С…РѕРґРёС‚Рµ РєР°Р¶РґС‹Р№ РґРµРЅСЊ РґР»СЏ Р±РѕРЅСѓСЃРЅС‹С… РѕС‡РєРѕРІ. РЎРѕР·РґР°РІР°Р№С‚Рµ СЃРµСЂРёСЋ РґР»СЏ Р±РѕР»СЊС€РёС… РЅР°РіСЂР°Рґ! Р’С‹РїРѕР»РЅСЏР№С‚Рµ Р·Р°РґР°РЅРёСЏ DEX РґР»СЏ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… Р±РѕРЅСѓСЃРѕРІ.',
     },
     {
       icon: Swords,
-      title: 'PvP Битвы',
-      content: 'Бросьте вызов другим игрокам в битве за очки. Создайте матч со ставкой - победитель забирает всё (минус 5% комиссии).',
+      title: 'PvP Р‘РёС‚РІС‹',
+      content: 'Р‘СЂРѕСЃСЊС‚Рµ РІС‹Р·РѕРІ РґСЂСѓРіРёРј РёРіСЂРѕРєР°Рј РІ Р±РёС‚РІРµ Р·Р° РѕС‡РєРё. РЎРѕР·РґР°Р№С‚Рµ РјР°С‚С‡ СЃРѕ СЃС‚Р°РІРєРѕР№ - РїРѕР±РµРґРёС‚РµР»СЊ Р·Р°Р±РёСЂР°РµС‚ РІСЃС‘ (РјРёРЅСѓСЃ 5% РєРѕРјРёСЃСЃРёРё).',
     },
     {
       icon: Music,
-      title: 'Музыка',
-      content: 'Открывайте новые треки достигая определенного количества очков. Слушайте любимую музыку во время игры!',
+      title: 'РњСѓР·С‹РєР°',
+      content: 'РћС‚РєСЂС‹РІР°Р№С‚Рµ РЅРѕРІС‹Рµ С‚СЂРµРєРё РґРѕСЃС‚РёРіР°СЏ РѕРїСЂРµРґРµР»РµРЅРЅРѕРіРѕ РєРѕР»РёС‡РµСЃС‚РІР° РѕС‡РєРѕРІ. РЎР»СѓС€Р°Р№С‚Рµ Р»СЋР±РёРјСѓСЋ РјСѓР·С‹РєСѓ РІРѕ РІСЂРµРјСЏ РёРіСЂС‹!',
     },
     {
       icon: Gift,
-      title: 'Боссы',
-      content: 'Каждую минуту появляется босс-кот! С каждым разом босс становится сильнее. За победу над боссом можно получить оружие (шанс 30%)!',
+      title: 'Р‘РѕСЃСЃС‹',
+      content: 'РљР°Р¶РґСѓСЋ РјРёРЅСѓС‚Сѓ РїРѕСЏРІР»СЏРµС‚СЃСЏ Р±РѕСЃСЃ-РєРѕС‚! РЎ РєР°Р¶РґС‹Рј СЂР°Р·РѕРј Р±РѕСЃСЃ СЃС‚Р°РЅРѕРІРёС‚СЃСЏ СЃРёР»СЊРЅРµРµ. Р—Р° РїРѕР±РµРґСѓ РЅР°Рґ Р±РѕСЃСЃРѕРј РјРѕР¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊ РѕСЂСѓР¶РёРµ (С€Р°РЅСЃ 30%)!',
     },
   ] : [
     {
@@ -120,7 +120,7 @@ export default function GuidePage() {
     <div className={`min-h-screen ${isDark ? 'bg-[#0a0a0b]' : 'bg-[#faf9f7]'}`}>
       <AppPageHeader
         title={t.title}
-        icon={<Info className="w-5 h-5 text-amber-500" />}
+        icon={<Info className="w-5 h-5 text-orange-500" />}
       />
 
       <div className="p-4 space-y-4 pb-8">
@@ -130,8 +130,8 @@ export default function GuidePage() {
             isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-white border-[#e5e5e5]'
           }`}
         >
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/30">
-            <span className="text-4xl">🐱</span>
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/30">
+            <span className="text-4xl">рџђ±</span>
           </div>
           <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>
             {t.welcome}
@@ -141,41 +141,41 @@ export default function GuidePage() {
           </p>
 
           <div className="mt-5">
-            <p className={`mb-2 text-xs font-semibold uppercase tracking-[0.12em] ${isDark ? 'text-amber-400/75' : 'text-amber-600'}`}>
+            <p className={`mb-2 text-xs font-semibold uppercase tracking-[0.12em] ${isDark ? 'text-orange-400/75' : 'text-orange-600'}`}>
               {t.quickActions}
             </p>
             <div className="grid grid-cols-2 gap-2">
               <Link
                 href="/play"
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold backdrop-blur-lg transition-all active:scale-[0.98] ${
-                  isDark ? 'border-amber-500/25 bg-black/45 text-white hover:border-amber-500/45' : 'border-amber-400/35 bg-white/80 text-[#2b2416]'
+                  isDark ? 'border-orange-500/25 bg-black/45 text-white hover:border-orange-500/45' : 'border-orange-400/35 bg-white/80 text-[#2b2416]'
                 }`}
               >
-                {language === 'ru' ? 'Играть' : 'Play'}
+                {language === 'ru' ? 'РРіСЂР°С‚СЊ' : 'Play'}
               </Link>
               <Link
                 href="/shop"
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold backdrop-blur-lg transition-all active:scale-[0.98] ${
-                  isDark ? 'border-amber-500/25 bg-black/45 text-white hover:border-amber-500/45' : 'border-amber-400/35 bg-white/80 text-[#2b2416]'
+                  isDark ? 'border-orange-500/25 bg-black/45 text-white hover:border-orange-500/45' : 'border-orange-400/35 bg-white/80 text-[#2b2416]'
                 }`}
               >
-                {language === 'ru' ? 'Магазин' : 'Shop'}
+                {language === 'ru' ? 'РњР°РіР°Р·РёРЅ' : 'Shop'}
               </Link>
               <Link
                 href="/daily"
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold backdrop-blur-lg transition-all active:scale-[0.98] ${
-                  isDark ? 'border-amber-500/25 bg-black/45 text-white hover:border-amber-500/45' : 'border-amber-400/35 bg-white/80 text-[#2b2416]'
+                  isDark ? 'border-orange-500/25 bg-black/45 text-white hover:border-orange-500/45' : 'border-orange-400/35 bg-white/80 text-[#2b2416]'
                 }`}
               >
-                {language === 'ru' ? 'Задания' : 'Tasks'}
+                {language === 'ru' ? 'Р—Р°РґР°РЅРёСЏ' : 'Tasks'}
               </Link>
               <Link
                 href="/music"
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold backdrop-blur-lg transition-all active:scale-[0.98] ${
-                  isDark ? 'border-amber-500/25 bg-black/45 text-white hover:border-amber-500/45' : 'border-amber-400/35 bg-white/80 text-[#2b2416]'
+                  isDark ? 'border-orange-500/25 bg-black/45 text-white hover:border-orange-500/45' : 'border-orange-400/35 bg-white/80 text-[#2b2416]'
                 }`}
               >
-                {language === 'ru' ? 'Музыка' : 'Music'}
+                {language === 'ru' ? 'РњСѓР·С‹РєР°' : 'Music'}
               </Link>
             </div>
           </div>
@@ -192,8 +192,8 @@ export default function GuidePage() {
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                  <section.icon className="w-5 h-5 text-amber-500" />
+                <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                  <section.icon className="w-5 h-5 text-orange-500" />
                 </div>
                 <div>
                   <h3 className={`font-bold mb-1 ${isDark ? 'text-white' : 'text-black'}`}>{section.title}</h3>
@@ -212,15 +212,15 @@ export default function GuidePage() {
           style={{ animationDelay: '500ms' }}
         >
           <h3 className={`font-bold mb-3 ${isDark ? 'text-white' : 'text-black'}`}>
-            {language === 'ru' ? 'Уровни токенов NAPIWAS' : 'NAPIWAS Token Tiers'}
+            {language === 'ru' ? 'РЈСЂРѕРІРЅРё С‚РѕРєРµРЅРѕРІ NAPIWAS' : 'NAPIWAS Token Tiers'}
           </h3>
           <div className="space-y-2">
             {[
-              { tier: language === 'ru' ? 'ОБЫЧНЫЙ' : 'COMMON', balance: '0+', mult: '1.0x', color: '#9CA3AF' },
-              { tier: language === 'ru' ? 'НЕОБЫЧНЫЙ' : 'UNCOMMON', balance: '1,000+', mult: '1.25x', color: '#22C55E' },
-              { tier: language === 'ru' ? 'РЕДКИЙ' : 'RARE', balance: '10,000+', mult: '1.5x', color: '#3B82F6' },
-              { tier: language === 'ru' ? 'ЭПИЧЕСКИЙ' : 'EPIC', balance: '50,000+', mult: '1.75x', color: '#A855F7' },
-              { tier: language === 'ru' ? 'ЛЕГЕНДАРНЫЙ' : 'LEGENDARY', balance: '100,000+', mult: '2.0x', color: '#FFD700' },
+              { tier: language === 'ru' ? 'РћР‘Р«Р§РќР«Р™' : 'COMMON', balance: '0+', mult: '1.0x', color: '#9CA3AF' },
+              { tier: language === 'ru' ? 'РќР•РћР‘Р«Р§РќР«Р™' : 'UNCOMMON', balance: '1,000+', mult: '1.25x', color: '#22C55E' },
+              { tier: language === 'ru' ? 'Р Р•Р”РљРР™' : 'RARE', balance: '10,000+', mult: '1.5x', color: '#3B82F6' },
+              { tier: language === 'ru' ? 'Р­РџРР§Р•РЎРљРР™' : 'EPIC', balance: '50,000+', mult: '1.75x', color: '#A855F7' },
+              { tier: language === 'ru' ? 'Р›Р•Р“Р•РќР”РђР РќР«Р™' : 'LEGENDARY', balance: '100,000+', mult: '2.0x', color: '#FFD700' },
             ].map((item) => (
               <div
                 key={item.tier}
@@ -247,7 +247,7 @@ export default function GuidePage() {
         {/* Play button */}
         <Link
           href="/play"
-          className="block w-full py-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 text-black font-bold text-center text-lg active:scale-[0.98] transition-all shadow-lg shadow-amber-500/30"
+          className="block w-full py-4 rounded-xl bg-gradient-to-r from-orange-400 to-orange-600 text-black font-bold text-center text-lg active:scale-[0.98] transition-all shadow-lg shadow-orange-500/30"
         >
           {t.startPlaying}
         </Link>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
@@ -45,21 +45,21 @@ export default function WithdrawPage() {
     () =>
       language === 'ru'
         ? {
-            title: 'Вывод',
-            wallet: 'Кошелёк',
-            notConnected: 'Не подключен',
-            rewards: 'Вывод NAPIWAS',
-            prepare: 'Конвертировать кружки',
-            withdraw: 'Вывести',
-            refresh: 'Обновить',
-            withdrawHint: 'Мин. вывод',
-            loadingRewards: 'Загрузка...',
-            withdrawAmount: 'Сумма вывода (NAPIWAS)',
-            recipient: 'Адрес получателя TON',
-            openCheck: 'Открыть транзакцию',
-            mugsBalance: 'Баланс кружек',
-            maxAvailable: 'Доступно к выводу',
-            checkMugs: 'Проверка кружек выполнится перед выводом',
+            title: 'Р’С‹РІРѕРґ',
+            wallet: 'РљРѕС€РµР»С‘Рє',
+            notConnected: 'РќРµ РїРѕРґРєР»СЋС‡РµРЅ',
+            rewards: 'Р’С‹РІРѕРґ NAPIWAS',
+            prepare: 'РљРѕРЅРІРµСЂС‚РёСЂРѕРІР°С‚СЊ РєСЂСѓР¶РєРё',
+            withdraw: 'Р’С‹РІРµСЃС‚Рё',
+            refresh: 'РћР±РЅРѕРІРёС‚СЊ',
+            withdrawHint: 'РњРёРЅ. РІС‹РІРѕРґ',
+            loadingRewards: 'Р—Р°РіСЂСѓР·РєР°...',
+            withdrawAmount: 'РЎСѓРјРјР° РІС‹РІРѕРґР° (NAPIWAS)',
+            recipient: 'РђРґСЂРµСЃ РїРѕР»СѓС‡Р°С‚РµР»СЏ TON',
+            openCheck: 'РћС‚РєСЂС‹С‚СЊ С‚СЂР°РЅР·Р°РєС†РёСЋ',
+            mugsBalance: 'Р‘Р°Р»Р°РЅСЃ РєСЂСѓР¶РµРє',
+            maxAvailable: 'Р”РѕСЃС‚СѓРїРЅРѕ Рє РІС‹РІРѕРґСѓ',
+            checkMugs: 'РџСЂРѕРІРµСЂРєР° РєСЂСѓР¶РµРє РІС‹РїРѕР»РЅРёС‚СЃСЏ РїРµСЂРµРґ РІС‹РІРѕРґРѕРј',
           }
         : {
             title: 'Withdraw',
@@ -215,12 +215,12 @@ export default function WithdrawPage() {
 
   return (
     <div className={`min-h-screen pb-[calc(108px+env(safe-area-inset-bottom))] ${isDark ? 'bg-[#060606]' : 'bg-[#f7f4ec]'}`}>
-      <AppPageHeader title={t.title} icon={<ArrowDownToLine className="h-5 w-5 text-amber-500" />} />
+      <AppPageHeader title={t.title} icon={<ArrowDownToLine className="h-5 w-5 text-orange-500" />} />
 
       <div className="space-y-3 p-4">
         <div className={`rounded-2xl p-4 ${isDark ? 'bg-[#111111]' : 'bg-white border border-[#e9e2d1]'}`}>
           <div className="flex items-center gap-3">
-            <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-amber-500/35 bg-black">
+            <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-orange-500/35 bg-black">
               <Image src="/images/kitten-reading.gif" alt="Kitten avatar" fill className="object-cover" />
             </div>
             <div className="min-w-0 flex-1">
@@ -234,14 +234,14 @@ export default function WithdrawPage() {
               disabled={!friendlyWalletAddress}
               className={`inline-flex h-9 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-semibold transition-colors ${
                 isDark
-                  ? 'border-amber-500/35 bg-black/45 text-amber-300 hover:bg-black/70 disabled:opacity-45'
+                  ? 'border-orange-500/35 bg-black/45 text-orange-300 hover:bg-black/70 disabled:opacity-45'
                   : 'border-[#e2c98f] bg-[#f7ecd0] text-[#7a5a1d] hover:bg-[#f2e2ba] disabled:opacity-45'
               }`}
-              title={language === 'ru' ? 'Копировать' : 'Copy'}
-              aria-label={language === 'ru' ? 'Копировать' : 'Copy'}
+              title={language === 'ru' ? 'РљРѕРїРёСЂРѕРІР°С‚СЊ' : 'Copy'}
+              aria-label={language === 'ru' ? 'РљРѕРїРёСЂРѕРІР°С‚СЊ' : 'Copy'}
             >
               {walletCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              <span>{walletCopied ? 'OK' : language === 'ru' ? 'Копировать' : 'Copy'}</span>
+              <span>{walletCopied ? 'OK' : language === 'ru' ? 'РљРѕРїРёСЂРѕРІР°С‚СЊ' : 'Copy'}</span>
             </button>
           </div>
         </div>
@@ -250,12 +250,12 @@ export default function WithdrawPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className={`text-sm ${isDark ? 'text-white/55' : 'text-[#7a6a4b]'}`}>{t.mugsBalance}</p>
-              <p className="text-3xl font-black text-amber-500">{formatNumber(coins)}</p>
+              <p className="text-3xl font-black text-orange-500">{formatNumber(coins)}</p>
             </div>
-            <Beer className="h-7 w-7 text-amber-500" />
+            <Beer className="h-7 w-7 text-orange-500" />
           </div>
           <p className={`mt-2 text-xs ${isDark ? 'text-white/55' : 'text-[#7a6a4b]'}`}>
-            {t.maxAvailable}: <span className="font-bold text-amber-500">{formatNapiwasValue(maxAvailableTokens)} NAPIWAS</span>
+            {t.maxAvailable}: <span className="font-bold text-orange-500">{formatNapiwasValue(maxAvailableTokens)} NAPIWAS</span>
           </p>
         </div>
 
@@ -271,7 +271,7 @@ export default function WithdrawPage() {
               onClick={() => void loadRewards()}
               disabled={rewardLoading}
               className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
-                isDark ? 'bg-black/45 text-amber-400 hover:bg-black/70' : 'bg-[#f1ebdb] text-amber-600 hover:bg-[#e8ddc5]'
+                isDark ? 'bg-black/45 text-orange-400 hover:bg-black/70' : 'bg-[#f1ebdb] text-orange-600 hover:bg-[#e8ddc5]'
               }`}
               aria-label={t.refresh}
               title={t.refresh}
@@ -293,8 +293,8 @@ export default function WithdrawPage() {
                   placeholder="UQ..."
                   className={`h-10 w-full rounded-xl border px-3 text-sm outline-none transition-colors ${
                     isDark
-                      ? 'border-amber-500/35 bg-black/45 text-white placeholder:text-white/35 focus:border-amber-500/70'
-                      : 'border-[#e9d8af] bg-[#fff9ea] text-[#222] placeholder:text-[#a48a56] focus:border-amber-500/70'
+                      ? 'border-orange-500/35 bg-black/45 text-white placeholder:text-white/35 focus:border-orange-500/70'
+                      : 'border-[#e9d8af] bg-[#fff9ea] text-[#222] placeholder:text-[#a48a56] focus:border-orange-500/70'
                   }`}
                 />
               </div>
@@ -310,8 +310,8 @@ export default function WithdrawPage() {
                   placeholder="0.001"
                   className={`h-10 w-full rounded-xl border px-3 text-sm outline-none transition-colors ${
                     isDark
-                      ? 'border-amber-500/35 bg-black/45 text-white placeholder:text-white/35 focus:border-amber-500/70'
-                      : 'border-[#e9d8af] bg-[#fff9ea] text-[#222] placeholder:text-[#a48a56] focus:border-amber-500/70'
+                      ? 'border-orange-500/35 bg-black/45 text-white placeholder:text-white/35 focus:border-orange-500/70'
+                      : 'border-[#e9d8af] bg-[#fff9ea] text-[#222] placeholder:text-[#a48a56] focus:border-orange-500/70'
                   }`}
                 />
               </div>
@@ -332,8 +332,8 @@ export default function WithdrawPage() {
                   disabled={rewardActionLoading !== null}
                   className={`flex h-11 items-center justify-center gap-1 rounded-xl text-sm font-semibold transition-colors ${
                     isDark
-                      ? 'bg-[#1a1a1a] text-amber-400 border border-amber-500/55 enabled:hover:bg-black disabled:opacity-45'
-                      : 'bg-[#fff6de] text-amber-700 border border-amber-500/55 enabled:hover:bg-[#ffe8b1] disabled:opacity-45'
+                      ? 'bg-[#1a1a1a] text-orange-400 border border-orange-500/55 enabled:hover:bg-black disabled:opacity-45'
+                      : 'bg-[#fff6de] text-orange-700 border border-orange-500/55 enabled:hover:bg-[#ffe8b1] disabled:opacity-45'
                   }`}
                 >
                   <Wallet className="h-4 w-4" />
@@ -355,7 +355,7 @@ export default function WithdrawPage() {
                   href={lastCheckUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className={`mt-2 inline-block text-xs font-semibold underline ${isDark ? 'text-amber-300' : 'text-amber-700'}`}
+                  className={`mt-2 inline-block text-xs font-semibold underline ${isDark ? 'text-orange-300' : 'text-orange-700'}`}
                 >
                   {t.openCheck}
                 </a>

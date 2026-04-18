@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useGameStore } from '@/lib/store'
@@ -114,24 +114,24 @@ export default function ShopPage() {
   } = useGameStore()
 
   const t = {
-    title: language === 'ru' ? 'Магазин' : 'Shop',
-    skins: language === 'ru' ? 'Скины' : 'Skins',
-    weapons: language === 'ru' ? 'Оружие' : 'Weapons',
-    select: language === 'ru' ? 'Выбрать' : 'Select',
-    selected: language === 'ru' ? 'Выбран' : 'Selected',
-    active: language === 'ru' ? 'Активно' : 'Active',
-    damage: language === 'ru' ? 'Урон' : 'DMG',
-    rate: language === 'ru' ? 'Скор.' : 'Rate',
-    projectiles: language === 'ru' ? 'Снар.' : 'Proj',
-    purchasesHint: language === 'ru' ? 'Покупки за пивные кружки' : 'Purchases use beer mugs',
+    title: language === 'ru' ? 'РњР°РіР°Р·РёРЅ' : 'Shop',
+    skins: language === 'ru' ? 'РЎРєРёРЅС‹' : 'Skins',
+    weapons: language === 'ru' ? 'РћСЂСѓР¶РёРµ' : 'Weapons',
+    select: language === 'ru' ? 'Р’С‹Р±СЂР°С‚СЊ' : 'Select',
+    selected: language === 'ru' ? 'Р’С‹Р±СЂР°РЅ' : 'Selected',
+    active: language === 'ru' ? 'РђРєС‚РёРІРЅРѕ' : 'Active',
+    damage: language === 'ru' ? 'РЈСЂРѕРЅ' : 'DMG',
+    rate: language === 'ru' ? 'РЎРєРѕСЂ.' : 'Rate',
+    projectiles: language === 'ru' ? 'РЎРЅР°СЂ.' : 'Proj',
+    purchasesHint: language === 'ru' ? 'РџРѕРєСѓРїРєРё Р·Р° РїРёРІРЅС‹Рµ РєСЂСѓР¶РєРё' : 'Purchases use beer mugs',
   }
 
   const rarityLabels: Record<string, { en: string; ru: string }> = {
-    common: { en: 'Common', ru: 'Обычный' },
-    uncommon: { en: 'Uncommon', ru: 'Необычный' },
-    rare: { en: 'Rare', ru: 'Редкий' },
-    epic: { en: 'Epic', ru: 'Эпик' },
-    legendary: { en: 'Legendary', ru: 'Легенда' },
+    common: { en: 'Common', ru: 'РћР±С‹С‡РЅС‹Р№' },
+    uncommon: { en: 'Uncommon', ru: 'РќРµРѕР±С‹С‡РЅС‹Р№' },
+    rare: { en: 'Rare', ru: 'Р РµРґРєРёР№' },
+    epic: { en: 'Epic', ru: 'Р­РїРёРє' },
+    legendary: { en: 'Legendary', ru: 'Р›РµРіРµРЅРґР°' },
   }
 
   const isDark = theme === 'dark'
@@ -172,13 +172,13 @@ export default function ShopPage() {
     <div className={`h-[100dvh] overflow-x-hidden overflow-y-auto overscroll-y-contain pb-[calc(72px+env(safe-area-inset-bottom))] ${isDark ? 'bg-[#0a0a0b]' : 'bg-[#faf9f7]'}`}>
       <AppPageHeader
         title={t.title}
-        icon={<ShoppingBag className="w-5 h-5 text-amber-500" />}
+        icon={<ShoppingBag className="w-5 h-5 text-orange-500" />}
         rightSlot={
           <div
             className={`h-10 px-3 rounded-xl flex items-center gap-1.5 ${isDark ? 'bg-[#1d1d1d]' : 'bg-[#e7e7e7]'}`}
           >
-            <Beer className="w-4 h-4 text-amber-500" />
-            <span className="font-bold text-amber-500">{formatNumber(coins)}</span>
+            <Beer className="w-4 h-4 text-orange-500" />
+            <span className="font-bold text-orange-500">{formatNumber(coins)}</span>
           </div>
         }
       />
@@ -265,7 +265,7 @@ export default function ShopPage() {
                         <h3 className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>
                           {language === 'ru' ? skin.nameRu : skin.name}
                         </h3>
-                        {isSelected && <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wide">{t.selected}</span>}
+                        {isSelected && <span className="text-[10px] text-orange-500 font-bold uppercase tracking-wide">{t.selected}</span>}
                       </div>
                       <p className={`text-xs mt-0.5 line-clamp-2 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                         {language === 'ru' ? skin.descriptionRu : skin.description}
@@ -273,8 +273,8 @@ export default function ShopPage() {
                     </div>
 
                     <div className="flex-shrink-0">
-                      <span className={`text-xs font-semibold ${isSelected ? 'text-amber-500' : isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {skin.unlocked ? (isSelected ? t.selected : t.select) : `${formatNumber(skin.price)} ${language === 'ru' ? 'кружек' : 'mugs'}`}
+                      <span className={`text-xs font-semibold ${isSelected ? 'text-orange-500' : isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {skin.unlocked ? (isSelected ? t.selected : t.select) : `${formatNumber(skin.price)} ${language === 'ru' ? 'РєСЂСѓР¶РµРє' : 'mugs'}`}
                       </span>
                     </div>
                   </div>
@@ -334,12 +334,12 @@ export default function ShopPage() {
                         <h3 className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>
                           {language === 'ru' ? weapon.nameRu : weapon.name}
                         </h3>
-                        {isSelected && weapon.unlocked && <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wide">{t.active}</span>}
+                        {isSelected && weapon.unlocked && <span className="text-[10px] text-orange-500 font-bold uppercase tracking-wide">{t.active}</span>}
                       </div>
                       <p className={`text-xs mt-0.5 line-clamp-2 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                         {language === 'ru' ? weapon.descriptionRu : weapon.description}
                       </p>
-                      <div className="flex flex-wrap gap-2 text-[10px] mt-1.5 font-medium text-amber-400">
+                      <div className="flex flex-wrap gap-2 text-[10px] mt-1.5 font-medium text-orange-400">
                         <span>{t.damage}: {displayStats.damage}</span>
                         <span>{t.rate}: {displayStats.shotsPerSecond.toFixed(1)}/s</span>
                         <span>{t.projectiles}: {displayStats.projectiles}</span>
@@ -347,8 +347,8 @@ export default function ShopPage() {
                     </div>
 
                     <div className="flex-shrink-0">
-                      <span className={`text-xs font-semibold ${isSelected ? 'text-amber-500' : isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {weapon.unlocked ? (isSelected ? t.active : t.select) : `${formatNumber(weapon.price)} ${language === 'ru' ? 'кружек' : 'mugs'}`}
+                      <span className={`text-xs font-semibold ${isSelected ? 'text-orange-500' : isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {weapon.unlocked ? (isSelected ? t.active : t.select) : `${formatNumber(weapon.price)} ${language === 'ru' ? 'РєСЂСѓР¶РµРє' : 'mugs'}`}
                       </span>
                     </div>
                   </div>

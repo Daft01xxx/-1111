@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Image from 'next/image'
 import Link from 'next/link'
@@ -78,85 +78,85 @@ const QUEST_ICONS: Record<GameQuest['metric'], LucideIcon> = {
 const EXACT_DEX_TASKS: DexTask[] = [
   {
     id: 'napiwas-site',
-    name: 'NaPiwas - сайт',
-    description: 'Открыть napiwas.com',
+    name: 'NaPiwas - СЃР°Р№С‚',
+    description: 'РћС‚РєСЂС‹С‚СЊ napiwas.com',
     url: 'https://napiwas.com/',
     reward_points: 100,
   },
   {
     id: 'napiwas-channel',
-    name: 'NaPiwas - канал',
-    description: 'Открыть официальный канал',
+    name: 'NaPiwas - РєР°РЅР°Р»',
+    description: 'РћС‚РєСЂС‹С‚СЊ РѕС„РёС†РёР°Р»СЊРЅС‹Р№ РєР°РЅР°Р»',
     url: 'https://t.me/NAPIWASofficial',
     reward_points: 120,
   },
   {
     id: 'napiwas-chat',
-    name: 'NaPiwas - чат',
-    description: 'Открыть чат сообщества',
+    name: 'NaPiwas - С‡Р°С‚',
+    description: 'РћС‚РєСЂС‹С‚СЊ С‡Р°С‚ СЃРѕРѕР±С‰РµСЃС‚РІР°',
     url: 'https://t.me/napiwas',
     reward_points: 120,
   },
   {
     id: 'tokenmystery-bot',
     name: 'tokenmystery_bot',
-    description: 'Перейти в tokenmystery_bot',
+    description: 'РџРµСЂРµР№С‚Рё РІ tokenmystery_bot',
     url: 'https://t.me/tokenmystery_bot?startapp=ref_335984221',
     reward_points: 130,
   },
   {
     id: 'blum-memepad-1',
     name: 'Blum Memepad',
-    description: 'Открыть Blum memepad',
+    description: 'РћС‚РєСЂС‹С‚СЊ Blum memepad',
     url: 'https://t.me/blum/app?startapp=memepadjetton_NAPIWAS_wlN45-ref_',
     reward_points: 150,
   },
   {
     id: 'dexscreener-ton',
     name: 'DexScreener',
-    description: 'Открыть пару NAPIWAS на DexScreener',
+    description: 'РћС‚РєСЂС‹С‚СЊ РїР°СЂСѓ NAPIWAS РЅР° DexScreener',
     url: 'https://dexscreener.com/ton/eqax24y9iugryybpwxgogtvz05k_xfgn70-jakrlngoyen6p',
     reward_points: 140,
   },
   {
     id: 'dyor-token',
     name: 'DYOR',
-    description: 'Открыть страницу токена на DYOR',
+    description: 'РћС‚РєСЂС‹С‚СЊ СЃС‚СЂР°РЅРёС†Сѓ С‚РѕРєРµРЅР° РЅР° DYOR',
     url: 'https://dyor.io/ru/token/EQDOCUp_pDBvOmGRyEDE2bnCl2cjGmAWjPsTWRt_veSsfGSn',
     reward_points: 140,
   },
   {
     id: 'geckoterminal-pool',
     name: 'GeckoTerminal',
-    description: 'Открыть пул на GeckoTerminal',
+    description: 'РћС‚РєСЂС‹С‚СЊ РїСѓР» РЅР° GeckoTerminal',
     url: 'https://www.geckoterminal.com/ru/ton/pools/EQAx24y9IUgryyBpWxgOgTVz05k_xfgn70-JakrLngoyEN6P',
     reward_points: 140,
   },
   {
     id: 'blum-memepad-2',
     name: 'Blum Memepad (ref)',
-    description: 'Открыть Blum memepad (ref)',
+    description: 'РћС‚РєСЂС‹С‚СЊ Blum memepad (ref)',
     url: 'https://t.me/blum/app?startapp=memepadjetton_NAPIWAS_wlN45-ref_VV7ujr1qAH',
     reward_points: 150,
   },
   {
     id: 'stonfi-swap',
     name: 'STON.fi Swap',
-    description: 'Открыть swap TON -> NAPIWAS',
+    description: 'РћС‚РєСЂС‹С‚СЊ swap TON -> NAPIWAS',
     url: 'https://app.ston.fi/swap?chartVisible=false&chartInterval=1w&ft=TON&tt=EQDOCUp_pDBvOmGRyEDE2bnCl2cjGmAWjPsTWRt_veSsfGSn',
     reward_points: 160,
   },
   {
     id: 'nft-collection-arni',
     name: 'NFT NAPIWAS & ARNI',
-    description: 'Открыть коллекцию NFT',
+    description: 'РћС‚РєСЂС‹С‚СЊ РєРѕР»Р»РµРєС†РёСЋ NFT',
     url: 'https://getgems.io/collection/EQBxyfZWx6VK4CQw7m0CpC6g3g23QZnHD0q5t0ZjUdagYjKb',
     reward_points: 170,
   },
   {
     id: 'nft-collection-jsi',
     name: 'NFT NAPIWAS & JSI',
-    description: 'Открыть коллекцию NFT',
+    description: 'РћС‚РєСЂС‹С‚СЊ РєРѕР»Р»РµРєС†РёСЋ NFT',
     url: 'https://getgems.io/collection/EQA3rkcoahIFvfRY4LKsPfdgjUyvWOp-D3S2Qlc-QiqGn1fU',
     reward_points: 170,
   },
@@ -240,30 +240,30 @@ export default function DailyPage() {
   const completedTasksRef = useRef<Set<string>>(new Set())
 
   const t = {
-    title: language === 'ru' ? 'Награды' : 'Daily Rewards',
-    checkin: language === 'ru' ? 'Бонус' : 'Bonus',
-    checkinDesc: language === 'ru' ? 'Заходите каждый день за наградой!' : 'Come back every day for rewards!',
-    streak: language === 'ru' ? 'Серия' : 'Streak',
-    checkIn: language === 'ru' ? 'Получить' : 'Check in',
-    checkedIn: language === 'ru' ? 'Получено сегодня!' : 'Checked in today!',
-    checking: language === 'ru' ? 'Проверка...' : 'Checking...',
-    streakBonuses: language === 'ru' ? 'Бонусы за серию' : 'Streak Bonuses',
-    dexTasks: language === 'ru' ? 'Задания DEX' : 'DEX Tasks',
-    dexTasksDesc: language === 'ru' ? 'Выполняйте задания для бонусов!' : 'Complete tasks for bonus points!',
-    noTasks: language === 'ru' ? 'Пока нет заданий' : 'No tasks available',
-    quests: language === 'ru' ? 'Задания' : 'Quests',
-    questsDesc: language === 'ru' ? 'Игровые цели с наградами за прогресс' : 'Game goals with reward claims',
-    claim: language === 'ru' ? 'Забрать' : 'Claim',
-    claimed: language === 'ru' ? 'Забрано' : 'Claimed',
-    open: language === 'ru' ? 'Открыть' : 'Open',
-    wait: language === 'ru' ? 'Проверка...' : 'Wait...',
-    notReady: language === 'ru' ? 'Цель ещё не выполнена' : 'Goal is not completed yet',
-    rewardClaimFailed: language === 'ru' ? 'Не удалось забрать награду, попробуйте ещё раз' : 'Could not claim reward, please retry',
-    connectWallet: language === 'ru' ? 'Подключите кошелек' : 'Connect wallet',
-    connectWalletDesc: language === 'ru' ? 'Для получения наград подключите TON кошелек' : 'Connect your TON wallet to access daily rewards',
-    goToMenu: language === 'ru' ? 'К меню' : 'Go to Menu',
-    days: language === 'ru' ? 'дней' : 'days',
-    day: language === 'ru' ? 'день' : 'day',
+    title: language === 'ru' ? 'РќР°РіСЂР°РґС‹' : 'Daily Rewards',
+    checkin: language === 'ru' ? 'Р‘РѕРЅСѓСЃ' : 'Bonus',
+    checkinDesc: language === 'ru' ? 'Р—Р°С…РѕРґРёС‚Рµ РєР°Р¶РґС‹Р№ РґРµРЅСЊ Р·Р° РЅР°РіСЂР°РґРѕР№!' : 'Come back every day for rewards!',
+    streak: language === 'ru' ? 'РЎРµСЂРёСЏ' : 'Streak',
+    checkIn: language === 'ru' ? 'РџРѕР»СѓС‡РёС‚СЊ' : 'Check in',
+    checkedIn: language === 'ru' ? 'РџРѕР»СѓС‡РµРЅРѕ СЃРµРіРѕРґРЅСЏ!' : 'Checked in today!',
+    checking: language === 'ru' ? 'РџСЂРѕРІРµСЂРєР°...' : 'Checking...',
+    streakBonuses: language === 'ru' ? 'Р‘РѕРЅСѓСЃС‹ Р·Р° СЃРµСЂРёСЋ' : 'Streak Bonuses',
+    dexTasks: language === 'ru' ? 'Р—Р°РґР°РЅРёСЏ DEX' : 'DEX Tasks',
+    dexTasksDesc: language === 'ru' ? 'Р’С‹РїРѕР»РЅСЏР№С‚Рµ Р·Р°РґР°РЅРёСЏ РґР»СЏ Р±РѕРЅСѓСЃРѕРІ!' : 'Complete tasks for bonus points!',
+    noTasks: language === 'ru' ? 'РџРѕРєР° РЅРµС‚ Р·Р°РґР°РЅРёР№' : 'No tasks available',
+    quests: language === 'ru' ? 'Р—Р°РґР°РЅРёСЏ' : 'Quests',
+    questsDesc: language === 'ru' ? 'РРіСЂРѕРІС‹Рµ С†РµР»Рё СЃ РЅР°РіСЂР°РґР°РјРё Р·Р° РїСЂРѕРіСЂРµСЃСЃ' : 'Game goals with reward claims',
+    claim: language === 'ru' ? 'Р—Р°Р±СЂР°С‚СЊ' : 'Claim',
+    claimed: language === 'ru' ? 'Р—Р°Р±СЂР°РЅРѕ' : 'Claimed',
+    open: language === 'ru' ? 'РћС‚РєСЂС‹С‚СЊ' : 'Open',
+    wait: language === 'ru' ? 'РџСЂРѕРІРµСЂРєР°...' : 'Wait...',
+    notReady: language === 'ru' ? 'Р¦РµР»СЊ РµС‰С‘ РЅРµ РІС‹РїРѕР»РЅРµРЅР°' : 'Goal is not completed yet',
+    rewardClaimFailed: language === 'ru' ? 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°Р±СЂР°С‚СЊ РЅР°РіСЂР°РґСѓ, РїРѕРїСЂРѕР±СѓР№С‚Рµ РµС‰С‘ СЂР°Р·' : 'Could not claim reward, please retry',
+    connectWallet: language === 'ru' ? 'РџРѕРґРєР»СЋС‡РёС‚Рµ РєРѕС€РµР»РµРє' : 'Connect wallet',
+    connectWalletDesc: language === 'ru' ? 'Р”Р»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РЅР°РіСЂР°Рґ РїРѕРґРєР»СЋС‡РёС‚Рµ TON РєРѕС€РµР»РµРє' : 'Connect your TON wallet to access daily rewards',
+    goToMenu: language === 'ru' ? 'Рљ РјРµРЅСЋ' : 'Go to Menu',
+    days: language === 'ru' ? 'РґРЅРµР№' : 'days',
+    day: language === 'ru' ? 'РґРµРЅСЊ' : 'day',
   }
 
   const isDark = theme === 'dark'
@@ -587,7 +587,7 @@ export default function DailyPage() {
       return <Check className="w-4 h-4 text-green-500" />
     }
     if (isChecking) {
-      return <Calendar className="w-4 h-4 text-amber-500 animate-pulse" />
+      return <Calendar className="w-4 h-4 text-orange-500 animate-pulse" />
     }
 
     const logo = DEX_TASK_LOGOS[task.id]
@@ -605,12 +605,12 @@ export default function DailyPage() {
     }
 
     const Icon = DEX_TASK_ICONS[task.id] ?? ExternalLinkFallback
-    return <Icon className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+    return <Icon className={`w-4 h-4 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
   }
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[rgb(var(--background))] pb-[calc(108px+env(safe-area-inset-bottom))]">
-      <AppPageHeader title={t.title} icon={<Calendar className="w-5 h-5 text-amber-500" />} />
+      <AppPageHeader title={t.title} icon={<Calendar className="w-5 h-5 text-orange-500" />} />
 
       <div className="p-4 space-y-4">
         {!wallet ? (
@@ -693,9 +693,9 @@ export default function DailyPage() {
                       <h2 className="text-lg font-bold text-[rgb(var(--foreground))]">{t.checkin}</h2>
                       <p className="text-sm text-[rgb(var(--muted-foreground))]">{t.checkinDesc}</p>
                     </div>
-                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${isDark ? 'bg-yellow-500/20' : 'bg-yellow-100'}`}>
-                      <Flame className="w-4 h-4 text-yellow-500" />
-                      <span className="font-bold text-yellow-500">{streak}</span>
+                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${isDark ? 'bg-orange-500/20' : 'bg-orange-100'}`}>
+                      <Flame className="w-4 h-4 text-orange-500" />
+                      <span className="font-bold text-orange-500">{streak}</span>
                     </div>
                   </div>
 
@@ -710,9 +710,9 @@ export default function DailyPage() {
                           key={dayNum}
                           className={`relative h-11 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
                             isCompleted
-                              ? 'bg-amber-500 text-black'
+                              ? 'bg-orange-500 text-black'
                               : showGift
-                                ? 'bg-amber-500/20 text-amber-500 border border-amber-500/60'
+                                ? 'bg-orange-500/20 text-orange-500 border border-orange-500/60'
                                 : isDark
                                   ? 'bg-[#1a1a1a] text-gray-500'
                                   : 'bg-[#efe7d7] text-[#9a8f79]'
@@ -769,8 +769,8 @@ export default function DailyPage() {
                         className={`flex items-center justify-between p-3 rounded-xl transition-all ${
                           streak >= reward.days
                             ? isDark
-                              ? 'bg-amber-500/10 border border-amber-500/20'
-                              : 'bg-amber-100/60 border border-amber-300/50'
+                              ? 'bg-orange-500/10 border border-orange-500/20'
+                              : 'bg-orange-100/60 border border-orange-300/50'
                             : isDark
                               ? 'bg-[#0f0f11]'
                               : 'bg-[#f3ecdf]'
@@ -780,7 +780,7 @@ export default function DailyPage() {
                           <div
                             className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                               streak >= reward.days
-                                ? 'bg-amber-500 text-black'
+                                ? 'bg-orange-500 text-black'
                                 : isDark
                                   ? 'bg-[#1a1a1a] text-gray-600'
                                   : 'bg-[#e8deca] text-[#9a8f79]'
@@ -788,11 +788,11 @@ export default function DailyPage() {
                           >
                             {streak >= reward.days ? <Check className="w-4 h-4" /> : <Flame className="w-4 h-4" />}
                           </div>
-                          <span className={`font-medium ${streak >= reward.days ? 'text-amber-500' : 'text-[rgb(var(--muted-foreground))]'}`}>
+                          <span className={`font-medium ${streak >= reward.days ? 'text-orange-500' : 'text-[rgb(var(--muted-foreground))]'}`}>
                             {reward.days} {reward.days === 1 ? t.day : t.days}
                           </span>
                         </div>
-                        <span className={`font-bold ${streak >= reward.days ? 'text-amber-500' : 'text-[rgb(var(--muted-foreground))]'}`}>
+                        <span className={`font-bold ${streak >= reward.days ? 'text-orange-500' : 'text-[rgb(var(--muted-foreground))]'}`}>
                           +{reward.points}
                         </span>
                       </div>
@@ -838,35 +838,35 @@ export default function DailyPage() {
                                           : 'bg-green-100'
                                         : isChecking
                                           ? isDark
-                                            ? 'bg-amber-500/20'
-                                            : 'bg-amber-100'
+                                            ? 'bg-orange-500/20'
+                                            : 'bg-orange-100'
                                           : isDark
-                                            ? 'bg-amber-500/20'
-                                            : 'bg-amber-100'
+                                            ? 'bg-orange-500/20'
+                                            : 'bg-orange-100'
                                     }`}
                                   >
                                     {renderDexTaskIcon(task, isCompleted, isChecking)}
                                   </div>
                                   <div className="min-w-0">
                                     <p className={`font-semibold truncate ${isDark ? 'text-white' : 'text-black'}`}>{task.name}</p>
-                                    <p className={`text-xs ${isChecking ? (isDark ? 'text-amber-400' : 'text-amber-700') : 'text-[rgb(var(--muted-foreground))]'}`}>
+                                    <p className={`text-xs ${isChecking ? (isDark ? 'text-orange-400' : 'text-orange-700') : 'text-[rgb(var(--muted-foreground))]'}`}>
                                       {isChecking ? t.wait : task.description}
                                     </p>
                                   </div>
                                 </div>
 
                                 <div className="text-right shrink-0">
-                                  <p className={`font-bold ${isCompleted ? 'text-[rgb(var(--muted-foreground))]' : 'text-amber-500'}`}>
+                                  <p className={`font-bold ${isCompleted ? 'text-[rgb(var(--muted-foreground))]' : 'text-orange-500'}`}>
                                     +{task.reward_points}
                                   </p>
                                   <div className="mt-0.5 flex justify-end">
-                                    <Beer className={`w-3.5 h-3.5 ${isCompleted ? 'text-[rgb(var(--muted-foreground))]' : 'text-amber-500'}`} />
+                                    <Beer className={`w-3.5 h-3.5 ${isCompleted ? 'text-[rgb(var(--muted-foreground))]' : 'text-orange-500'}`} />
                                   </div>
                                 </div>
                               </div>
 
                               <div className={`mt-3 h-2 rounded-full overflow-hidden ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e8dfcf]'}`}>
-                                <div className="h-full bg-amber-500 transition-all duration-300" style={{ width: `${percent}%` }} />
+                                <div className="h-full bg-orange-500 transition-all duration-300" style={{ width: `${percent}%` }} />
                               </div>
 
                               <div className="mt-2 flex items-center justify-between">
@@ -883,8 +883,8 @@ export default function DailyPage() {
                                         : 'bg-green-100 text-green-700'
                                       : isChecking
                                         ? isDark
-                                          ? 'bg-amber-500/20 text-amber-300'
-                                          : 'bg-amber-100 text-amber-700'
+                                          ? 'bg-orange-500/20 text-orange-300'
+                                          : 'bg-orange-100 text-orange-700'
                                         : 'menu-play-button text-[#1a1a1a]'
                                   }`}
                                 >
@@ -905,8 +905,8 @@ export default function DailyPage() {
                             <div key={quest.id} className="rounded-xl bg-[rgb(var(--background))] p-3 border border-[rgb(var(--border))]">
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0 flex items-start gap-2.5">
-                                  <div className={`mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
-                                    <QuestIcon className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+                                  <div className={`mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isDark ? 'bg-orange-500/20' : 'bg-orange-100'}`}>
+                                    <QuestIcon className={`w-4 h-4 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
                                   </div>
                                   <div className="min-w-0">
                                     <p className={`font-semibold truncate ${isDark ? 'text-white' : 'text-black'}`}>{quest.name}</p>
@@ -914,15 +914,15 @@ export default function DailyPage() {
                                   </div>
                                 </div>
                                 <div className="text-right shrink-0">
-                                  <p className="text-amber-500 font-bold">+{quest.reward_points}</p>
+                                  <p className="text-orange-500 font-bold">+{quest.reward_points}</p>
                                   <div className="mt-0.5 flex justify-end">
-                                    <Beer className="w-3.5 h-3.5 text-amber-500" />
+                                    <Beer className="w-3.5 h-3.5 text-orange-500" />
                                   </div>
                                 </div>
                               </div>
 
                               <div className={`mt-3 h-2 rounded-full overflow-hidden ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e8dfcf]'}`}>
-                                <div className="h-full bg-amber-500 transition-all duration-300" style={{ width: `${progress?.percent ?? 0}%` }} />
+                                <div className="h-full bg-orange-500 transition-all duration-300" style={{ width: `${progress?.percent ?? 0}%` }} />
                               </div>
 
                               <div className="mt-2 flex items-center justify-between">

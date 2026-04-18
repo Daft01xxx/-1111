@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Image from 'next/image'
 import Link from 'next/link'
@@ -232,7 +232,7 @@ export function MainMenu() {
 
               <button
                 onClick={handleWalletClick}
-                className="h-11 rounded-full bg-[#18a2ea] px-4 text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] inline-flex items-center gap-2"
+                className="h-11 rounded-full bg-gradient-to-r from-orange-500 to-orange-400 px-4 text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] inline-flex items-center gap-2"
                 aria-label="Connect wallet"
               >
                 <Wallet className="h-4 w-4" />
@@ -264,10 +264,10 @@ export function MainMenu() {
           </div>
 
           <h1 className="text-3xl font-bold gold-text mb-1">NAPIWAS</h1>
-          <p className={`text-sm font-bold ${isDark ? 'text-amber-300/95' : 'text-amber-700'}`}>
+          <p className={`text-sm font-bold ${isDark ? 'text-orange-300/95' : 'text-orange-700'}`}>
             {formatNumber(Math.floor(napiwasBalance))} NAPIWAS
           </p>
-          <p className="text-sm text-[rgb(var(--muted-foreground))]">{language === 'ru' ? 'Кот за пивом' : 'Cat for Beer'}</p>
+          <p className="text-sm text-[rgb(var(--muted-foreground))]">{language === 'ru' ? 'РљРѕС‚ Р·Р° РїРёРІРѕРј' : 'Cat for Beer'}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mb-4">
@@ -335,7 +335,7 @@ function MenuLink({
       style={{ animationDelay: `${delay}ms` }}
       className="flex h-14 items-center gap-2 rounded-xl bg-[rgb(var(--card))] px-4 active:scale-[0.965] active:translate-y-[1px] transition-all duration-200 hover:bg-[rgb(var(--muted))] hover:shadow-[0_8px_14px_rgba(0,0,0,0.2)] active:shadow-[inset_0_8px_16px_rgba(0,0,0,0.18)] animate-fadeInUp"
     >
-      <Icon className="h-5 w-5 text-amber-500 flex-shrink-0" />
+      <Icon className="h-5 w-5 text-orange-500 flex-shrink-0" />
       <span className="font-medium truncate">{label}</span>
     </Link>
   )
