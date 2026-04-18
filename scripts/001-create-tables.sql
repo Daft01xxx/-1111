@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS leaderboard (
 CREATE TABLE IF NOT EXISTS daily_checkins (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  wallet_address TEXT,
   checkin_date DATE NOT NULL,
   streak_count INTEGER DEFAULT 1,
   bonus_earned INTEGER DEFAULT 0,
@@ -93,6 +94,16 @@ CREATE TABLE IF NOT EXISTS music_tracks (
   is_active BOOLEAN DEFAULT true,
   sort_order INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Generic unlock table for music/skins/items
+CREATE TABLE IF NOT EXISTS user_unlocks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  wallet_address TEXT NOT NULL,
+  unlock_type TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  unlocked_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(wallet_address, unlock_type, item_id)
 );
 
 -- Partners table
@@ -153,6 +164,8 @@ ON CONFLICT DO NOTHING;
 CREATE INDEX IF NOT EXISTS idx_leaderboard_score ON leaderboard(score DESC);
 CREATE INDEX IF NOT EXISTS idx_leaderboard_created ON leaderboard(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_users_wallet ON users(wallet_address);
+CREATE INDEX IF NOT EXISTS idx_daily_checkins_wallet ON daily_checkins(wallet_address);
+CREATE INDEX IF NOT EXISTS idx_user_unlocks_wallet ON user_unlocks(wallet_address);
 CREATE INDEX IF NOT EXISTS idx_analytics_type ON analytics_events(event_type);
 CREATE INDEX IF NOT EXISTS idx_analytics_created ON analytics_events(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_pvp_status ON pvp_matches(status);

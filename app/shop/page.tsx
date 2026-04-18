@@ -1,63 +1,96 @@
 'use client'
 
 import { useState } from 'react'
-import { useGameStore, NAPIWAS_CONTRACT } from '@/lib/store'
+import { useGameStore } from '@/lib/store'
 import { formatNumber } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
 import {
-  ArrowLeft,
   ShoppingBag,
   Cat,
   Zap,
-  Check,
-  Lock,
-  Coins,
-  Wallet,
-  ExternalLink,
-  Crosshair,
-  Fish,
-  Droplets,
-  Bomb,
-  Sparkles,
-  Wind,
   Crown,
+  Beer,
+  Crosshair,
+  Sparkles,
   Flame,
-  Star,
+  Orbit,
+  Snowflake,
+  Target,
 } from 'lucide-react'
-import Link from 'next/link'
+import { AppPageHeader } from '@/components/ui/app-page-header'
 
 const weaponIcons: Record<string, LucideIcon> = {
-  yarn_ball: Crosshair,
-  fish_bone: Fish,
-  milk_splash: Droplets,
-  catnip_bomb: Bomb,
-  whisker_laser: Zap,
-  paw_punch: Star,
-  fur_tornado: Wind,
-  golden_scratch: Crown,
-  nine_lives: Sparkles,
-  napiwas_beam: Flame,
+  standard: Crosshair,
+  spread: Target,
+  laser: Zap,
+  chainsaw: Orbit,
+  missile: Flame,
+  paw: Sparkles,
+  beer: Beer,
+  ice: Snowflake,
 }
 
-function WeaponGlyph({ weaponId, color }: { weaponId: string; color: string }) {
-  const Icon = weaponIcons[weaponId] ?? Crosshair
+const skinIcons: Record<string, LucideIcon> = {
+  orange_cat: Flame,
+  gray_cat: Orbit,
+  black_cat: Cat,
+  white_cat: Snowflake,
+  calico_cat: Sparkles,
+  siamese_cat: Target,
+  ginger_ninja: Crosshair,
+  cosmic_cat: Zap,
+  golden_emperor: Beer,
+  napiwas_legend: Crown,
+}
 
+type DisplayWeaponStats = {
+  damage: number
+  shotsPerSecond: number
+  projectiles: number
+}
+
+const displayWeaponStatsById: Record<string, DisplayWeaponStats> = {
+  standard: { damage: 1, shotsPerSecond: 7.1, projectiles: 1 },
+  spread: { damage: 1, shotsPerSecond: 3.8, projectiles: 3 },
+  laser: { damage: 3, shotsPerSecond: 2.6, projectiles: 1 },
+  chainsaw: { damage: 2, shotsPerSecond: 5.0, projectiles: 1 },
+  missile: { damage: 4, shotsPerSecond: 2.2, projectiles: 1 },
+  paw: { damage: 2, shotsPerSecond: 5.6, projectiles: 2 },
+  beer: { damage: 3, shotsPerSecond: 1.0, projectiles: 1 },
+  ice: { damage: 1, shotsPerSecond: 2.5, projectiles: 1 },
+}
+
+function WeaponGlyph({ weaponId, color, isDark }: { weaponId: string; color: string; isDark: boolean }) {
+  const Icon = weaponIcons[weaponId] ?? Crosshair
   return (
-    <div
-      className="relative w-10 h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-110 hover:-rotate-6"
-      style={{
-        background: `radial-gradient(circle at 30% 30%, ${color}40 0%, ${color}18 42%, rgba(8,8,10,0.92) 100%)`,
-        boxShadow: `0 8px 24px ${color}35`,
-      }}
-    >
-      <div
-        className="absolute inset-[2px] rounded-[10px] opacity-80"
-        style={{ border: `1px solid ${color}55` }}
+    <div className="w-11 h-11 flex items-center justify-center">
+      <Icon
+        className="w-8 h-8"
+        style={{
+          color,
+          filter: isDark
+            ? 'saturate(1.45) brightness(1.3) drop-shadow(0 0 6px rgba(251,191,36,0.35))'
+            : 'saturate(1.35) brightness(1.1)',
+        }}
+        strokeWidth={2.2}
       />
-      <Icon className="w-5 h-5" style={{ color }} strokeWidth={2.25} />
-      <div
-        className="absolute right-1.5 top-1.5 w-1.5 h-1.5 rounded-full"
-        style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}` }}
+    </div>
+  )
+}
+
+function SkinGlyph({ skinId, color, isDark }: { skinId: string; color: string; isDark: boolean }) {
+  const Icon = skinIcons[skinId] ?? Cat
+  return (
+    <div className="w-11 h-11 flex items-center justify-center">
+      <Icon
+        className="w-8 h-8"
+        style={{
+          color,
+          filter: isDark
+            ? 'saturate(1.45) brightness(1.3) drop-shadow(0 0 6px rgba(251,191,36,0.35))'
+            : 'saturate(1.35) brightness(1.1)',
+        }}
+        strokeWidth={2.2}
       />
     </div>
   )
@@ -65,11 +98,19 @@ function WeaponGlyph({ weaponId, color }: { weaponId: string; color: string }) {
 
 export default function ShopPage() {
   const [tab, setTab] = useState<'skins' | 'weapons'>('skins')
-  
-  const { 
-    napiwasBalance, skins, weapons, currentSkinId, currentWeaponIndex,
-    purchaseSkin, purchaseWeapon, selectSkin, selectWeapon,
-    theme, language, walletAddress
+
+  const {
+    coins,
+    skins,
+    weapons,
+    currentSkinId,
+    currentWeaponIndex,
+    purchaseSkin,
+    purchaseWeapon,
+    selectSkin,
+    selectWeapon,
+    theme,
+    language,
   } = useGameStore()
 
   const t = {
@@ -79,32 +120,21 @@ export default function ShopPage() {
     select: language === 'ru' ? 'Выбрать' : 'Select',
     selected: language === 'ru' ? 'Выбран' : 'Selected',
     active: language === 'ru' ? 'Активно' : 'Active',
-    buy: language === 'ru' ? 'Купить' : 'Buy',
-    locked: language === 'ru' ? 'Заблокировано' : 'Locked',
     damage: language === 'ru' ? 'Урон' : 'DMG',
     rate: language === 'ru' ? 'Скор.' : 'Rate',
-    projectiles: language === 'ru' ? 'Снаряды' : 'Proj',
-    connectWallet: language === 'ru' ? 'Подключите кошелек для покупок' : 'Connect wallet to purchase',
-    napiwasInfo: language === 'ru' ? 'Покупки за токены NAPIWAS' : 'Purchase with NAPIWAS tokens',
-    viewContract: language === 'ru' ? 'Смотреть контракт' : 'View Contract',
-    balance: language === 'ru' ? 'Баланс' : 'Balance',
+    projectiles: language === 'ru' ? 'Снар.' : 'Proj',
+    purchasesHint: language === 'ru' ? 'Покупки за пивные кружки' : 'Purchases use beer mugs',
   }
 
   const rarityLabels: Record<string, { en: string; ru: string }> = {
     common: { en: 'Common', ru: 'Обычный' },
     uncommon: { en: 'Uncommon', ru: 'Необычный' },
     rare: { en: 'Rare', ru: 'Редкий' },
-    epic: { en: 'Epic', ru: 'Эпический' },
-    legendary: { en: 'Legendary', ru: 'Легендарный' },
+    epic: { en: 'Epic', ru: 'Эпик' },
+    legendary: { en: 'Legendary', ru: 'Легенда' },
   }
 
-  const rarityColors: Record<string, string> = {
-    common: '#6B7280',
-    uncommon: '#22C55E',
-    rare: '#3B82F6',
-    epic: '#A855F7',
-    legendary: '#F59E0B',
-  }
+  const isDark = theme === 'dark'
 
   const handlePurchaseSkin = (skinId: string) => {
     if (purchaseSkin(skinId)) {
@@ -118,162 +148,134 @@ export default function ShopPage() {
     }
   }
 
-  const isDark = theme === 'dark'
+  const onSkinCardPress = (skinId: string, skinUnlocked: boolean, canAfford: boolean) => {
+    if (skinUnlocked) {
+      selectSkin(skinId)
+      return
+    }
+    if (canAfford) {
+      handlePurchaseSkin(skinId)
+    }
+  }
+
+  const onWeaponCardPress = (weaponId: string, index: number, weaponUnlocked: boolean, canAfford: boolean) => {
+    if (weaponUnlocked) {
+      selectWeapon(index)
+      return
+    }
+    if (canAfford) {
+      handlePurchaseWeapon(weaponId, index)
+    }
+  }
 
   return (
-    <div className={`min-h-screen overflow-x-hidden ${isDark ? 'bg-[#0a0a0b]' : 'bg-[#faf9f7]'}`}>
-      {/* Header */}
-      <header 
-        className={`sticky top-0 z-20 backdrop-blur-md border-b pt-[env(safe-area-inset-top)] animate-fadeInUp ${
-          isDark ? 'bg-[#0a0a0b]/95 border-[#1a1a1a]' : 'bg-[#faf9f7]/95 border-[#e5e5e5]'
-        }`}
-      >
-        <div className="flex items-center justify-between gap-3 px-4 pt-3 pb-3">
-          <Link 
-            href="/" 
-            className={`w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-all ${
-              isDark ? 'bg-[#1a1a1a] hover:bg-[#252525]' : 'bg-[#f0f0f0] hover:bg-[#e5e5e5]'
-            }`}
+    <div className={`h-[100dvh] overflow-x-hidden overflow-y-auto overscroll-y-contain pb-[calc(72px+env(safe-area-inset-bottom))] ${isDark ? 'bg-[#0a0a0b]' : 'bg-[#faf9f7]'}`}>
+      <AppPageHeader
+        title={t.title}
+        icon={<ShoppingBag className="w-5 h-5 text-amber-500" />}
+        rightSlot={
+          <div
+            className={`h-10 px-3 rounded-xl flex items-center gap-1.5 ${isDark ? 'bg-[#1d1d1d]' : 'bg-[#e7e7e7]'}`}
           >
-            <ArrowLeft className={`w-5 h-5 ${isDark ? 'text-white' : 'text-black'}`} />
-          </Link>
-          
-          <h1 className={`text-lg font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
-            <ShoppingBag className="w-5 h-5 text-amber-500" />
-            {t.title}
-          </h1>
-          
-          <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl ${
-            isDark ? 'bg-[#1a1a1a]' : 'bg-[#f0f0f0]'
-          }`}>
-            <Coins className="w-4 h-4 text-amber-500" />
-            <span className="font-bold text-amber-500">{formatNumber(napiwasBalance)}</span>
+            <Beer className="w-4 h-4 text-amber-500" />
+            <span className="font-bold text-amber-500">{formatNumber(coins)}</span>
+          </div>
+        }
+      />
+
+      <div className="px-4 pt-3">
+        <div className="rounded-2xl p-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))]">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setTab('skins')}
+              className={`h-11 rounded-xl font-semibold transition-all ${
+                tab === 'skins'
+                  ? 'menu-play-button text-[#1a1a1a]'
+                  : isDark
+                    ? 'bg-[#0f0f11] text-white/80'
+                    : 'bg-[#f0e8d9] text-[#2f2617]'
+              }`}
+              role="tab"
+              aria-selected={tab === 'skins'}
+            >
+              {t.skins}
+            </button>
+            <button
+              onClick={() => setTab('weapons')}
+              className={`h-11 rounded-xl font-semibold transition-all ${
+                tab === 'weapons'
+                  ? 'menu-play-button text-[#1a1a1a]'
+                  : isDark
+                    ? 'bg-[#0f0f11] text-white/80'
+                    : 'bg-[#f0e8d9] text-[#2f2617]'
+              }`}
+              role="tab"
+              aria-selected={tab === 'weapons'}
+            >
+              {t.weapons}
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 px-4 pb-3">
-          <button
-            onClick={() => setTab('skins')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium transition-all active:scale-[0.98] ${
-              tab === 'skins'
-                ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/25'
-                : isDark ? 'bg-[#1a1a1a] text-gray-400' : 'bg-[#f0f0f0] text-gray-600'
-            }`}
-          >
-            <Cat className="w-4 h-4" />
-            {t.skins} ({skins.filter(s => s.unlocked).length}/{skins.length})
-          </button>
-          <button
-            onClick={() => setTab('weapons')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium transition-all active:scale-[0.98] ${
-              tab === 'weapons'
-                ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/25'
-                : isDark ? 'bg-[#1a1a1a] text-gray-400' : 'bg-[#f0f0f0] text-gray-600'
-            }`}
-          >
-            <Zap className="w-4 h-4" />
-            {t.weapons} ({weapons.filter(w => w.unlocked).length}/{weapons.length})
-          </button>
-        </div>
-      </header>
-
-      <div className="p-4 space-y-3 pb-32">
+      <div className="p-4 pt-4 space-y-3">
         {tab === 'skins' ? (
           <>
             {skins.map((skin, index) => {
               const isSelected = currentSkinId === skin.id
-              const canAfford = napiwasBalance >= skin.price
-
+              const canAfford = coins >= skin.price
               return (
                 <div
                   key={skin.id}
-                  className={`p-4 rounded-2xl border-2 transition-all animate-fadeInUp ${
+                  onClick={() => onSkinCardPress(skin.id, skin.unlocked, canAfford)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onSkinCardPress(skin.id, skin.unlocked, canAfford)
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  className={`p-4 rounded-2xl transition-all animate-fadeInUp ${
                     isSelected
-                      ? 'border-amber-500 shadow-lg shadow-amber-500/20'
-                      : isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-white border-[#e5e5e5]'
-                  }`}
-                  style={{ 
-                    borderColor: isSelected ? '#F59E0B' : skin.unlocked ? rarityColors[skin.rarity] + '40' : undefined,
-                    animationDelay: `${index * 50}ms`
+                      ? isDark
+                        ? 'bg-[#2a2318]'
+                        : 'bg-[#e5d8c1]'
+                      : isDark
+                        ? 'bg-[#161616]'
+                        : 'bg-[#ececec]'
+                  } cursor-pointer outline-none`}
+                  style={{
+                    animationDelay: `${index * 50}ms`,
                   }}
                 >
                   <div className="flex items-center gap-4">
-                    {/* Preview */}
-                    <div 
-                      className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden"
-                      style={{ backgroundColor: skin.color + '15' }}
-                    >
-                      <div 
-                        className="w-10 h-10 rounded-full transition-transform hover:scale-110"
-                        style={{ 
-                          backgroundColor: skin.color,
-                          boxShadow: `0 4px 20px ${skin.color}50`
-                        }}
-                      />
-                      <span 
+                    <div className="w-16 h-16 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                      <SkinGlyph skinId={skin.id} color={skin.color} isDark={isDark} />
+                      <span
                         className="absolute -top-0.5 -right-0.5 text-[8px] px-1.5 py-0.5 rounded-bl-lg rounded-tr-xl font-bold text-white uppercase"
-                        style={{ backgroundColor: rarityColors[skin.rarity] }}
+                        style={{ backgroundColor: isSelected ? '#F59E0B' : '#8A4E12' }}
                       >
                         {language === 'ru' ? rarityLabels[skin.rarity].ru.slice(0, 3) : rarityLabels[skin.rarity].en.slice(0, 3)}
                       </span>
                     </div>
 
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>
                           {language === 'ru' ? skin.nameRu : skin.name}
                         </h3>
-                        {isSelected && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 font-bold uppercase tracking-wide">
-                            {t.selected}
-                          </span>
-                        )}
+                        {isSelected && <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wide">{t.selected}</span>}
                       </div>
                       <p className={`text-xs mt-0.5 line-clamp-2 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                         {language === 'ru' ? skin.descriptionRu : skin.description}
                       </p>
                     </div>
 
-                    {/* Action */}
                     <div className="flex-shrink-0">
-                      {skin.unlocked ? (
-                        isSelected ? (
-                          <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                            <Check className="w-5 h-5 text-black" />
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => selectSkin(skin.id)}
-                            className="px-4 py-2 rounded-xl bg-amber-500 text-black font-bold text-sm active:scale-95 transition-all shadow-lg shadow-amber-500/25"
-                          >
-                            {t.select}
-                          </button>
-                        )
-                      ) : (
-                        <button
-                          onClick={() => handlePurchaseSkin(skin.id)}
-                          disabled={!canAfford}
-                          className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 active:scale-95 transition-all ${
-                            canAfford
-                              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/25'
-                              : isDark ? 'bg-[#1a1a1a] text-gray-600' : 'bg-[#e5e5e5] text-gray-400'
-                          }`}
-                        >
-                          {canAfford ? (
-                            <>
-                              <Coins className="w-3.5 h-3.5" />
-                              {formatNumber(skin.price)}
-                            </>
-                          ) : (
-                            <>
-                              <Lock className="w-3.5 h-3.5" />
-                              {formatNumber(skin.price)}
-                            </>
-                          )}
-                        </button>
-                      )}
+                      <span className={`text-xs font-semibold ${isSelected ? 'text-amber-500' : isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {skin.unlocked ? (isSelected ? t.selected : t.select) : `${formatNumber(skin.price)} ${language === 'ru' ? 'кружек' : 'mugs'}`}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -284,96 +286,70 @@ export default function ShopPage() {
           <>
             {weapons.map((weapon, index) => {
               const isSelected = currentWeaponIndex === index
-              const canAfford = napiwasBalance >= weapon.price
+              const canAfford = coins >= weapon.price
+              const displayStats = displayWeaponStatsById[weapon.id] ?? {
+                damage: weapon.damage,
+                shotsPerSecond: weapon.fireRate,
+                projectiles: weapon.projectileCount,
+              }
 
               return (
                 <div
                   key={weapon.id}
-                  className={`p-4 rounded-2xl border-2 transition-all animate-fadeInUp ${
+                  onClick={() => onWeaponCardPress(weapon.id, index, weapon.unlocked, canAfford)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onWeaponCardPress(weapon.id, index, weapon.unlocked, canAfford)
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  className={`p-4 rounded-2xl transition-all animate-fadeInUp ${
                     isSelected
-                      ? 'border-amber-500 shadow-lg shadow-amber-500/20'
-                      : isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-white border-[#e5e5e5]'
-                  }`}
-                  style={{ 
-                    borderColor: isSelected ? '#F59E0B' : weapon.unlocked ? rarityColors[weapon.rarity] + '40' : undefined,
-                    animationDelay: `${index * 50}ms`
+                      ? isDark
+                        ? 'bg-[#2a2318]'
+                        : 'bg-[#e5d8c1]'
+                      : isDark
+                        ? 'bg-[#161616]'
+                        : 'bg-[#ececec]'
+                  } cursor-pointer outline-none`}
+                  style={{
+                    animationDelay: `${index * 50}ms`,
                   }}
                 >
                   <div className="flex items-center gap-4">
-                    {/* Icon */}
-                    <div 
-                      className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden"
-                      style={{ backgroundColor: weapon.color + '15' }}
-                    >
-                      <WeaponGlyph weaponId={weapon.id} color={weapon.color} />
-                      <span 
+                    <div className="w-16 h-16 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                      <WeaponGlyph weaponId={weapon.id} color={weapon.color} isDark={isDark} />
+                      <span
                         className="absolute -top-0.5 -right-0.5 text-[8px] px-1.5 py-0.5 rounded-bl-lg rounded-tr-xl font-bold text-white uppercase"
-                        style={{ backgroundColor: rarityColors[weapon.rarity] }}
+                        style={{ backgroundColor: isSelected ? '#F59E0B' : '#8A4E12' }}
                       >
                         {language === 'ru' ? rarityLabels[weapon.rarity].ru.slice(0, 3) : rarityLabels[weapon.rarity].en.slice(0, 3)}
                       </span>
                     </div>
 
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>
                           {language === 'ru' ? weapon.nameRu : weapon.name}
                         </h3>
-                        {isSelected && weapon.unlocked && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 font-bold uppercase tracking-wide">
-                            {t.active}
-                          </span>
-                        )}
+                        {isSelected && weapon.unlocked && <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wide">{t.active}</span>}
                       </div>
-                      <p className={`text-xs mt-0.5 line-clamp-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      <p className={`text-xs mt-0.5 line-clamp-2 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                         {language === 'ru' ? weapon.descriptionRu : weapon.description}
                       </p>
-                      <div className="flex gap-3 text-[10px] mt-1.5 font-medium">
-                        <span className="text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">{t.damage}: {weapon.damage}</span>
-                        <span className="text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">{t.rate}: {weapon.fireRate}/s</span>
-                        <span className="text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">{t.projectiles}: {weapon.projectileCount}</span>
+                      <div className="flex flex-wrap gap-2 text-[10px] mt-1.5 font-medium text-amber-400">
+                        <span>{t.damage}: {displayStats.damage}</span>
+                        <span>{t.rate}: {displayStats.shotsPerSecond.toFixed(1)}/s</span>
+                        <span>{t.projectiles}: {displayStats.projectiles}</span>
                       </div>
                     </div>
 
-                    {/* Action */}
                     <div className="flex-shrink-0">
-                      {weapon.unlocked ? (
-                        isSelected ? (
-                          <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                            <Check className="w-5 h-5 text-black" />
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => selectWeapon(index)}
-                            className="px-4 py-2 rounded-xl bg-amber-500 text-black font-bold text-sm active:scale-95 transition-all shadow-lg shadow-amber-500/25"
-                          >
-                            {t.select}
-                          </button>
-                        )
-                      ) : (
-                        <button
-                          onClick={() => handlePurchaseWeapon(weapon.id, index)}
-                          disabled={!canAfford}
-                          className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 active:scale-95 transition-all ${
-                            canAfford
-                              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/25'
-                              : isDark ? 'bg-[#1a1a1a] text-gray-600' : 'bg-[#e5e5e5] text-gray-400'
-                          }`}
-                        >
-                          {canAfford ? (
-                            <>
-                              <Coins className="w-3.5 h-3.5" />
-                              {formatNumber(weapon.price)}
-                            </>
-                          ) : (
-                            <>
-                              <Lock className="w-3.5 h-3.5" />
-                              {formatNumber(weapon.price)}
-                            </>
-                          )}
-                        </button>
-                      )}
+                      <span className={`text-xs font-semibold ${isSelected ? 'text-amber-500' : isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {weapon.unlocked ? (isSelected ? t.active : t.select) : `${formatNumber(weapon.price)} ${language === 'ru' ? 'кружек' : 'mugs'}`}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -383,27 +359,10 @@ export default function ShopPage() {
         )}
       </div>
 
-      {/* Footer */}
-      <div 
-        className={`fixed bottom-0 left-0 right-0 p-4 border-t pb-[calc(1rem+env(safe-area-inset-bottom))] ${
-          isDark ? 'bg-[#0a0a0b]/95 backdrop-blur-md border-[#1a1a1a]' : 'bg-white/95 backdrop-blur-md border-[#e5e5e5]'
-        }`}
-      >
-        <div className="text-center">
-          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-            {t.napiwasInfo}
-          </p>
-          <a 
-            href={`https://tonviewer.com/${NAPIWAS_CONTRACT}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-amber-500 text-[10px] font-mono mt-1 hover:underline"
-          >
-            CA: {NAPIWAS_CONTRACT.slice(0, 8)}...{NAPIWAS_CONTRACT.slice(-6)}
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        </div>
+      <div className="px-4 pb-3">
+        <p className={`text-center text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{t.purchasesHint}</p>
       </div>
+      <div aria-hidden className="h-24" />
     </div>
   )
 }

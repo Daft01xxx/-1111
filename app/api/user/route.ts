@@ -1,75 +1,90 @@
-"use server"
+import { NextRequest, NextResponse } from 'next/server'
+import { createSupabaseAdminClientOrNull } from '@/lib/server/supabase-admin'
 
-import { createClient } from "@/lib/supabase/server"
-import { NextRequest, NextResponse } from "next/server"
+function normalizeWallet(value: unknown) {
+  if (typeof value !== 'string') return ''
+  return value.trim()
+}
+
+function normalizeUsername(value: unknown) {
+  if (typeof value !== 'string') return ''
+  return value.trim()
+}
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const body = await request.json()
-  const { wallet_address, username } = body
-
-  if (!wallet_address) {
-    return NextResponse.json({ error: "Wallet address required" }, { status: 400 })
+  const supabase = createSupabaseAdminClientOrNull()
+  if (!supabase) {
+    return NextResponse.json({ error: 'Supabase is not configured' }, { status: 503 })
   }
 
-  // Check if user exists
-  const { data: existingUser } = await supabase
-    .from("users")
-    .select("*")
-    .eq("wallet_address", wallet_address)
-    .single()
+  const body = await request.json().catch(() => ({}))
+  const walletAddress = normalizeWallet((body as Record<string, unknown>)?.wallet_address)
+  const username = normalizeUsername((body as Record<string, unknown>)?.username)
 
-  if (existingUser) {
-    // Update last login
-    await supabase
-      .from("users")
-      .update({ updated_at: new Date().toISOString() })
-      .eq("wallet_address", wallet_address)
-    
-    return NextResponse.json({ user: existingUser, isNew: false })
+  if (!walletAddress) {
+    return NextResponse.json({ error: 'Wallet address required' }, { status: 400 })
   }
 
-  // Create new user
-  const { data: newUser, error } = await supabase
-    .from("users")
-    .insert({
-      wallet_address,
-      username: username || `Player_${wallet_address.slice(0, 6)}`,
-      napiwas_balance: 0,
-      total_score: 0,
-      highest_score: 0,
-      bosses_defeated: 0,
-      current_level: 1,
-      multiplier: 1.0,
-    })
-    .select()
-    .single()
+  try {
+    const { data: existingUser, error: existingError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('wallet_address', walletAddress)
+      .maybeSingle()
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    if (existingError) throw new Error(existingError.message)
+
+    if (existingUser) {
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('wallet_address', walletAddress)
+
+      if (updateError) throw new Error(updateError.message)
+      return NextResponse.json({ user: existingUser, isNew: false, source: 'supabase' })
+    }
+
+    const { data: newUser, error: insertError } = await supabase
+      .from('users')
+      .insert({
+        wallet_address: walletAddress,
+        username: username || `Player_${walletAddress.slice(-6)}`,
+        napiwas_balance: 0,
+        total_score: 0,
+        high_score: 0,
+        bosses_defeated: 0,
+        current_level: 1,
+        multiplier: 1.0,
+      })
+      .select('*')
+      .single()
+
+    if (insertError) throw new Error(insertError.message)
+    return NextResponse.json({ user: newUser, isNew: true, source: 'supabase' })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unexpected user API error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
-
-  return NextResponse.json({ user: newUser, isNew: true })
 }
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-  const searchParams = request.nextUrl.searchParams
-  const wallet = searchParams.get("wallet")
+  const supabase = createSupabaseAdminClientOrNull()
+  if (!supabase) {
+    return NextResponse.json({ error: 'Supabase is not configured' }, { status: 503 })
+  }
 
+  const wallet = normalizeWallet(request.nextUrl.searchParams.get('wallet'))
   if (!wallet) {
-    return NextResponse.json({ error: "Wallet address required" }, { status: 400 })
+    return NextResponse.json({ error: 'Wallet address required' }, { status: 400 })
   }
 
-  const { data: user, error } = await supabase
-    .from("users")
-    .select("*")
-    .eq("wallet_address", wallet)
-    .single()
-
-  if (error) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 })
+  try {
+    const { data: user, error } = await supabase.from('users').select('*').eq('wallet_address', wallet).maybeSingle()
+    if (error) throw new Error(error.message)
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    return NextResponse.json({ user, source: 'supabase' })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unexpected user API error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
-
-  return NextResponse.json({ user })
 }

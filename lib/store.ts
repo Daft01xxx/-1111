@@ -43,6 +43,8 @@ export interface Skin {
 }
 
 interface GameState {
+  userId: string
+
   // Player
   score: number
   highScore: number
@@ -68,6 +70,10 @@ interface GameState {
   hasDoubleShot: boolean
   hasSpeedBoost: boolean
   hasTripleShot: boolean
+  hasMagnet: boolean
+  hasReflector: boolean
+  hasTimeWarp: boolean
+  hasKraken: boolean
   
   // Weapons & Skins
   weapons: Weapon[]
@@ -84,6 +90,7 @@ interface GameState {
   // Audio
   musicVolume: number
   sfxVolume: number
+  selectedMusicTrack: string
   
   // Settings
   theme: 'dark' | 'light'
@@ -121,6 +128,7 @@ interface GameState {
   
   setMusicVolume: (volume: number) => void
   setSfxVolume: (volume: number) => void
+  setSelectedMusicTrack: (trackUrl: string) => void
   setTheme: (theme: 'dark' | 'light') => void
   setLanguage: (language: 'en' | 'ru') => void
   addCoins: (amount: number) => void
@@ -128,6 +136,7 @@ interface GameState {
 
 type PersistedGameState = Pick<
   GameState,
+  | 'userId'
   | 'highScore'
   | 'level'
   | 'totalMeters'
@@ -137,6 +146,7 @@ type PersistedGameState = Pick<
   | 'bossesDefeated'
   | 'musicVolume'
   | 'sfxVolume'
+  | 'selectedMusicTrack'
   | 'theme'
   | 'language'
   | 'coins'
@@ -417,8 +427,169 @@ const defaultPowerUps: PowerUp[] = [
   { id: 'triple_shot', name: 'Triple Shot', nameRu: 'Тройной Выстрел', icon: 'flame', duration: 12, active: false, timeLeft: 0 },
 ]
 
+const activeWeapons: Weapon[] = [
+  {
+    id: 'standard',
+    name: 'BEER',
+    nameRu: 'ПИВО',
+    description: 'Base weapon. Fast and reliable.',
+    descriptionRu: 'Базовое оружие. Быстрое и надёжное.',
+    damage: 12,
+    fireRate: 5,
+    projectileSpeed: 620,
+    projectileCount: 1,
+    unlocked: true,
+    price: 0,
+    rarity: 'common',
+    color: '#FFD93D',
+  },
+  {
+    id: 'spread',
+    name: 'FOAM',
+    nameRu: 'ПЕНА',
+    description: 'Three-shot spread that creates a slowing foam pulse on impact.',
+    descriptionRu: 'Веер из трёх снарядов для широкого контроля.',
+    damage: 11,
+    fireRate: 4,
+    projectileSpeed: 540,
+    projectileCount: 3,
+    unlocked: false,
+    price: 350,
+    rarity: 'uncommon',
+    color: '#FF7F50',
+  },
+  {
+    id: 'laser',
+    name: 'LASER',
+    nameRu: 'ЛАЗЕР',
+    description: 'Precise high-damage beam.',
+    descriptionRu: 'Точный луч с повышенным уроном.',
+    damage: 18,
+    fireRate: 3,
+    projectileSpeed: 880,
+    projectileCount: 1,
+    unlocked: false,
+    price: 700,
+    rarity: 'rare',
+    color: '#FF4757',
+  },
+  {
+    id: 'chainsaw',
+    name: 'CHAINSAW',
+    nameRu: 'ПИЛА',
+    description: 'Rotating blade shot with extra pierce and projectile cutting.',
+    descriptionRu: 'Плотный поток вращающихся снарядов.',
+    damage: 14,
+    fireRate: 5,
+    projectileSpeed: 720,
+    projectileCount: 1,
+    unlocked: false,
+    price: 900,
+    rarity: 'rare',
+    color: '#FF0000',
+  },
+  {
+    id: 'missile',
+    name: 'MISSILE',
+    nameRu: 'РАКЕТА',
+    description: 'Heavy rockets with high single-shot damage.',
+    descriptionRu: 'Тяжёлые ракеты с высоким уроном за попадание.',
+    damage: 24,
+    fireRate: 2.2,
+    projectileSpeed: 470,
+    projectileCount: 1,
+    unlocked: false,
+    price: 1400,
+    rarity: 'epic',
+    color: '#FF6B00',
+  },
+  {
+    id: 'paw',
+    name: 'PAW',
+    nameRu: 'ЛАПА',
+    description: 'Fast chaotic shots with solid DPS.',
+    descriptionRu: 'Быстрые хаотичные выстрелы с хорошим DPS.',
+    damage: 13,
+    fireRate: 5.5,
+    projectileSpeed: 580,
+    projectileCount: 2,
+    unlocked: false,
+    price: 1100,
+    rarity: 'rare',
+    color: '#FF69B4',
+  },
+  {
+    id: 'beer',
+    name: 'BOTTLE',
+    nameRu: 'БУТЫЛКА',
+    description: 'Heavy bottle shot with impact splash and projectile wipe.',
+    descriptionRu: 'Бутылочные снаряды для давления по группам.',
+    damage: 24,
+    fireRate: 1,
+    projectileSpeed: 440,
+    projectileCount: 1,
+    unlocked: false,
+    price: 1800,
+    rarity: 'epic',
+    color: '#00AA00',
+  },
+  {
+    id: 'ice',
+    name: 'ICE',
+    nameRu: 'ЛЁД',
+    description: 'Cold rounds for safer control in dense fights.',
+    descriptionRu: 'Ледяные выстрелы для более безопасного контроля.',
+    damage: 15,
+    fireRate: 2.6,
+    projectileSpeed: 600,
+    projectileCount: 1,
+    unlocked: false,
+    price: 2200,
+    rarity: 'legendary',
+    color: '#00D2D3',
+  },
+]
+
+const activePowerUps: PowerUp[] = [
+  { id: 'magnet', name: 'MAGNET', nameRu: 'МАГНИТ', icon: 'magnet', duration: 10, active: false, timeLeft: 0 },
+  { id: 'reflect', name: 'REFLECTOR', nameRu: 'ОТРАЖАТЕЛЬ', icon: 'reflect', duration: 10, active: false, timeLeft: 0 },
+  { id: 'double', name: 'DOUBLE SHOT', nameRu: 'ДВОЙНОЙ ВЫСТРЕЛ', icon: 'double', duration: 10, active: false, timeLeft: 0 },
+  { id: 'slowmo', name: 'TIME WARP', nameRu: 'ЗАМЕДЛЕНИЕ', icon: 'slowmo', duration: 10, active: false, timeLeft: 0 },
+  { id: 'shield', name: 'GUARDIAN', nameRu: 'ЩИТ', icon: 'shield', duration: 10, active: false, timeLeft: 0 },
+  { id: 'kraken', name: 'KRAKEN', nameRu: 'КРАКЕН', icon: 'kraken', duration: 10, active: false, timeLeft: 0 },
+]
+
+const weaponIdAliases: Record<string, string> = {
+  yarn_ball: 'standard',
+  fish_bone: 'spread',
+  whisker_laser: 'laser',
+  fur_tornado: 'chainsaw',
+  catnip_bomb: 'missile',
+  paw_punch: 'paw',
+  golden_scratch: 'beer',
+  nine_lives: 'ice',
+  napiwas_beam: 'ice',
+}
+
+const powerUpIdAliases: Record<string, string> = {
+  double_shot: 'double',
+  speed_boost: 'slowmo',
+  triple_shot: 'kraken',
+}
+
+const legacyWeaponIds = new Set(defaultWeapons.map((weapon) => weapon.id))
+const legacyPowerUpIds = new Set(defaultPowerUps.map((powerUp) => powerUp.id))
+
 const METERS_PER_LEVEL = 10000
 const BOSS_INTERVAL_MS = 60000 // 60 seconds = 1 minute
+
+function createUserId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `usr-${crypto.randomUUID()}`
+  }
+
+  return `usr-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
 
 function sanitizeNumber(value: unknown, fallback: number, min = 0) {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
@@ -433,12 +604,21 @@ function sanitizeVolume(value: unknown, fallback: number) {
   return Math.min(1, sanitizeNumber(value, fallback, 0))
 }
 
+function sanitizeTrack(value: unknown, fallback: string) {
+  return typeof value === 'string' && value.trim().length > 0 ? value : fallback
+}
+
 function sanitizeTheme(value: unknown): GameState['theme'] {
   return value === 'light' ? 'light' : 'dark'
 }
 
 function sanitizeLanguage(value: unknown): GameState['language'] {
   return value === 'en' ? 'en' : 'ru'
+}
+
+function sanitizeUserId(value: unknown): string {
+  if (typeof value === 'string' && value.trim().length > 0) return value.trim()
+  return createUserId()
 }
 
 function sanitizeWeapons(value: unknown) {
@@ -452,11 +632,11 @@ function sanitizeWeapons(value: unknown) {
               typeof (entry as Weapon).id === 'string' &&
               (entry as Weapon).unlocked === true
           )
-          .map((entry) => entry.id)
+          .map((entry) => weaponIdAliases[entry.id] ?? (legacyWeaponIds.has(entry.id) ? 'standard' : entry.id))
       : []
   )
 
-  return defaultWeapons.map((weapon) =>
+  return activeWeapons.map((weapon) =>
     unlockedIds.has(weapon.id) ? { ...weapon, unlocked: true } : { ...weapon }
   )
 }
@@ -500,6 +680,7 @@ function sanitizePersistedState(persistedState: unknown, currentState: GameState
 
   return {
     ...currentState,
+    userId: sanitizeUserId(persisted.userId),
     highScore: sanitizeInteger(persisted.highScore, currentState.highScore),
     level: sanitizeInteger(persisted.level, currentState.level, 1),
     totalMeters: sanitizeInteger(persisted.totalMeters, currentState.totalMeters),
@@ -509,6 +690,7 @@ function sanitizePersistedState(persistedState: unknown, currentState: GameState
     bossesDefeated: sanitizeInteger(persisted.bossesDefeated, currentState.bossesDefeated),
     musicVolume: sanitizeVolume(persisted.musicVolume, currentState.musicVolume),
     sfxVolume: sanitizeVolume(persisted.sfxVolume, currentState.sfxVolume),
+    selectedMusicTrack: sanitizeTrack(persisted.selectedMusicTrack, currentState.selectedMusicTrack),
     theme: sanitizeTheme(persisted.theme),
     language: sanitizeLanguage(persisted.language),
     coins: sanitizeInteger(persisted.coins, currentState.coins),
@@ -543,6 +725,7 @@ const safePersistStorage: PersistStorage<PersistedGameState> | undefined =
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
+      userId: createUserId(),
       score: 0,
       highScore: 0,
       health: 100,
@@ -559,13 +742,17 @@ export const useGameStore = create<GameState>()(
       isPaused: false,
       gameOver: false,
       
-      powerUps: [...defaultPowerUps],
+      powerUps: [...activePowerUps],
       hasShield: false,
       hasDoubleShot: false,
       hasSpeedBoost: false,
       hasTripleShot: false,
+      hasMagnet: false,
+      hasReflector: false,
+      hasTimeWarp: false,
+      hasKraken: false,
       
-      weapons: [...defaultWeapons],
+      weapons: [...activeWeapons],
       currentWeaponIndex: 0,
       skins: [...defaultSkins],
       currentSkinId: 'orange_cat',
@@ -577,6 +764,7 @@ export const useGameStore = create<GameState>()(
       
       musicVolume: 0.5,
       sfxVolume: 0.7,
+      selectedMusicTrack: '/audio/napiwas-game-main.mp3',
       
       theme: 'dark',
       language: 'ru',
@@ -648,11 +836,15 @@ export const useGameStore = create<GameState>()(
         health: get().maxHealth,
         lastBossTime: Date.now(),
         droppedWeapons: [],
-        powerUps: defaultPowerUps.map(p => ({ ...p, active: false, timeLeft: 0 })),
+        powerUps: activePowerUps.map(p => ({ ...p, active: false, timeLeft: 0 })),
         hasShield: false,
         hasDoubleShot: false,
         hasSpeedBoost: false,
         hasTripleShot: false,
+        hasMagnet: false,
+        hasReflector: false,
+        hasTimeWarp: false,
+        hasKraken: false,
       }),
       resetGame: () => set((state) => ({
         score: 0,
@@ -664,11 +856,15 @@ export const useGameStore = create<GameState>()(
         currentWeaponIndex: 0,
         lastBossTime: 0,
         droppedWeapons: [],
-        powerUps: defaultPowerUps.map((powerUp) => ({ ...powerUp, active: false, timeLeft: 0 })),
+        powerUps: activePowerUps.map((powerUp) => ({ ...powerUp, active: false, timeLeft: 0 })),
         hasShield: false,
         hasDoubleShot: false,
         hasSpeedBoost: false,
         hasTripleShot: false,
+        hasMagnet: false,
+        hasReflector: false,
+        hasTimeWarp: false,
+        hasKraken: false,
       })),
       
       pauseGame: () => set({ isPaused: true }),
@@ -681,15 +877,22 @@ export const useGameStore = create<GameState>()(
       },
       
       activatePowerUp: (powerUpId) => {
+        const normalizedPowerUpId = powerUpIdAliases[powerUpId] ?? powerUpId
+        const isKnownPowerUp =
+          legacyPowerUpIds.has(powerUpId) ||
+          activePowerUps.some((powerUp) => powerUp.id === normalizedPowerUpId)
+        if (!isKnownPowerUp) return
         const powerUps = get().powerUps.map(p => 
-          p.id === powerUpId ? { ...p, active: true, timeLeft: p.duration } : p
+          p.id === normalizedPowerUpId ? { ...p, active: true, timeLeft: p.duration } : p
         )
         const updates: Partial<GameState> = { powerUps }
         
-        if (powerUpId === 'shield') updates.hasShield = true
-        if (powerUpId === 'double_shot') updates.hasDoubleShot = true
-        if (powerUpId === 'speed_boost') updates.hasSpeedBoost = true
-        if (powerUpId === 'triple_shot') updates.hasTripleShot = true
+        if (normalizedPowerUpId === 'shield') updates.hasShield = true
+        if (normalizedPowerUpId === 'double') updates.hasDoubleShot = true
+        if (normalizedPowerUpId === 'slowmo') updates.hasTimeWarp = true
+        if (normalizedPowerUpId === 'magnet') updates.hasMagnet = true
+        if (normalizedPowerUpId === 'reflect') updates.hasReflector = true
+        if (normalizedPowerUpId === 'kraken') updates.hasKraken = true
         
         set(updates)
       },
@@ -700,21 +903,37 @@ export const useGameStore = create<GameState>()(
         let hasDoubleShot = state.hasDoubleShot
         let hasSpeedBoost = state.hasSpeedBoost
         let hasTripleShot = state.hasTripleShot
+        let hasMagnet = state.hasMagnet
+        let hasReflector = state.hasReflector
+        let hasTimeWarp = state.hasTimeWarp
+        let hasKraken = state.hasKraken
         
         const powerUps = state.powerUps.map(p => {
           if (!p.active) return p
           const newTimeLeft = p.timeLeft - deltaTime
           if (newTimeLeft <= 0) {
             if (p.id === 'shield') hasShield = false
-            if (p.id === 'double_shot') hasDoubleShot = false
-            if (p.id === 'speed_boost') hasSpeedBoost = false
-            if (p.id === 'triple_shot') hasTripleShot = false
+            if (p.id === 'double') hasDoubleShot = false
+            if (p.id === 'slowmo') hasTimeWarp = false
+            if (p.id === 'magnet') hasMagnet = false
+            if (p.id === 'reflect') hasReflector = false
+            if (p.id === 'kraken') hasKraken = false
             return { ...p, active: false, timeLeft: 0 }
           }
           return { ...p, timeLeft: newTimeLeft }
         })
         
-        set({ powerUps, hasShield, hasDoubleShot, hasSpeedBoost, hasTripleShot })
+        set({
+          powerUps,
+          hasShield,
+          hasDoubleShot,
+          hasSpeedBoost,
+          hasTripleShot,
+          hasMagnet,
+          hasReflector,
+          hasTimeWarp,
+          hasKraken,
+        })
       },
       
       selectWeapon: (index) => {
@@ -736,13 +955,13 @@ export const useGameStore = create<GameState>()(
         const weapon = state.weapons.find(w => w.id === weaponId)
         if (!weapon || weapon.unlocked) return false
         
-        // Check NAPIWAS balance from wallet
-        if (state.napiwasBalance < weapon.price) return false
+        // Shop purchases are made with in-game beer mugs.
+        if (state.coins < weapon.price) return false
         
         const weapons = state.weapons.map(w => 
           w.id === weaponId ? { ...w, unlocked: true } : w
         )
-        set({ weapons, napiwasBalance: state.napiwasBalance - weapon.price })
+        set({ weapons, coins: state.coins - weapon.price })
         return true
       },
       
@@ -775,13 +994,13 @@ export const useGameStore = create<GameState>()(
         const skin = state.skins.find(s => s.id === skinId)
         if (!skin || skin.unlocked) return false
         
-        // Check NAPIWAS balance from wallet
-        if (state.napiwasBalance < skin.price) return false
+        // Shop purchases are made with in-game beer mugs.
+        if (state.coins < skin.price) return false
         
         const skins = state.skins.map(s => 
           s.id === skinId ? { ...s, unlocked: true } : s
         )
-        set({ skins, napiwasBalance: state.napiwasBalance - skin.price })
+        set({ skins, coins: state.coins - skin.price })
         return true
       },
       
@@ -799,6 +1018,7 @@ export const useGameStore = create<GameState>()(
       
       setMusicVolume: (volume) => set({ musicVolume: volume }),
       setSfxVolume: (volume) => set({ sfxVolume: volume }),
+      setSelectedMusicTrack: (trackUrl) => set({ selectedMusicTrack: trackUrl }),
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => set({ language }),
       addCoins: (amount) => set((state) => ({ coins: state.coins + amount })),
@@ -807,6 +1027,7 @@ export const useGameStore = create<GameState>()(
       name: 'napiwas-game-storage',
       storage: safePersistStorage,
       partialize: (state) => ({
+        userId: state.userId,
         highScore: state.highScore,
         level: state.level,
         totalMeters: state.totalMeters,
@@ -816,6 +1037,7 @@ export const useGameStore = create<GameState>()(
         bossesDefeated: state.bossesDefeated,
         musicVolume: state.musicVolume,
         sfxVolume: state.sfxVolume,
+        selectedMusicTrack: state.selectedMusicTrack,
         theme: state.theme,
         language: state.language,
         coins: state.coins,

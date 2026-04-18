@@ -1,11 +1,12 @@
 'use client'
 
 import { 
-  Info, ArrowLeft, Gamepad2, Target, Shield, Zap, 
+  Info, Gamepad2, Target, Shield, Zap, 
   Trophy, Wallet, Flame, Music, Swords, Gift
 } from 'lucide-react'
 import Link from 'next/link'
 import { useGameStore } from '@/lib/store'
+import { AppPageHeader } from '@/components/ui/app-page-header'
 
 export default function GuidePage() {
   const { theme, language } = useGameStore()
@@ -18,6 +19,7 @@ export default function GuidePage() {
       ? 'Космический шутер с котиком против пивных кружек. Побеждай врагов, собирай бонусы и стань чемпионом!'
       : 'The ultimate cat vs beer space shooter. Defeat enemies, collect power-ups, and become the champion!',
     startPlaying: language === 'ru' ? 'Начать играть' : 'Start Playing',
+    quickActions: language === 'ru' ? 'Быстрые действия' : 'Quick Actions',
   }
 
   const sections = language === 'ru' ? [
@@ -116,23 +118,10 @@ export default function GuidePage() {
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-[#0a0a0b]' : 'bg-[#faf9f7]'}`}>
-      {/* Header */}
-      <header className={`sticky top-0 z-20 backdrop-blur-sm border-b p-4 pt-[calc(1rem+env(safe-area-inset-top))] ${
-        isDark ? 'bg-[#0a0a0b]/90 border-[#1a1a1a]' : 'bg-[#faf9f7]/90 border-[#e5e5e5]'
-      }`}>
-        <div className="flex items-center justify-between">
-          <Link href="/" className={`p-2 -m-2 rounded-lg active:scale-95 transition-all ${
-            isDark ? 'active:bg-[#1a1a1a]' : 'active:bg-[#e5e5e5]'
-          }`}>
-            <ArrowLeft className={`w-6 h-6 ${isDark ? 'text-white' : 'text-black'}`} />
-          </Link>
-          <h1 className={`text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
-            <Info className="w-5 h-5 text-amber-500" />
-            {t.title}
-          </h1>
-          <div className="w-10" />
-        </div>
-      </header>
+      <AppPageHeader
+        title={t.title}
+        icon={<Info className="w-5 h-5 text-amber-500" />}
+      />
 
       <div className="p-4 space-y-4 pb-8">
         {/* Hero */}
@@ -150,6 +139,46 @@ export default function GuidePage() {
           <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             {t.welcomeDesc}
           </p>
+
+          <div className="mt-5">
+            <p className={`mb-2 text-xs font-semibold uppercase tracking-[0.12em] ${isDark ? 'text-amber-400/75' : 'text-amber-600'}`}>
+              {t.quickActions}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <Link
+                href="/play"
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold backdrop-blur-lg transition-all active:scale-[0.98] ${
+                  isDark ? 'border-amber-500/25 bg-black/45 text-white hover:border-amber-500/45' : 'border-amber-400/35 bg-white/80 text-[#2b2416]'
+                }`}
+              >
+                {language === 'ru' ? 'Играть' : 'Play'}
+              </Link>
+              <Link
+                href="/shop"
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold backdrop-blur-lg transition-all active:scale-[0.98] ${
+                  isDark ? 'border-amber-500/25 bg-black/45 text-white hover:border-amber-500/45' : 'border-amber-400/35 bg-white/80 text-[#2b2416]'
+                }`}
+              >
+                {language === 'ru' ? 'Магазин' : 'Shop'}
+              </Link>
+              <Link
+                href="/daily"
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold backdrop-blur-lg transition-all active:scale-[0.98] ${
+                  isDark ? 'border-amber-500/25 bg-black/45 text-white hover:border-amber-500/45' : 'border-amber-400/35 bg-white/80 text-[#2b2416]'
+                }`}
+              >
+                {language === 'ru' ? 'Задания' : 'Tasks'}
+              </Link>
+              <Link
+                href="/music"
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold backdrop-blur-lg transition-all active:scale-[0.98] ${
+                  isDark ? 'border-amber-500/25 bg-black/45 text-white hover:border-amber-500/45' : 'border-amber-400/35 bg-white/80 text-[#2b2416]'
+                }`}
+              >
+                {language === 'ru' ? 'Музыка' : 'Music'}
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* Sections */}

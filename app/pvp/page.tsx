@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { formatNumber } from '@/lib/utils'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Swords, Plus, Users, Trophy, Clock, ArrowLeft, Coins, X } from 'lucide-react'
+import { Swords, Plus, Users, Trophy, Clock, Coins, X } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useGameStore } from '@/lib/store'
 import { useTonWallet } from '@tonconnect/ui-react'
+import { AppPageHeader } from '@/components/ui/app-page-header'
+import { formatNumber } from '@/lib/utils'
 
 interface PvPMatch {
   id: string
@@ -21,14 +22,82 @@ interface PvPMatch {
   opponent_score: number | null
   winner_id: string | null
   created_at: string
-  creator_wallet?: string
-  opponent_wallet?: string
+}
+
+const LOCAL_PVP_MATCHES_KEY = 'napiwas-local-pvp-matches-v1'
+const LOCAL_PVP_GUEST_ID_KEY = 'napiwas-pvp-guest-id-v1'
+const OPEN_MATCH_STATUSES = ['waiting', 'pending', 'active', 'in_progress'] as const
+
+function readLocalPvpMatches(): PvPMatch[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(LOCAL_PVP_MATCHES_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? (parsed as PvPMatch[]) : []
+  } catch {
+    return []
+  }
+}
+
+function writeLocalPvpMatches(matches: PvPMatch[]) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(LOCAL_PVP_MATCHES_KEY, JSON.stringify(matches))
+}
+
+function getOrCreateGuestPlayerId(): string {
+  if (typeof window === 'undefined') return ''
+  const existing = localStorage.getItem(LOCAL_PVP_GUEST_ID_KEY)
+  if (existing) return existing
+  const created = `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  localStorage.setItem(LOCAL_PVP_GUEST_ID_KEY, created)
+  return created
+}
+
+function buildLocalMatch(params: {
+  creatorWallet: string
+  betAmount: number
+  matchType: 'score' | 'bosses'
+}): PvPMatch {
+  return {
+    id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    creator_id: params.creatorWallet,
+    opponent_id: null,
+    bet_amount: params.betAmount,
+    match_type: params.matchType,
+    target_value: null,
+    status: 'waiting',
+    creator_score: null,
+    opponent_score: null,
+    winner_id: null,
+    created_at: new Date().toISOString(),
+  }
+}
+
+async function postPvp<T>(payload: Record<string, unknown>): Promise<T> {
+  const response = await fetch('/api/pvp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  const json = await response.json().catch(() => ({}))
+  if (!response.ok || (json && typeof json.error === 'string')) {
+    throw new Error((json && json.error) || 'PvP request failed')
+  }
+  return json as T
 }
 
 export default function PvPPage() {
+  const router = useRouter()
   const wallet = useTonWallet()
-  const { walletAddress, language } = useGameStore()
-  
+  const { walletAddress, language, theme } = useGameStore()
+
+  const connectedWalletAddress = wallet?.account?.address ?? walletAddress ?? null
+  const [guestPlayerId, setGuestPlayerId] = useState<string | null>(null)
+  const playerAddress = connectedWalletAddress ?? guestPlayerId
+  const isDark = theme === 'dark'
+
   const [matches, setMatches] = useState<PvPMatch[]>([])
   const [myMatches, setMyMatches] = useState<PvPMatch[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,270 +106,403 @@ export default function PvPPage() {
   const [matchType, setMatchType] = useState<'score' | 'bosses'>('score')
   const [creating, setCreating] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [pvpMode, setPvpMode] = useState<'remote' | 'local'>('local')
+  const [pvpError, setPvpError] = useState<string | null>(null)
+  const autoLaunchMatchRef = useRef<string | null>(null)
+  const hasLoadedMatchesRef = useRef(false)
+
+  useEffect(() => {
+    if (connectedWalletAddress) {
+      setGuestPlayerId(null)
+      return
+    }
+    setGuestPlayerId(getOrCreateGuestPlayerId())
+  }, [connectedWalletAddress])
 
   const t = {
-    title: language === 'ru' ? 'PvP Арена' : 'PvP Arena',
-    connectWallet: language === 'ru' ? 'Подключите кошелек для участия в PvP!' : 'Connect your wallet to participate in PvP matches!',
-    goToMenu: language === 'ru' ? 'В меню' : 'Go to Menu',
+    title: language === 'ru' ? 'PvP Битва' : 'PvP Battle',
     createMatch: language === 'ru' ? 'Создать матч' : 'Create Match',
     myMatches: language === 'ru' ? 'Мои матчи' : 'My Matches',
     available: language === 'ru' ? 'Доступные матчи' : 'Available Matches',
     noMatches: language === 'ru' ? 'Нет доступных матчей' : 'No matches available',
-    createOrWait: language === 'ru' ? 'Создайте свой или подождите!' : 'Create one or check back later!',
+    createOrWait: language === 'ru' ? 'Создайте матч или подождите соперника' : 'Create a match or wait for opponents',
     scoreBattle: language === 'ru' ? 'Битва очков' : 'Score Battle',
     bossRush: language === 'ru' ? 'Охота на боссов' : 'Boss Rush',
-    highestScore: language === 'ru' ? 'Побеждает больший счет' : 'Highest score wins',
+    highestScore: language === 'ru' ? 'Побеждает больший счёт' : 'Highest score wins',
     mostBosses: language === 'ru' ? 'Побеждает больше боссов' : 'Most bosses wins',
     matchType: language === 'ru' ? 'Тип матча' : 'Match Type',
-    betAmount: language === 'ru' ? 'Ставка (очки)' : 'Bet Amount (Points)',
+    betAmount: language === 'ru' ? 'Ставка (кружки)' : 'Bet Amount (Mugs)',
     winnerTakes: language === 'ru' ? 'Победитель получает' : 'Winner takes',
-    points: language === 'ru' ? 'очков' : 'points',
+    points: language === 'ru' ? 'кружек' : 'mugs',
     joinMatch: language === 'ru' ? 'Присоединиться' : 'Join Match',
     playNow: language === 'ru' ? 'Играть' : 'Play Now',
-    victory: language === 'ru' ? 'Победа!' : 'Victory!',
+    victory: language === 'ru' ? 'Победа' : 'Victory',
     defeat: language === 'ru' ? 'Поражение' : 'Defeat',
-    yourScore: language === 'ru' ? 'Ваш счет' : 'Your score',
+    yourScore: language === 'ru' ? 'Ваш счёт' : 'Your score',
     opponent: language === 'ru' ? 'Противник' : 'Opponent',
     creating: language === 'ru' ? 'Создание...' : 'Creating...',
-    pending: language === 'ru' ? 'ОЖИДАНИЕ' : 'PENDING',
-    active: language === 'ru' ? 'АКТИВЕН' : 'ACTIVE',
-    completed: language === 'ru' ? 'ЗАВЕРШЕН' : 'COMPLETED',
+    pending: language === 'ru' ? 'Ожидание' : 'PENDING',
+    active: language === 'ru' ? 'Активен' : 'ACTIVE',
+    completed: language === 'ru' ? 'Завершён' : 'COMPLETED',
     youCreated: language === 'ru' ? 'Вы создали' : 'You created',
     youJoined: language === 'ru' ? 'Вы присоединились' : 'You joined',
     result: language === 'ru' ? 'Результат' : 'Result',
-    by: language === 'ru' ? 'от' : 'by',
+    runSaved: language === 'ru' ? 'Ран сохранён' : 'Run submitted',
+    checking: language === 'ru' ? 'Проверка…' : 'Checking…',
+    loading: language === 'ru' ? 'Загрузка PvP…' : 'Loading PvP…',
+    modeRemote: language === 'ru' ? 'Онлайн PvP активен' : 'Online PvP is active',
+    modeLocal: language === 'ru' ? 'Локальный тестовый режим PvP' : 'Local PvP test mode',
   }
 
-  // Get or create user ID
+  const cardBorderClass = isDark ? 'border-[#8a4e12]/70' : 'border-border'
+  const cardTopBorderClass = isDark ? 'border-[#8a4e12]/55' : 'border-border'
+  const mutedCardClass = isDark ? 'bg-[#0f0f0f] border-[#8a4e12]/70' : 'bg-card border-border'
+
+  const hasOpenMatch = useCallback((items: PvPMatch[], participantId: string) => {
+    return items.some((match) =>
+      (match.creator_id === participantId || match.opponent_id === participantId) &&
+      OPEN_MATCH_STATUSES.includes(match.status as (typeof OPEN_MATCH_STATUSES)[number])
+    )
+  }, [])
+
+  const loadLocalMatches = useCallback(() => {
+    if (!playerAddress) {
+      setMatches([])
+      setMyMatches([])
+      setLoading(false)
+      return
+    }
+
+    const allMatches = readLocalPvpMatches()
+    const availableMatches = allMatches
+      .filter((match) => (match.status === 'waiting' || match.status === 'pending') && match.creator_id !== playerAddress)
+      .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
+      .slice(0, 20)
+
+    const ownMatches = allMatches
+      .filter((match) => match.creator_id === playerAddress || match.opponent_id === playerAddress)
+      .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
+      .slice(0, 20)
+
+    setMatches(availableMatches)
+    setMyMatches(ownMatches)
+    setLoading(false)
+  }, [playerAddress])
+
   useEffect(() => {
-    const getUserId = async () => {
-      if (!walletAddress) return
-      
-      const supabase = createClient()
-      
-      // Try to find existing user
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('wallet_address', walletAddress)
-        .single()
-      
-      if (existingUser) {
-        setUserId(existingUser.id)
-      } else {
-        // Create new user
-        const { data: newUser } = await supabase
-          .from('users')
-          .insert({ wallet_address: walletAddress })
-          .select('id')
-          .single()
-        
-        if (newUser) setUserId(newUser.id)
+    const identity = playerAddress?.trim()
+    if (!identity) {
+      setUserId(null)
+      setPvpMode('local')
+      setPvpError(null)
+      return
+    }
+
+    const syncUser = async () => {
+      try {
+        const response = await postPvp<{ userId: string }>({
+          action: 'upsert_user',
+          identity,
+        })
+        setUserId(response.userId)
+        setPvpMode('remote')
+        setPvpError(null)
+      } catch (error) {
+        setUserId(null)
+        setPvpMode('local')
+        setPvpError(error instanceof Error ? error.message : 'Failed to initialize PvP user')
       }
     }
-    
-    getUserId()
-  }, [walletAddress])
 
-  const fetchMatches = async () => {
-    if (!userId) return
-    
-    setLoading(true)
-    const supabase = createClient()
+    void syncUser()
+  }, [playerAddress])
 
-    // Get pending matches (available to join)
-    const { data: pendingMatches } = await supabase
-      .from('pvp_matches')
-      .select('*')
-      .eq('status', 'pending')
-      .neq('creator_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(20)
-
-    if (pendingMatches) {
-      setMatches(pendingMatches)
+  const fetchMatches = useCallback(async () => {
+    if (!playerAddress) {
+      setMatches([])
+      setMyMatches([])
+      setLoading(false)
+      return
     }
 
-    // Get my matches
-    const { data: userMatches } = await supabase
-      .from('pvp_matches')
-      .select('*')
-      .or(`creator_id.eq.${userId},opponent_id.eq.${userId}`)
-      .order('created_at', { ascending: false })
-      .limit(20)
-
-    if (userMatches) {
-      setMyMatches(userMatches)
+    if (!userId) {
+      loadLocalMatches()
+      return
     }
 
-    setLoading(false)
-  }
+    if (!hasLoadedMatchesRef.current) {
+      setLoading(true)
+    }
+    try {
+      const response = await postPvp<{ matches: PvPMatch[]; myMatches: PvPMatch[] }>({
+        action: 'list',
+        userId,
+      })
+      setMatches(response.matches ?? [])
+      setMyMatches(response.myMatches ?? [])
+      hasLoadedMatchesRef.current = true
+      setPvpMode('remote')
+      setPvpError(null)
+      setLoading(false)
+    } catch (error) {
+      // Keep online mode and retry on next poll; do not permanently fall back
+      // to local mode after transient API/network errors.
+      setPvpError(error instanceof Error ? error.message : 'Failed to load online matches')
+    } finally {
+      if (!hasLoadedMatchesRef.current) {
+        setLoading(false)
+      }
+    }
+  }, [loadLocalMatches, playerAddress, userId])
 
   useEffect(() => {
-    if (userId) {
-      fetchMatches()
-    }
-  }, [userId])
+    if (!playerAddress) return
+    hasLoadedMatchesRef.current = false
+    setLoading(true)
+    void fetchMatches()
+  }, [fetchMatches, playerAddress])
+
+  useEffect(() => {
+    if (!playerAddress) return
+    const intervalId = window.setInterval(() => {
+      void fetchMatches()
+    }, 2500)
+    return () => window.clearInterval(intervalId)
+  }, [fetchMatches, playerAddress])
 
   const handleCreateMatch = async () => {
-    if (!userId || creating) return
-    
-    setCreating(true)
-    const supabase = createClient()
+    if (!playerAddress || creating) return
+    const normalizedBet = Math.max(0, Math.floor(Number.isFinite(betAmount) ? betAmount : 0))
 
-    const { error } = await supabase.from('pvp_matches').insert({
-      creator_id: userId,
-      bet_amount: betAmount,
-      match_type: matchType,
-      status: 'pending',
-    })
-
-    if (!error) {
-      setShowCreateModal(false)
-      fetchMatches()
+    const participantId = userId ?? playerAddress
+    if (participantId && hasOpenMatch(myMatches, participantId)) {
+      setPvpError(language === 'ru' ? 'Сначала завершите текущий матч' : 'Finish your current match first')
+      return
     }
-    setCreating(false)
+
+    setCreating(true)
+    setPvpError(null)
+
+    if (!userId) {
+      const localMatches = readLocalPvpMatches()
+      const hasAnyOpenLocalMatch = localMatches.some((entry) =>
+        OPEN_MATCH_STATUSES.includes(entry.status as (typeof OPEN_MATCH_STATUSES)[number])
+      )
+      if (hasAnyOpenLocalMatch) {
+        setPvpError(language === 'ru' ? 'Сейчас уже есть активный матч' : 'There is already an active match')
+        setCreating(false)
+        return
+      }
+
+      localMatches.unshift(
+        buildLocalMatch({
+          creatorWallet: playerAddress,
+          betAmount: normalizedBet,
+          matchType,
+        })
+      )
+      writeLocalPvpMatches(localMatches)
+      setShowCreateModal(false)
+      loadLocalMatches()
+      setCreating(false)
+      return
+    }
+
+    try {
+      await postPvp<{ match: PvPMatch }>({
+        action: 'create',
+        userId,
+        betAmount: normalizedBet,
+        matchType,
+      })
+      setShowCreateModal(false)
+      await fetchMatches()
+    } catch (error) {
+      setPvpError(error instanceof Error ? error.message : 'Failed to create match')
+    } finally {
+      setCreating(false)
+    }
   }
 
   const handleJoinMatch = async (match: PvPMatch) => {
-    if (!userId || match.status !== 'pending') return
-    
-    const supabase = createClient()
+    if (!playerAddress || (match.status !== 'waiting' && match.status !== 'pending')) return
 
-    await supabase
-      .from('pvp_matches')
-      .update({ 
-        opponent_id: userId,
-        status: 'active',
+    const participantId = userId ?? playerAddress
+    if (participantId && hasOpenMatch(myMatches, participantId)) {
+      setPvpError(language === 'ru' ? 'Сначала завершите текущий матч' : 'Finish your current match first')
+      return
+    }
+
+    if (!userId || match.id.startsWith('local-')) {
+      const localMatches = readLocalPvpMatches()
+      const updated = localMatches.map((entry) =>
+        entry.id === match.id
+          ? { ...entry, opponent_id: playerAddress, status: 'active' }
+          : entry
+      )
+      writeLocalPvpMatches(updated)
+      loadLocalMatches()
+      router.push(`/play?pvp=${match.id}`)
+      return
+    }
+
+    try {
+      await postPvp<{ match: PvPMatch }>({
+        action: 'join',
+        userId,
+        matchId: match.id,
       })
-      .eq('id', match.id)
-
-    fetchMatches()
+      await fetchMatches()
+      router.push(`/play?pvp=${match.id}`)
+    } catch (error) {
+      setPvpError(error instanceof Error ? error.message : 'Failed to join match')
+      await fetchMatches()
+    }
   }
+
+  useEffect(() => {
+    const participantId = userId ?? playerAddress
+    if (!participantId) return
+
+    const readyMatch = myMatches.find((match) => {
+      if (!(match.status === 'active' || match.status === 'in_progress')) return false
+      if (!match.creator_id || !match.opponent_id) return false
+      if (match.creator_id === participantId) return match.creator_score === null
+      if (match.opponent_id === participantId) return match.opponent_score === null
+      return false
+    })
+
+    if (!readyMatch) {
+      autoLaunchMatchRef.current = null
+      return
+    }
+
+    if (autoLaunchMatchRef.current === readyMatch.id) return
+    autoLaunchMatchRef.current = readyMatch.id
+    router.push(`/play?pvp=${readyMatch.id}`)
+  }, [myMatches, playerAddress, router, userId])
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'text-yellow-400 bg-yellow-400/20'
-      case 'active': return 'text-blue-400 bg-blue-400/20'
-      case 'completed': return 'text-green-400 bg-green-400/20'
-      default: return 'text-muted-foreground bg-muted'
+      case 'waiting':
+      case 'pending':
+        return 'text-yellow-400 bg-yellow-400/20'
+      case 'active':
+      case 'in_progress':
+        return 'text-blue-400 bg-blue-400/20'
+      case 'completed':
+        return 'text-green-400 bg-green-400/20'
+      default:
+        return 'text-muted-foreground bg-muted'
     }
   }
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'pending': return t.pending
-      case 'active': return t.active
-      case 'completed': return t.completed
-      default: return status.toUpperCase()
+      case 'waiting':
+      case 'pending':
+        return t.pending
+      case 'active':
+      case 'in_progress':
+        return t.active
+      case 'completed':
+        return t.completed
+      default:
+        return status.toUpperCase()
     }
   }
 
+  const renderMetric = (value: number | null) => {
+    if (value === null || value === undefined) return '—'
+    return String(value)
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm border-b border-border p-4">
-        <div className="flex items-center justify-between">
-          <motion.div whileTap={{ scale: 0.9 }}>
-            <Link href="/" className="p-2 -m-2 rounded-lg hover:bg-muted transition-colors">
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </Link>
-          </motion.div>
-          <h1 className="text-xl font-display font-bold beer-text flex items-center gap-2">
-            <Swords className="w-5 h-5 text-beer-400" />
-            {t.title}
-          </h1>
-          <div className="w-10" />
-        </div>
-      </header>
+    <div className="min-h-screen overflow-x-hidden bg-[rgb(var(--background))] pb-[calc(108px+env(safe-area-inset-bottom))]">
+      <AppPageHeader
+        title={t.title}
+        icon={<Swords className="h-5 w-5 text-amber-500" />}
+      />
 
       <div className="p-4 space-y-6">
-        {!wallet ? (
+        {!playerAddress ? (
           <div className="text-center py-12">
             <Swords className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">{t.connectWallet}</p>
-            <Link href="/">
-              <motion.button 
-                whileTap={{ scale: 0.95 }}
-                className="mt-4 px-6 py-3 bg-muted text-foreground font-bold rounded-xl"
-              >
-                {t.goToMenu}
-              </motion.button>
-            </Link>
+            <p className="text-muted-foreground">{t.loading}</p>
           </div>
         ) : (
           <>
-            {/* Create match button */}
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowCreateModal(true)}
-              className="w-full p-4 rounded-2xl beer-gradient flex items-center justify-center gap-3 font-bold text-dark-950"
+              disabled={creating || ((userId ?? playerAddress) ? hasOpenMatch(myMatches, (userId ?? playerAddress) as string) : false)}
+              className="w-full p-4 rounded-2xl bg-amber-500 hover:bg-amber-400 border border-amber-300 flex items-center justify-center gap-3 font-bold text-black shadow-[0_10px_30px_rgba(245,158,11,0.35)] transition-colors disabled:cursor-not-allowed disabled:opacity-55"
             >
               <Plus className="w-6 h-6" />
               {t.createMatch}
             </motion.button>
 
-            {/* My matches */}
+            <div className="rounded-xl border border-amber-300/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+              {pvpError ? pvpError : pvpMode === 'local' ? t.modeLocal : t.modeRemote}
+            </div>
+
             {myMatches.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-beer-400" />
+                  <Users className="w-5 h-5 text-amber-500" />
                   {t.myMatches}
                 </h2>
                 <div className="space-y-3">
                   {myMatches.map((match) => {
-                    const isCreator = match.creator_id === userId
-                    const isWinner = match.winner_id === userId
-                    
+                    const currentParticipantId = userId ?? playerAddress
+                    const isCreator = match.creator_id === currentParticipantId
+                    const isWinner = match.winner_id === currentParticipantId
+                    const myScoreSubmitted = isCreator ? match.creator_score !== null : match.opponent_score !== null
+                    const hasBothPlayers = Boolean(match.creator_id && match.opponent_id)
+                    const canStartRun =
+                      hasBothPlayers &&
+                      (match.status === 'active' || match.status === 'in_progress') &&
+                      !myScoreSubmitted
+
                     return (
                       <motion.div
                         key={match.id}
                         whileTap={{ scale: 0.98 }}
-                        className={`
-                          p-4 rounded-xl border bg-card
-                          ${match.status === 'completed' && isWinner 
-                            ? 'border-green-500/30 bg-green-500/5' 
-                            : 'border-border'
-                          }
-                        `}
+                        className={`p-4 rounded-xl border bg-card ${match.status === 'completed' && isWinner ? 'border-green-500/30 bg-green-500/5' : cardBorderClass}`}
                       >
                         <div className="flex items-center justify-between mb-2">
                           <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(match.status)}`}>
                             {getStatusText(match.status)}
                           </span>
-                          <div className="flex items-center gap-1 text-beer-400">
+                          <div className="flex items-center gap-1 text-amber-500">
                             <Coins className="w-4 h-4" />
-                            <span className="font-bold">{match.bet_amount}</span>
+                            <span className="font-bold">{formatNumber(match.bet_amount)}</span>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex-1">
-                            <p className="text-xs text-muted-foreground">
-                              {isCreator ? t.youCreated : t.youJoined}
-                            </p>
-                            <p className="font-medium text-foreground">
-                              {match.match_type === 'score' ? t.scoreBattle : t.bossRush}
-                            </p>
+                            <p className="text-xs text-muted-foreground">{isCreator ? t.youCreated : t.youJoined}</p>
+                            <p className="font-medium text-foreground">{match.match_type === 'score' ? t.scoreBattle : t.bossRush}</p>
                           </div>
-                          
-                          {match.status === 'active' && (
+
+                          {canStartRun && (
                             <Link href={`/play?pvp=${match.id}`}>
-                              <motion.span
-                                whileTap={{ scale: 0.95 }}
-                                className="px-4 py-2 rounded-lg beer-gradient text-dark-950 font-bold text-sm inline-block"
-                              >
+                              <motion.span whileTap={{ scale: 0.95 }} className="px-4 py-2 rounded-lg beer-gradient text-dark-950 font-bold text-sm inline-block">
                                 {t.playNow}
                               </motion.span>
                             </Link>
                           )}
-                          
+
+                          {!canStartRun && myScoreSubmitted && match.status !== 'completed' && (
+                            <div className="text-right">
+                              <p className="text-xs text-muted-foreground">{t.checking}</p>
+                              <p className="text-xs font-semibold text-amber-400">{t.runSaved}</p>
+                            </div>
+                          )}
+
                           {match.status === 'completed' && (
                             <div className="text-right">
                               <p className="text-xs text-muted-foreground">{t.result}</p>
@@ -312,18 +514,20 @@ export default function PvPPage() {
                         </div>
 
                         {match.status === 'completed' && (
-                          <div className="flex items-center justify-between mt-3 pt-3 border-t border-border text-sm">
+                          <div className={`flex items-center justify-between mt-3 pt-3 border-t text-sm ${cardTopBorderClass}`}>
                             <span className="text-muted-foreground">
-                              {t.yourScore}: <span className="text-foreground font-bold">
-                                {isCreator ? match.creator_score : match.opponent_score}
+                                {t.yourScore}:{' '}
+                                <span className="text-foreground font-bold">
+                                  {renderMetric(isCreator ? match.creator_score : match.opponent_score)}
+                                </span>
                               </span>
-                            </span>
-                            <span className="text-muted-foreground">
-                              {t.opponent}: <span className="text-foreground font-bold">
-                                {isCreator ? match.opponent_score : match.creator_score}
+                              <span className="text-muted-foreground">
+                                {t.opponent}:{' '}
+                                <span className="text-foreground font-bold">
+                                  {renderMetric(isCreator ? match.opponent_score : match.creator_score)}
+                                </span>
                               </span>
-                            </span>
-                          </div>
+                            </div>
                         )}
                       </motion.div>
                     )
@@ -332,17 +536,12 @@ export default function PvPPage() {
               </motion.div>
             )}
 
-            {/* Available matches */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-beer-400" />
+                <Trophy className="w-5 h-5 text-amber-500" />
                 {t.available}
               </h2>
-              
+
               {loading ? (
                 <div className="space-y-3">
                   {[...Array(3)].map((_, i) => (
@@ -350,7 +549,7 @@ export default function PvPPage() {
                   ))}
                 </div>
               ) : matches.length === 0 ? (
-                <div className="text-center py-8 bg-card rounded-xl border border-border">
+                <div className={`text-center py-8 rounded-xl border ${mutedCardClass}`}>
                   <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                   <p className="text-foreground">{t.noMatches}</p>
                   <p className="text-sm text-muted-foreground">{t.createOrWait}</p>
@@ -361,24 +560,22 @@ export default function PvPPage() {
                     <motion.div
                       key={match.id}
                       whileTap={{ scale: 0.98 }}
-                      className="p-4 rounded-xl bg-card border border-border"
+                      className={`p-4 rounded-xl bg-card border ${cardBorderClass}`}
                     >
                       <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {match.match_type === 'score' ? t.scoreBattle : t.bossRush}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 text-beer-400">
+                        <p className="font-medium text-foreground">
+                          {match.match_type === 'score' ? t.scoreBattle : t.bossRush}
+                        </p>
+                        <div className="flex items-center gap-1 text-amber-500">
                           <Coins className="w-5 h-5" />
-                          <span className="text-lg font-bold">{match.bet_amount}</span>
+                          <span className="text-lg font-bold">{formatNumber(match.bet_amount)}</span>
                         </div>
                       </div>
-                      
+
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleJoinMatch(match)}
-                        className="w-full py-3 rounded-lg bg-muted text-foreground font-bold hover:bg-muted/80 transition-colors"
+                        className="w-full py-3 rounded-lg bg-amber-500 hover:bg-amber-400 border border-amber-300 text-black font-bold transition-colors shadow-[0_8px_22px_rgba(245,158,11,0.3)]"
                       >
                         {t.joinMatch}
                       </motion.button>
@@ -391,24 +588,23 @@ export default function PvPPage() {
         )}
       </div>
 
-      {/* Create match modal */}
       <AnimatePresence>
         {showCreateModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/70 p-4 pb-28 sm:pb-4"
             onClick={() => setShowCreateModal(false)}
           >
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
-              onClick={e => e.stopPropagation()}
-              className="w-full max-w-md bg-card rounded-2xl border border-border overflow-hidden"
+              onClick={(event) => event.stopPropagation()}
+              className={`w-full max-w-md max-h-[calc(100dvh-7rem)] overflow-y-auto rounded-2xl border bg-[rgb(var(--card))] shadow-[0_24px_60px_rgba(0,0,0,0.55)] ${cardBorderClass}`}
             >
-              <div className="flex items-center justify-between p-4 border-b border-border">
+              <div className={`flex items-center justify-between p-4 border-b ${cardTopBorderClass}`}>
                 <h3 className="text-lg font-bold text-foreground">{t.createMatch}</h3>
                 <motion.button
                   whileTap={{ scale: 0.9 }}
@@ -420,22 +616,13 @@ export default function PvPPage() {
               </div>
 
               <div className="p-4 space-y-4">
-                {/* Match type */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    {t.matchType}
-                  </label>
+                  <label className="block text-sm font-medium text-foreground mb-2">{t.matchType}</label>
                   <div className="grid grid-cols-2 gap-2">
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setMatchType('score')}
-                      className={`
-                        p-3 rounded-xl border-2 transition-colors text-left
-                        ${matchType === 'score' 
-                          ? 'border-beer-500 bg-beer-500/10' 
-                          : 'border-border bg-muted hover:border-muted-foreground'
-                        }
-                      `}
+                      className={`p-3 rounded-xl border-2 transition-colors text-left ${matchType === 'score' ? 'border-beer-500 bg-beer-500/10' : `${cardBorderClass} bg-muted hover:border-amber-500/55`}`}
                     >
                       <p className="font-bold text-foreground">{t.scoreBattle}</p>
                       <p className="text-xs text-muted-foreground">{t.highestScore}</p>
@@ -443,13 +630,7 @@ export default function PvPPage() {
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setMatchType('bosses')}
-                      className={`
-                        p-3 rounded-xl border-2 transition-colors text-left
-                        ${matchType === 'bosses' 
-                          ? 'border-beer-500 bg-beer-500/10' 
-                          : 'border-border bg-muted hover:border-muted-foreground'
-                        }
-                      `}
+                      className={`p-3 rounded-xl border-2 transition-colors text-left ${matchType === 'bosses' ? 'border-beer-500 bg-beer-500/10' : `${cardBorderClass} bg-muted hover:border-amber-500/55`}`}
                     >
                       <p className="font-bold text-foreground">{t.bossRush}</p>
                       <p className="text-xs text-muted-foreground">{t.mostBosses}</p>
@@ -457,44 +638,52 @@ export default function PvPPage() {
                   </div>
                 </div>
 
-                {/* Bet amount */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    {t.betAmount}
-                  </label>
+                  <label className="block text-sm font-medium text-foreground mb-2">{t.betAmount}</label>
                   <div className="grid grid-cols-4 gap-2">
                     {[100, 250, 500, 1000].map((amount) => (
                       <motion.button
                         key={amount}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setBetAmount(amount)}
-                        className={`
-                          py-2 px-3 rounded-lg font-bold text-sm transition-colors
-                          ${betAmount === amount 
-                            ? 'bg-beer-500 text-dark-950' 
-                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                          }
-                        `}
+                        className={`py-2 px-3 rounded-lg font-bold text-sm transition-colors ${betAmount === amount ? 'bg-beer-500 text-dark-950' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
                       >
                         {amount}
                       </motion.button>
                     ))}
                   </div>
+                  <div className="mt-3">
+                    <input
+                      type="number"
+                      min={0}
+                      step={10}
+                      value={Number.isFinite(betAmount) ? betAmount : 0}
+                      onChange={(event) => {
+                        const raw = event.target.value
+                        if (raw === '') {
+                          setBetAmount(0)
+                          return
+                        }
+                        const next = Math.max(0, Math.floor(Number(raw)))
+                        if (Number.isFinite(next)) setBetAmount(next)
+                      }}
+                      className={`w-full rounded-lg border px-3 py-2 text-sm bg-[rgb(var(--card))] text-foreground ${cardBorderClass}`}
+                      placeholder={language === 'ru' ? 'Своя ставка' : 'Custom bet'}
+                    />
+                  </div>
                 </div>
 
-                {/* Info */}
                 <div className="bg-muted rounded-xl p-3">
                   <p className="text-xs text-muted-foreground">
-                    {t.winnerTakes} {Math.floor(betAmount * 2 * 0.95)} {t.points} (95%).
+                    {t.winnerTakes} {Math.floor(betAmount * 2 * 0.95)} {t.points} (95%)
                   </p>
                 </div>
 
-                {/* Create button */}
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleCreateMatch}
                   disabled={creating}
-                  className="w-full py-4 rounded-xl beer-gradient text-dark-950 font-bold disabled:opacity-50"
+                  className="w-full py-4 rounded-xl bg-amber-500 hover:bg-amber-400 border border-amber-300 text-black font-bold disabled:opacity-50 transition-colors"
                 >
                   {creating ? t.creating : t.createMatch}
                 </motion.button>

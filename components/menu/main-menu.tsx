@@ -1,52 +1,174 @@
 'use client'
 
-import { useGameStore, translations } from '@/lib/store'
-import { formatNumber, getMultiplierTier } from '@/lib/utils'
-import { 
-  Play, Trophy, Calendar, Swords, Music, Users, 
-  Skull, Wallet, Crown, Info, ShoppingBag, Sun, Moon
-} from 'lucide-react'
-import Link from 'next/link'
 import Image from 'next/image'
-import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react'
-import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTonAddress, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react'
+import {
+  Calendar,
+  Info,
+  Languages,
+  Moon,
+  Music,
+  Play,
+  ShoppingBag,
+  Skull,
+  Sun,
+  Swords,
+  Trophy,
+  Users,
+  Wallet,
+} from 'lucide-react'
+import { NAPIWAS_CONTRACT, translations, useGameStore } from '@/lib/store'
+import { formatNumber, getMultiplierTier, shortWalletAddress } from '@/lib/utils'
 
 export function MainMenu() {
   const wallet = useTonWallet()
+  const walletFriendlyAddress = useTonAddress()
   const [tonConnectUI] = useTonConnectUI()
-  const { 
-    highScore, level, napiwasBalance, coins,
-    setWallet, setMultiplier, theme, setTheme, language, setLanguage
+  const {
+    highScore,
+    level,
+    napiwasBalance,
+    setWallet,
+    setMultiplier,
+    theme,
+    setTheme,
+    language,
+    setLanguage,
+    musicVolume,
   } = useGameStore()
-  
+
   const [mounted, setMounted] = useState(false)
+  const menuAudioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   useEffect(() => {
-    if (wallet) {
+    if (typeof window === 'undefined') return
+    const audio = new Audio('/audio/napiwas-menu.mp3')
+    audio.loop = true
+    audio.preload = 'auto'
+    audio.volume = Math.max(0, Math.min(1, musicVolume)) * 0.65
+    menuAudioRef.current = audio
+
+    const tryPlay = () => {
+      if (audio.volume <= 0) return
+      void audio.play().catch(() => undefined)
+    }
+
+    tryPlay()
+    window.addEventListener('pointerdown', tryPlay, { passive: true })
+    window.addEventListener('keydown', tryPlay)
+
+    return () => {
+      window.removeEventListener('pointerdown', tryPlay)
+      window.removeEventListener('keydown', tryPlay)
+      audio.pause()
+      audio.currentTime = 0
+      menuAudioRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    const audio = menuAudioRef.current
+    if (!audio) return
+    const normalizedVolume = Math.max(0, Math.min(1, musicVolume)) * 0.65
+    audio.volume = normalizedVolume
+    if (normalizedVolume <= 0) {
+      audio.pause()
+      return
+    }
+    if (audio.paused) {
+      void audio.play().catch(() => undefined)
+    }
+  }, [musicVolume])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const parseJettonBalance = (raw: string, decimals: number) => {
+      const normalizedRaw = /^\d+$/.test(raw) ? raw : '0'
+      const safeDecimals = Number.isFinite(decimals) ? Math.max(0, decimals) : 9
+      const padded = normalizedRaw.padStart(safeDecimals + 1, '0')
+      const intPart = padded.slice(0, -safeDecimals) || '0'
+      const fracPart = safeDecimals > 0 ? padded.slice(-safeDecimals, -Math.max(0, safeDecimals - 4)) : ''
+      return Number(fracPart ? `${intPart}.${fracPart}` : intPart)
+    }
+
+    const fetchNapiwasBalance = async (address: string) => {
+      try {
+        const response = await fetch(`https://tonapi.io/v2/accounts/${encodeURIComponent(address)}/jettons`, {
+          cache: 'no-store',
+        })
+        if (!response.ok) return 0
+        const data = await response.json()
+        const balances = Array.isArray(data?.balances) ? data.balances : []
+        const targetContract = NAPIWAS_CONTRACT.toUpperCase()
+
+        const entry = balances.find((item: any) => {
+          const symbol = String(item?.jetton?.symbol ?? item?.jetton?.metadata?.symbol ?? '').toUpperCase()
+          const jettonAddress = String(item?.jetton?.address ?? '').toUpperCase()
+          const jettonName = String(item?.jetton?.name ?? '').toUpperCase()
+          return symbol === 'NAPIWAS' || jettonName.includes('NAPIWAS') || jettonAddress === targetContract
+        })
+
+        if (!entry) return 0
+        return parseJettonBalance(String(entry?.balance ?? '0'), Number(entry?.jetton?.decimals ?? 9))
+      } catch {
+        return 0
+      }
+    }
+
+    const syncWallet = async () => {
+      if (!wallet) {
+        setWallet(null, 0)
+        setMultiplier(1.0)
+        return
+      }
+
       const address = wallet.account.address
-      const mockBalance = Math.floor(Math.random() * 50000) + 1000
-      setWallet(address, mockBalance)
-      const tier = getMultiplierTier(mockBalance)
-      setMultiplier(tier.multiplier)
-    } else {
-      setWallet(null, 0)
-      setMultiplier(1.0)
+      const balance = await fetchNapiwasBalance(address)
+      if (cancelled) return
+      setWallet(address, balance)
+      setMultiplier(getMultiplierTier(balance).multiplier)
+
+      // Keep users table warm so leaderboard can list connected wallets on a fresh DB.
+      try {
+        await fetch('/api/user', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            wallet_address: address,
+            username: `Player_${address.slice(-6)}`,
+          }),
+        })
+      } catch {
+        // Non-blocking best-effort sync.
+      }
+    }
+
+    void syncWallet()
+
+    return () => {
+      cancelled = true
     }
   }, [wallet, setWallet, setMultiplier])
 
   useEffect(() => {
-    if (mounted) {
-      document.documentElement.classList.toggle('light', theme === 'light')
-    }
+    if (!mounted) return
+    document.documentElement.classList.toggle('light', theme === 'light')
   }, [theme, mounted])
 
   const tier = getMultiplierTier(napiwasBalance)
   const t = translations[language]
   const isDark = theme === 'dark'
+  const effectiveWalletAddress = walletFriendlyAddress || wallet?.account.address || ''
+  const toggleTheme = useCallback(() => {
+    setTheme(isDark ? 'light' : 'dark')
+  }, [isDark, setTheme])
 
   const handleWalletClick = useCallback(() => {
     if (wallet) {
@@ -65,65 +187,89 @@ export function MainMenu() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[rgb(var(--background))] safe-top overflow-hidden">
-      {/* Header */}
-      <header className="flex-shrink-0 px-4 py-3">
-        <div className="flex items-center justify-between">
-          {/* Theme Toggle */}
-          <button
-            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className="w-10 h-10 rounded-xl bg-[rgb(var(--muted))] flex items-center justify-center active:scale-95 transition-transform"
-          >
-            {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
-          </button>
+    <div className="min-h-screen flex flex-col bg-[rgb(var(--background))] safe-top overflow-x-hidden pb-[calc(92px+env(safe-area-inset-bottom))]">
+      <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-[calc(env(safe-area-inset-top)+10px)] pb-2 pointer-events-none">
+        <div
+          className={`pointer-events-auto rounded-[28px] backdrop-blur-xl px-3 py-2 ${
+            isDark
+              ? 'bg-[#060912]/92'
+              : 'bg-[#faf4e8]/94'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center">
+              <div className={`relative h-11 w-11 overflow-hidden rounded-full ${isDark ? 'bg-black/30' : 'bg-white/80'}`}>
+                <Image src="/images/token-logo-coin.png" alt="NAPIWAS token" fill className="object-cover" sizes="44px" priority />
+              </div>
+            </div>
 
-          {/* Coins */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[rgb(var(--muted))]">
-            <span className="text-amber-400 font-bold">{formatNumber(coins)}</span>
-            <span className="text-xs text-[rgb(var(--muted-foreground))]">{language === 'ru' ? 'монет' : 'coins'}</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                aria-label="Theme switch"
+                aria-pressed={!isDark}
+                className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-all duration-200 active:scale-[0.97] ${
+                  isDark
+                    ? 'bg-[#111827] text-white/90'
+                    : 'bg-[#f0e7d2] text-[#3a2c14]'
+                }`}
+              >
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
+
+              <button
+                onClick={() => setLanguage(language === 'ru' ? 'en' : 'ru')}
+                className={`h-11 min-w-[52px] rounded-full px-3 text-xs font-bold tracking-wide transition-colors inline-flex items-center justify-center gap-1.5 ${
+                  isDark
+                    ? 'bg-[#111827] text-white/90'
+                    : 'bg-[#f0e7d2] text-[#2f2617]'
+                }`}
+                aria-label="Language switch"
+              >
+                <Languages className="h-3.5 w-3.5" />
+                {language.toUpperCase()}
+              </button>
+
+              <button
+                onClick={handleWalletClick}
+                className="h-11 rounded-full bg-[#18a2ea] px-4 text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] inline-flex items-center gap-2"
+                aria-label="Connect wallet"
+              >
+                <Wallet className="h-4 w-4" />
+                {wallet ? shortWalletAddress(effectiveWalletAddress, 5, 4) : (language === 'ru' ? 'Подключить' : 'Connect Wallet')}
+              </button>
+            </div>
           </div>
-
-          {/* Language Toggle */}
-          <button
-            onClick={() => setLanguage(language === 'ru' ? 'en' : 'ru')}
-            className="w-10 h-10 rounded-xl bg-[rgb(var(--muted))] flex items-center justify-center active:scale-95 transition-transform"
-          >
-            <span className="font-bold text-sm">{language.toUpperCase()}</span>
-          </button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col px-4 pb-4 overflow-y-auto no-scrollbar">
-        {/* Hero Logo */}
-        <div className="flex flex-col items-center py-6">
+      <div aria-hidden className="h-[calc(env(safe-area-inset-top)+76px)] flex-shrink-0" />
+
+      <main className="flex-1 flex flex-col px-4 pb-4">
+        <div className="flex flex-col items-center py-6 animate-menu-hero">
           <div className="relative mb-4">
-            {/* Glow */}
-            <div className="absolute inset-0 blur-3xl bg-amber-500/30 rounded-full scale-150" />
-            
-            {/* Logo */}
-            <div className="relative w-32 h-32 rounded-full overflow-hidden ring-4 ring-amber-500/50 shadow-2xl animate-float">
-              <Image 
-                src="/images/napiwas-logo.jpg" 
-                alt="NAPIWAS" 
+            <div className="relative w-32 h-32 overflow-hidden">
+              <Image
+                src="/images/tagay-shot.webp"
+                alt="NAPIWAS"
                 fill
-                className="object-cover"
+                className="object-contain"
                 priority
+                unoptimized
               />
             </div>
-            
-            {/* Level Badge */}
             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 gold-gradient text-[#1a1a1a] text-xs font-bold px-3 py-1 rounded-full shadow-lg">
               LVL {level}
             </div>
           </div>
 
-          {/* Title */}
           <h1 className="text-3xl font-bold gold-text mb-1">NAPIWAS</h1>
-          <p className="text-sm text-[rgb(var(--muted-foreground))]">{language === 'ru' ? 'Кот против Пива' : 'Cat vs Beer'}</p>
+          <p className={`text-sm font-bold ${isDark ? 'text-amber-300/95' : 'text-amber-700'}`}>
+            {formatNumber(Math.floor(napiwasBalance))} NAPIWAS
+          </p>
+          <p className="text-sm text-[rgb(var(--muted-foreground))]">{language === 'ru' ? 'Кот за пивом' : 'Cat for Beer'}</p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="bg-[rgb(var(--card))] rounded-xl p-3 text-center border border-[rgb(var(--border))]">
             <p className="text-xs text-[rgb(var(--muted-foreground))] mb-1">{t.highScore}</p>
@@ -135,21 +281,22 @@ export function MainMenu() {
           </div>
           <div className="bg-[rgb(var(--card))] rounded-xl p-3 text-center border border-[rgb(var(--border))]">
             <p className="text-xs text-[rgb(var(--muted-foreground))] mb-1">{t.multiplier}</p>
-            <p className="text-lg font-bold" style={{ color: tier.color }}>x{tier.multiplier}</p>
+            <p className="text-lg font-bold" style={{ color: tier.color }}>
+              x{tier.multiplier}
+            </p>
           </div>
         </div>
 
-        {/* Play Button */}
-        <Link 
+        <Link
           href="/play"
-          className="w-full py-4 rounded-2xl gold-gradient text-[#1a1a1a] font-bold text-lg flex items-center justify-center gap-2 mb-4 active:scale-[0.98] transition-transform glow-gold"
+          style={{ animationDelay: '220ms' }}
+          className="w-full py-4 rounded-2xl gold-gradient text-[#1a1a1a] font-bold text-lg flex items-center justify-center gap-2 mb-4 active:scale-[0.965] active:translate-y-[1px] transition-all duration-200 hover:brightness-110 hover:shadow-[0_12px_24px_rgba(245,158,11,0.35)] active:shadow-[inset_0_8px_18px_rgba(0,0,0,0.2)] glow-gold animate-menu-section"
         >
           <Play className="w-6 h-6" />
           {t.play}
         </Link>
 
-        {/* Menu Grid */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="grid grid-cols-2 gap-2 mb-4 animate-menu-section" style={{ animationDelay: '260ms' }}>
           <MenuLink href="/leaderboard" icon={Trophy} label={t.leaderboard} delay={50} />
           <MenuLink href="/daily" icon={Calendar} label={t.daily} delay={100} />
           <MenuLink href="/pvp" icon={Swords} label={t.pvp} delay={150} />
@@ -158,70 +305,38 @@ export function MainMenu() {
           <MenuLink href="/music" icon={Music} label={t.music} delay={300} />
         </div>
 
-        {/* Secondary Links */}
-        <div className="grid grid-cols-2 gap-2">
-          <MenuLink href="/partners" icon={Users} label={t.partners} small delay={350} />
-          <MenuLink href="/guide" icon={Info} label={t.guide} small delay={400} />
+        <div className="grid grid-cols-2 gap-2 animate-menu-section" style={{ animationDelay: '300ms' }}>
+          <MenuLink href="/partners" icon={Users} label={t.partners} delay={350} />
+          <MenuLink href="/guide" icon={Info} label={t.guide} delay={400} />
         </div>
 
-        {/* Spacer */}
         <div className="flex-1 min-h-4" />
 
-        {/* Wallet Section */}
-        <div className="mt-4 space-y-2">
-          <button
-            onClick={handleWalletClick}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgb(var(--muted))] border border-[rgb(var(--border))] active:scale-[0.98] transition-transform"
-          >
-            <Wallet className="w-5 h-5 text-amber-500" />
-            <span className="font-medium">
-              {wallet 
-                ? `${wallet.account.address.slice(0, 6)}...${wallet.account.address.slice(-4)}`
-                : t.connect
-              }
-            </span>
-          </button>
-
-          {wallet && (
-            <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[rgb(var(--card))] border border-[rgb(var(--border))]">
-              <div className="flex items-center gap-2">
-                <Crown className="w-4 h-4" style={{ color: tier.color }} />
-                <span className="text-sm font-medium" style={{ color: tier.color }}>{tier.tier}</span>
-              </div>
-              <span className="text-sm text-[rgb(var(--muted-foreground))]">
-                {formatNumber(napiwasBalance)} NAPIWAS
-              </span>
-            </div>
-          )}
-        </div>
+        <div className="mt-4 space-y-2 animate-menu-section" style={{ animationDelay: '340ms' }} />
       </main>
     </div>
   )
 }
 
-function MenuLink({ 
-  href, 
-  icon: Icon, 
-  label, 
-  small,
-  delay = 0
-}: { 
+function MenuLink({
+  href,
+  icon: Icon,
+  label,
+  delay = 0,
+}: {
   href: string
   icon: React.ElementType
   label: string
-  small?: boolean
   delay?: number
 }) {
   return (
     <Link
       href={href}
       style={{ animationDelay: `${delay}ms` }}
-      className={`flex items-center gap-2 rounded-xl bg-[rgb(var(--card))] border border-[rgb(var(--border))] active:scale-[0.97] transition-transform animate-fadeInUp ${
-        small ? 'py-2.5 px-3' : 'py-3.5 px-4'
-      }`}
+      className="flex h-14 items-center gap-2 rounded-xl bg-[rgb(var(--card))] px-4 active:scale-[0.965] active:translate-y-[1px] transition-all duration-200 hover:bg-[rgb(var(--muted))] hover:shadow-[0_8px_14px_rgba(0,0,0,0.2)] active:shadow-[inset_0_8px_16px_rgba(0,0,0,0.18)] animate-fadeInUp"
     >
-      <Icon className={`text-amber-500 flex-shrink-0 ${small ? 'w-4 h-4' : 'w-5 h-5'}`} />
-      <span className={`font-medium truncate ${small ? 'text-sm' : ''}`}>{label}</span>
+      <Icon className="h-5 w-5 text-amber-500 flex-shrink-0" />
+      <span className="font-medium truncate">{label}</span>
     </Link>
   )
 }

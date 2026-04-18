@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { motion } from 'framer-motion'
-import { Handshake, ExternalLink, ArrowLeft, Sparkles, Star } from 'lucide-react'
+import { Handshake, ExternalLink, Sparkles, Star } from 'lucide-react'
 import Link from 'next/link'
 import { useGameStore } from '@/lib/store'
+import { AppPageHeader } from '@/components/ui/app-page-header'
 
 interface Partner {
   id: string
@@ -83,21 +84,10 @@ export default function PartnersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm border-b border-border p-4">
-        <div className="flex items-center justify-between">
-          <motion.div whileTap={{ scale: 0.9 }}>
-            <Link href="/" className="p-2 -m-2 rounded-lg hover:bg-muted transition-colors">
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </Link>
-          </motion.div>
-          <h1 className="text-xl font-display font-bold beer-text flex items-center gap-2">
-            <Handshake className="w-5 h-5 text-beer-400" />
-            {t.title}
-          </h1>
-          <div className="w-10" />
-        </div>
-      </header>
+      <AppPageHeader
+        title={t.title}
+        icon={<Handshake className="w-5 h-5 text-beer-400" />}
+      />
 
       <div className="p-4 space-y-4">
         {/* Intro */}

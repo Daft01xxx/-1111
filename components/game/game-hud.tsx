@@ -2,7 +2,7 @@
 
 import { useGameStore } from '@/lib/store'
 import { formatNumber, getMultiplierTier } from '@/lib/utils'
-import { Heart, Pause, Zap, Shield, Target, Flame } from 'lucide-react'
+import { Heart, Pause, Zap, Shield, Target, Flame, Timer, Magnet, RefreshCw } from 'lucide-react'
 
 export function GameHUD() {
   const {
@@ -112,6 +112,11 @@ function PowerUpIcon({ type }: { type: string }) {
   const size = "w-3.5 h-3.5"
   switch (type) {
     case 'shield': return <Shield className={`${size} text-blue-400`} />
+    case 'double': return <Target className={`${size} text-amber-400`} />
+    case 'slowmo': return <Timer className={`${size} text-purple-400`} />
+    case 'magnet': return <Magnet className={`${size} text-cyan-400`} />
+    case 'reflect': return <RefreshCw className={`${size} text-sky-300`} />
+    case 'kraken': return <Flame className={`${size} text-pink-400`} />
     case 'double_shot': return <Target className={`${size} text-amber-400`} />
     case 'speed_boost': return <Zap className={`${size} text-purple-400`} />
     case 'triple_shot': return <Flame className={`${size} text-red-400`} />

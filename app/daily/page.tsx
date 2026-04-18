@@ -1,11 +1,30 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { Calendar, Gift, Flame, Check, ExternalLink, ArrowLeft, Wallet } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
-import { useGameStore } from '@/lib/store'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTonWallet } from '@tonconnect/ui-react'
+import { createClient } from '@/lib/supabase/client'
+import { useGameStore } from '@/lib/store'
+import { AppPageHeader } from '@/components/ui/app-page-header'
+import {
+  Beer,
+  Calendar,
+  Check,
+  Flame,
+  Gift,
+  Globe,
+  Hammer,
+  Image as ImageIcon,
+  Megaphone,
+  MessageCircle,
+  Rocket,
+  Route,
+  Swords,
+  Trophy,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react'
 
 interface DexTask {
   id: string
@@ -13,32 +32,233 @@ interface DexTask {
   description: string
   url: string
   reward_points: number
-  icon: string
+}
+
+interface GameQuest {
+  id: string
+  name: string
+  description: string
+  reward_points: number
+  metric: 'bosses' | 'meters' | 'score' | 'level'
+  target: number
+}
+
+const DEX_TASK_ICONS: Record<string, LucideIcon> = {
+  'napiwas-site': Globe,
+  'napiwas-channel': Megaphone,
+  'napiwas-chat': MessageCircle,
+  'tokenmystery-bot': Hammer,
+  'blum-memepad-1': Rocket,
+  'dexscreener-ton': Rocket,
+  'dyor-token': Globe,
+  'geckoterminal-pool': Rocket,
+  'blum-memepad-2': Rocket,
+  'stonfi-swap': Route,
+  'nft-collection-arni': ImageIcon,
+  'nft-collection-jsi': ImageIcon,
+}
+
+const DEX_TASK_LOGOS: Partial<Record<DexTask['id'], string>> = {
+  'napiwas-channel': '/icons/dex/telegram.svg',
+  'napiwas-chat': '/icons/dex/telegram.svg',
+  'tokenmystery-bot': '/icons/dex/telegram.svg',
+  'dexscreener-ton': '/icons/dex/dexscreener.svg',
+  'dyor-token': '/icons/dex/dyor.svg',
+  'geckoterminal-pool': '/icons/dex/geckoterminal.svg',
+  'stonfi-swap': '/icons/dex/stonfi.svg',
+}
+
+const QUEST_ICONS: Record<GameQuest['metric'], LucideIcon> = {
+  bosses: Swords,
+  meters: Route,
+  score: Trophy,
+  level: Flame,
+}
+
+const EXACT_DEX_TASKS: DexTask[] = [
+  {
+    id: 'napiwas-site',
+    name: 'NaPiwas - сайт',
+    description: 'Открыть napiwas.com',
+    url: 'https://napiwas.com/',
+    reward_points: 100,
+  },
+  {
+    id: 'napiwas-channel',
+    name: 'NaPiwas - канал',
+    description: 'Открыть официальный канал',
+    url: 'https://t.me/NAPIWASofficial',
+    reward_points: 120,
+  },
+  {
+    id: 'napiwas-chat',
+    name: 'NaPiwas - чат',
+    description: 'Открыть чат сообщества',
+    url: 'https://t.me/napiwas',
+    reward_points: 120,
+  },
+  {
+    id: 'tokenmystery-bot',
+    name: 'tokenmystery_bot',
+    description: 'Перейти в tokenmystery_bot',
+    url: 'https://t.me/tokenmystery_bot?startapp=ref_335984221',
+    reward_points: 130,
+  },
+  {
+    id: 'blum-memepad-1',
+    name: 'Blum Memepad',
+    description: 'Открыть Blum memepad',
+    url: 'https://t.me/blum/app?startapp=memepadjetton_NAPIWAS_wlN45-ref_',
+    reward_points: 150,
+  },
+  {
+    id: 'dexscreener-ton',
+    name: 'DexScreener',
+    description: 'Открыть пару NAPIWAS на DexScreener',
+    url: 'https://dexscreener.com/ton/eqax24y9iugryybpwxgogtvz05k_xfgn70-jakrlngoyen6p',
+    reward_points: 140,
+  },
+  {
+    id: 'dyor-token',
+    name: 'DYOR',
+    description: 'Открыть страницу токена на DYOR',
+    url: 'https://dyor.io/ru/token/EQDOCUp_pDBvOmGRyEDE2bnCl2cjGmAWjPsTWRt_veSsfGSn',
+    reward_points: 140,
+  },
+  {
+    id: 'geckoterminal-pool',
+    name: 'GeckoTerminal',
+    description: 'Открыть пул на GeckoTerminal',
+    url: 'https://www.geckoterminal.com/ru/ton/pools/EQAx24y9IUgryyBpWxgOgTVz05k_xfgn70-JakrLngoyEN6P',
+    reward_points: 140,
+  },
+  {
+    id: 'blum-memepad-2',
+    name: 'Blum Memepad (ref)',
+    description: 'Открыть Blum memepad (ref)',
+    url: 'https://t.me/blum/app?startapp=memepadjetton_NAPIWAS_wlN45-ref_VV7ujr1qAH',
+    reward_points: 150,
+  },
+  {
+    id: 'stonfi-swap',
+    name: 'STON.fi Swap',
+    description: 'Открыть swap TON -> NAPIWAS',
+    url: 'https://app.ston.fi/swap?chartVisible=false&chartInterval=1w&ft=TON&tt=EQDOCUp_pDBvOmGRyEDE2bnCl2cjGmAWjPsTWRt_veSsfGSn',
+    reward_points: 160,
+  },
+  {
+    id: 'nft-collection-arni',
+    name: 'NFT NAPIWAS & ARNI',
+    description: 'Открыть коллекцию NFT',
+    url: 'https://getgems.io/collection/EQBxyfZWx6VK4CQw7m0CpC6g3g23QZnHD0q5t0ZjUdagYjKb',
+    reward_points: 170,
+  },
+  {
+    id: 'nft-collection-jsi',
+    name: 'NFT NAPIWAS & JSI',
+    description: 'Открыть коллекцию NFT',
+    url: 'https://getgems.io/collection/EQA3rkcoahIFvfRY4LKsPfdgjUyvWOp-D3S2Qlc-QiqGn1fU',
+    reward_points: 170,
+  },
+]
+
+const GAME_QUESTS: GameQuest[] = [
+  {
+    id: 'quest-boss-10',
+    name: 'Boss Hunter',
+    description: 'Defeat 10 bosses',
+    reward_points: 1500,
+    metric: 'bosses',
+    target: 10,
+  },
+  {
+    id: 'quest-meters-10000',
+    name: 'Long Run',
+    description: 'Travel 10,000 meters total',
+    reward_points: 1200,
+    metric: 'meters',
+    target: 10000,
+  },
+  {
+    id: 'quest-score-5000',
+    name: 'Score Burst',
+    description: 'Reach high score 5,000+',
+    reward_points: 900,
+    metric: 'score',
+    target: 5000,
+  },
+  {
+    id: 'quest-level-10',
+    name: 'Captain Rank',
+    description: 'Reach level 10',
+    reward_points: 1000,
+    metric: 'level',
+    target: 10,
+  },
+]
+
+const STREAK_REWARDS = [
+  { days: 1, points: 100 },
+  { days: 3, points: 150 },
+  { days: 7, points: 300 },
+  { days: 14, points: 500 },
+  { days: 30, points: 1000 },
+] as const
+
+const DEX_COMPLETED_STORAGE_KEY = 'napiwas-dex-tasks-completed-v1'
+const QUEST_CLAIMED_STORAGE_KEY = 'napiwas-game-quests-claimed-v1'
+const LOCAL_CHECKIN_STATE_KEY = 'napiwas-local-checkin-v1'
+
+const getDexCompletedStorageKey = (walletKey: string | null) =>
+  walletKey ? `${DEX_COMPLETED_STORAGE_KEY}:${walletKey}` : DEX_COMPLETED_STORAGE_KEY
+
+function getTodayString() {
+  return new Date().toISOString().split('T')[0]
+}
+
+function getYesterdayString() {
+  return new Date(Date.now() - 86400000).toISOString().split('T')[0]
 }
 
 export default function DailyPage() {
   const wallet = useTonWallet()
-  const { walletAddress, addScore, theme, language, addCoins } = useGameStore()
-  
+  const { walletAddress, addScore, theme, language, addCoins, bossesDefeated, totalMeters, highScore, level } = useGameStore()
+  const effectiveWalletAddress = walletAddress || wallet?.account?.address || null
+
   const [streak, setStreak] = useState(0)
   const [checkedInToday, setCheckedInToday] = useState(false)
   const [checkingIn, setCheckingIn] = useState(false)
   const [dexTasks, setDexTasks] = useState<DexTask[]>([])
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set())
+  const [checkingTaskIds, setCheckingTaskIds] = useState<Set<string>>(new Set())
+  const [claimedGameQuests, setClaimedGameQuests] = useState<Set<string>>(new Set())
+  const [activeTab, setActiveTab] = useState<'daily' | 'dex' | 'quests'>('daily')
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [claimingQuestId, setClaimingQuestId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const taskDelayTimeoutsRef = useRef<Record<string, number>>({})
+  const completedTasksRef = useRef<Set<string>>(new Set())
 
   const t = {
     title: language === 'ru' ? 'Награды' : 'Daily Rewards',
-    checkin: language === 'ru' ? 'Ежедневный бонус' : 'Daily Check-in',
+    checkin: language === 'ru' ? 'Бонус' : 'Bonus',
     checkinDesc: language === 'ru' ? 'Заходите каждый день за наградой!' : 'Come back every day for rewards!',
     streak: language === 'ru' ? 'Серия' : 'Streak',
     checkIn: language === 'ru' ? 'Получить' : 'Check in',
     checkedIn: language === 'ru' ? 'Получено сегодня!' : 'Checked in today!',
-    checking: language === 'ru' ? 'Загрузка...' : 'Checking...',
+    checking: language === 'ru' ? 'Проверка...' : 'Checking...',
     streakBonuses: language === 'ru' ? 'Бонусы за серию' : 'Streak Bonuses',
     dexTasks: language === 'ru' ? 'Задания DEX' : 'DEX Tasks',
     dexTasksDesc: language === 'ru' ? 'Выполняйте задания для бонусов!' : 'Complete tasks for bonus points!',
     noTasks: language === 'ru' ? 'Пока нет заданий' : 'No tasks available',
+    quests: language === 'ru' ? 'Задания' : 'Quests',
+    questsDesc: language === 'ru' ? 'Игровые цели с наградами за прогресс' : 'Game goals with reward claims',
+    claim: language === 'ru' ? 'Забрать' : 'Claim',
+    claimed: language === 'ru' ? 'Забрано' : 'Claimed',
+    open: language === 'ru' ? 'Открыть' : 'Open',
+    wait: language === 'ru' ? 'Проверка...' : 'Wait...',
+    notReady: language === 'ru' ? 'Цель ещё не выполнена' : 'Goal is not completed yet',
+    rewardClaimFailed: language === 'ru' ? 'Не удалось забрать награду, попробуйте ещё раз' : 'Could not claim reward, please retry',
     connectWallet: language === 'ru' ? 'Подключите кошелек' : 'Connect wallet',
     connectWalletDesc: language === 'ru' ? 'Для получения наград подключите TON кошелек' : 'Connect your TON wallet to access daily rewards',
     goToMenu: language === 'ru' ? 'К меню' : 'Go to Menu',
@@ -48,374 +268,690 @@ export default function DailyPage() {
 
   const isDark = theme === 'dark'
 
+  const readLocalCheckIn = (walletKey: string) => {
+    try {
+      const raw = localStorage.getItem(`${LOCAL_CHECKIN_STATE_KEY}:${walletKey}`)
+      if (!raw) return null
+      const parsed = JSON.parse(raw) as { date?: string; streak?: number }
+      if (!parsed?.date || typeof parsed?.streak !== 'number') return null
+      return { date: parsed.date, streak: parsed.streak }
+    } catch {
+      return null
+    }
+  }
+
+  const writeLocalCheckIn = (walletKey: string, date: string, streakCount: number) => {
+    localStorage.setItem(
+      `${LOCAL_CHECKIN_STATE_KEY}:${walletKey}`,
+      JSON.stringify({ date, streak: streakCount })
+    )
+  }
+
+  const questProgress = useMemo(() => {
+    const progressMap = new Map<string, { current: number; target: number; done: boolean; percent: number }>()
+    for (const quest of GAME_QUESTS) {
+      const current =
+        quest.metric === 'bosses'
+          ? bossesDefeated
+          : quest.metric === 'meters'
+            ? totalMeters
+            : quest.metric === 'score'
+              ? highScore
+              : level
+
+      const percent = Math.max(0, Math.min(100, Math.floor((current / quest.target) * 100)))
+      progressMap.set(quest.id, {
+        current,
+        target: quest.target,
+        done: current >= quest.target,
+        percent,
+      })
+    }
+    return progressMap
+  }, [bossesDefeated, totalMeters, highScore, level])
+
+  const getStreakMilestoneBonus = (previousStreak: number, nextStreak: number) => {
+    return STREAK_REWARDS
+      .filter((reward) => reward.days > previousStreak && reward.days <= nextStreak)
+      .reduce((sum, reward) => sum + reward.points, 0)
+  }
+
   useEffect(() => {
-    if (!walletAddress) {
+    try {
+      const rawDexTasks = localStorage.getItem(getDexCompletedStorageKey(effectiveWalletAddress))
+      const rawClaimedQuests = localStorage.getItem(QUEST_CLAIMED_STORAGE_KEY)
+
+      if (rawDexTasks) {
+        const parsed = JSON.parse(rawDexTasks) as string[]
+        setCompletedTasks(new Set(parsed))
+      } else {
+        setCompletedTasks(new Set())
+      }
+
+      if (rawClaimedQuests) {
+        const parsed = JSON.parse(rawClaimedQuests) as string[]
+        setClaimedGameQuests(new Set(parsed))
+      }
+    } catch {
+      // ignore malformed local storage
+    }
+  }, [effectiveWalletAddress])
+
+  useEffect(() => {
+    completedTasksRef.current = completedTasks
+  }, [completedTasks])
+
+  useEffect(() => {
+    return () => {
+      Object.values(taskDelayTimeoutsRef.current).forEach((timeoutId) => window.clearTimeout(timeoutId))
+      taskDelayTimeoutsRef.current = {}
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!effectiveWalletAddress) {
       setLoading(false)
       return
     }
-    
-    const fetchData = async () => {
-      const supabase = createClient()
-      
-      const { data: user } = await supabase
-        .from('users')
-        .select('id')
-        .eq('wallet_address', walletAddress)
-        .single()
 
-      if (!user) {
+    const localCheckIn = readLocalCheckIn(effectiveWalletAddress)
+    if (localCheckIn) {
+      const today = getTodayString()
+      setStreak(localCheckIn.streak)
+      setCheckedInToday(localCheckIn.date === today)
+    }
+
+    const fetchData = async () => {
+      try {
+        const supabase = createClient()
+
+        const { data: user } = await supabase
+          .from('users')
+          .select('id')
+          .eq('wallet_address', effectiveWalletAddress)
+          .single()
+
+        if (!user) {
+          setDexTasks(EXACT_DEX_TASKS)
+          setLoading(false)
+          return
+        }
+
+        const { data: checkins } = await supabase
+          .from('daily_checkins')
+          .select('checkin_date, streak_count')
+          .eq('wallet_address', effectiveWalletAddress)
+          .order('checkin_date', { ascending: false })
+          .limit(30)
+
+        if (checkins && checkins.length > 0) {
+          const today = getTodayString()
+          const lastCheckin = checkins[0]
+          setCheckedInToday(lastCheckin.checkin_date === today)
+          setStreak(Number(lastCheckin.streak_count || 0))
+        }
+
+        setDexTasks(EXACT_DEX_TASKS)
+
+        const { data: userTasks } = await supabase
+          .from('user_tasks')
+          .select('task_id')
+          .eq('user_id', user.id)
+
+        if (userTasks) {
+          const localCompleted = (() => {
+            try {
+              const parsed = JSON.parse(
+                localStorage.getItem(getDexCompletedStorageKey(effectiveWalletAddress)) || '[]'
+              ) as string[]
+              return new Set(parsed)
+            } catch {
+              return new Set<string>()
+            }
+          })()
+
+          const merged = new Set<string>([
+            ...localCompleted,
+            ...userTasks.map((task) => task.task_id),
+          ])
+          setCompletedTasks(merged)
+        }
+      } catch {
+        setDexTasks(EXACT_DEX_TASKS)
+      } finally {
         setLoading(false)
+      }
+    }
+
+    void fetchData()
+  }, [effectiveWalletAddress])
+
+  const applyDailyReward = (previousStreak: number, nextStreak: number, baseBonus: number) => {
+    if (!effectiveWalletAddress) return
+    const milestoneBonus = getStreakMilestoneBonus(previousStreak, nextStreak)
+    const totalBonus = baseBonus + milestoneBonus
+
+    setStreak(nextStreak)
+    setCheckedInToday(true)
+    addScore(totalBonus)
+    addCoins(totalBonus)
+    writeLocalCheckIn(effectiveWalletAddress, getTodayString(), nextStreak)
+  }
+
+  const handleCheckIn = async () => {
+    if (!effectiveWalletAddress || checkedInToday || checkingIn) return
+
+    setCheckingIn(true)
+    setActionError(null)
+
+    const previousStreak = streak
+
+    try {
+      const response = await fetch('/api/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet_address: effectiveWalletAddress }),
+      })
+      const payload = await response.json().catch(() => null)
+
+      if (response.ok && payload?.success) {
+        const nextStreak = Number(payload.streak || 1)
+        const baseBonus = Number(payload.bonus || 100)
+        applyDailyReward(previousStreak, nextStreak, baseBonus)
         return
       }
 
-      const { data: checkins } = await supabase
-        .from('daily_checkins')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('check_in_date', { ascending: false })
-        .limit(30)
-
-      if (checkins && checkins.length > 0) {
-        const today = new Date().toISOString().split('T')[0]
-        const lastCheckin = checkins[0]
-        setCheckedInToday(lastCheckin.check_in_date === today)
-        setStreak(lastCheckin.streak_count)
+      if (payload?.alreadyCheckedIn) {
+        setCheckedInToday(true)
+        return
       }
-
-      const { data: tasks } = await supabase
-        .from('dex_tasks')
-        .select('*')
-        .eq('is_active', true)
-
-      if (tasks) {
-        setDexTasks(tasks)
-      }
-
-      const { data: userTasks } = await supabase
-        .from('user_tasks')
-        .select('task_id')
-        .eq('user_id', user.id)
-
-      if (userTasks) {
-        setCompletedTasks(new Set(userTasks.map(t => t.task_id)))
-      }
-
-      setLoading(false)
+    } catch {
+      // fallback to local reward below
     }
 
-    fetchData()
-  }, [walletAddress])
+    try {
+      const localState = readLocalCheckIn(effectiveWalletAddress)
+      const today = getTodayString()
+      const yesterday = getYesterdayString()
+      let nextStreak = 1
 
-  const handleCheckIn = async () => {
-    if (!walletAddress || checkedInToday || checkingIn) return
-    
-    setCheckingIn(true)
-    const supabase = createClient()
+      if (localState) {
+        if (localState.date === yesterday) {
+          nextStreak = localState.streak + 1
+        } else if (localState.date === today) {
+          setCheckedInToday(true)
+          setStreak(localState.streak)
+          return
+        }
+      }
 
-    let { data: user } = await supabase
-      .from('users')
-      .select('id')
-      .eq('wallet_address', walletAddress)
-      .single()
-
-    if (!user) {
-      const { data: newUser } = await supabase
-        .from('users')
-        .insert({ wallet_address: walletAddress })
-        .select('id')
-        .single()
-      user = newUser
-    }
-
-    if (!user) {
+      const baseBonus = Math.min(100 + (nextStreak - 1) * 25, 500)
+      applyDailyReward(previousStreak, nextStreak, baseBonus)
+    } catch {
+      setActionError(t.rewardClaimFailed)
+    } finally {
       setCheckingIn(false)
-      return
     }
-
-    const today = new Date().toISOString().split('T')[0]
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
-
-    const { data: lastCheckin } = await supabase
-      .from('daily_checkins')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('check_in_date', { ascending: false })
-      .limit(1)
-      .single()
-
-    let newStreak = 1
-    if (lastCheckin && lastCheckin.check_in_date === yesterday) {
-      newStreak = lastCheckin.streak_count + 1
-    }
-
-    const bonusPoints = Math.min(100 + (newStreak - 1) * 25, 500)
-    
-    await supabase.from('daily_checkins').insert({
-      user_id: user.id,
-      check_in_date: today,
-      streak_count: newStreak,
-      bonus_points: bonusPoints,
-    })
-
-    setStreak(newStreak)
-    setCheckedInToday(true)
-    addScore(bonusPoints)
-    addCoins(bonusPoints)
-    setCheckingIn(false)
   }
 
   const handleTaskComplete = async (task: DexTask) => {
-    if (!walletAddress || completedTasks.has(task.id)) return
+    if (!effectiveWalletAddress || completedTasks.has(task.id) || checkingTaskIds.has(task.id)) return
 
+    setActionError(null)
     window.open(task.url, '_blank')
+    setCheckingTaskIds((prev) => new Set([...prev, task.id]))
 
-    const supabase = createClient()
+    const timeoutId = window.setTimeout(async () => {
+      setCheckingTaskIds((prev) => {
+        const next = new Set(prev)
+        next.delete(task.id)
+        return next
+      })
+      delete taskDelayTimeoutsRef.current[task.id]
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('id')
-      .eq('wallet_address', walletAddress)
-      .single()
+      if (completedTasksRef.current.has(task.id)) return
 
-    if (!user) return
+      const updatedCompleted = new Set([...completedTasksRef.current, task.id])
+      setCompletedTasks(updatedCompleted)
+      localStorage.setItem(getDexCompletedStorageKey(effectiveWalletAddress), JSON.stringify(Array.from(updatedCompleted)))
+      addScore(task.reward_points)
+      addCoins(task.reward_points)
 
-    await supabase.from('user_tasks').insert({
-      user_id: user.id,
-      task_id: task.id,
-    })
+      const supabase = createClient()
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('wallet_address', effectiveWalletAddress)
+        .single()
 
-    setCompletedTasks(prev => new Set([...prev, task.id]))
-    addScore(task.reward_points)
-    addCoins(task.reward_points)
+      if (!user) return
+
+      const { error } = await supabase.from('user_tasks').insert({
+        user_id: user.id,
+        task_id: task.id,
+      })
+
+      if (error) {
+        setActionError(t.rewardClaimFailed)
+      }
+    }, 30000)
+
+    taskDelayTimeoutsRef.current[task.id] = timeoutId
   }
 
-  const streakRewards = [
-    { days: 1, points: 100 },
-    { days: 3, points: 150 },
-    { days: 7, points: 300 },
-    { days: 14, points: 500 },
-    { days: 30, points: 1000 },
-  ]
+  const handleGameQuestClaim = async (quest: GameQuest) => {
+    if (!effectiveWalletAddress || claimedGameQuests.has(quest.id)) return
+    setActionError(null)
+    setClaimingQuestId(quest.id)
+
+    try {
+      const progress = questProgress.get(quest.id)
+      if (!progress?.done) {
+        setActionError(t.notReady)
+        return
+      }
+
+      addScore(quest.reward_points)
+      addCoins(quest.reward_points)
+
+      const updatedClaims = new Set([...claimedGameQuests, quest.id])
+      setClaimedGameQuests(updatedClaims)
+      localStorage.setItem(QUEST_CLAIMED_STORAGE_KEY, JSON.stringify(Array.from(updatedClaims)))
+
+      const supabase = createClient()
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('wallet_address', effectiveWalletAddress)
+        .single()
+
+      if (user) {
+        const { error } = await supabase.from('user_tasks').insert({
+          user_id: user.id,
+          task_id: quest.id,
+        })
+        if (error) {
+          setActionError(t.rewardClaimFailed)
+        }
+      }
+    } finally {
+      setClaimingQuestId(null)
+    }
+  }
+
+  const completedDaysInCycle = checkedInToday ? (streak % 7 || 7) : streak % 7
+  const giftDayInCycle = completedDaysInCycle >= 7 ? 1 : completedDaysInCycle + 1
+
+  const renderDexTaskIcon = (task: DexTask, isCompleted: boolean, isChecking: boolean) => {
+    if (isCompleted) {
+      return <Check className="w-4 h-4 text-green-500" />
+    }
+    if (isChecking) {
+      return <Calendar className="w-4 h-4 text-amber-500 animate-pulse" />
+    }
+
+    const logo = DEX_TASK_LOGOS[task.id]
+    if (logo) {
+      return (
+        <Image
+          src={logo}
+          alt={task.name}
+          width={18}
+          height={18}
+          className="w-[18px] h-[18px] object-contain"
+          unoptimized
+        />
+      )
+    }
+
+    const Icon = DEX_TASK_ICONS[task.id] ?? ExternalLinkFallback
+    return <Icon className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+  }
 
   return (
-    <div className={`min-h-screen overflow-x-hidden ${isDark ? 'bg-[#0a0a0b]' : 'bg-[#faf9f7]'}`}>
-      {/* Header */}
-      <header 
-        className={`sticky top-0 z-20 backdrop-blur-md border-b px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 ${
-          isDark ? 'bg-[#0a0a0b]/95 border-[#1a1a1a]' : 'bg-[#faf9f7]/95 border-[#e5e5e5]'
-        }`}
-        style={{ animation: 'fadeInDown 0.3s ease' }}
-      >
-        <div className="flex items-center justify-between">
-          <Link 
-            href="/" 
-            className={`w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-all ${
-              isDark ? 'bg-[#1a1a1a]' : 'bg-[#f0f0f0]'
-            }`}
-          >
-            <ArrowLeft className={`w-5 h-5 ${isDark ? 'text-white' : 'text-black'}`} />
-          </Link>
-          <h1 className={`text-lg font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-black'}`}>
-            <Calendar className="w-5 h-5 text-amber-500" />
-            {t.title}
-          </h1>
-          <div className="w-10" />
-        </div>
-      </header>
+    <div className="min-h-screen overflow-x-hidden bg-[rgb(var(--background))] pb-[calc(108px+env(safe-area-inset-bottom))]">
+      <AppPageHeader title={t.title} icon={<Calendar className="w-5 h-5 text-amber-500" />} />
 
       <div className="p-4 space-y-4">
         {!wallet ? (
-          <div 
-            className={`text-center py-12 rounded-2xl ${isDark ? 'bg-[#111] border border-[#1a1a1a]' : 'bg-white border border-[#e5e5e5]'}`}
+          <div
+            className="text-center py-12 rounded-2xl bg-[rgb(var(--card))] border border-[rgb(var(--border))]"
             style={{ animation: 'fadeInUp 0.3s ease' }}
           >
             <Wallet className={`w-16 h-16 mx-auto mb-4 ${isDark ? 'text-gray-700' : 'text-gray-300'}`} />
-            <h3 className={`font-bold text-lg mb-2 ${isDark ? 'text-white' : 'text-black'}`}>{t.connectWallet}</h3>
-            <p className={`text-sm mb-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{t.connectWalletDesc}</p>
-            <Link 
-              href="/" 
-              className="inline-block px-6 py-3 bg-amber-500 text-black font-bold rounded-xl active:scale-95 transition-all"
-            >
+            <h3 className="font-bold text-lg mb-2 text-[rgb(var(--foreground))]">{t.connectWallet}</h3>
+            <p className="text-sm mb-4 text-[rgb(var(--muted-foreground))]">{t.connectWalletDesc}</p>
+            <Link href="/" className="menu-play-button inline-flex items-center justify-center px-6 py-3 rounded-xl font-bold text-[#1a1a1a]">
               {t.goToMenu}
             </Link>
           </div>
         ) : loading ? (
           <div className="space-y-4">
-            <div className={`h-40 rounded-2xl animate-pulse ${isDark ? 'bg-[#111]' : 'bg-gray-200'}`} />
-            <div className={`h-48 rounded-2xl animate-pulse ${isDark ? 'bg-[#111]' : 'bg-gray-200'}`} />
+            <div className="h-40 rounded-2xl animate-pulse bg-[rgb(var(--card))]" />
+            <div className="h-48 rounded-2xl animate-pulse bg-[rgb(var(--card))]" />
           </div>
         ) : (
           <>
-            {/* Check-in card */}
             <div
-              className={`rounded-2xl p-5 ${isDark ? 'bg-[#111] border border-[#1a1a1a]' : 'bg-white border border-[#e5e5e5]'}`}
+              className="rounded-2xl p-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))]"
               style={{ animation: 'fadeInUp 0.3s ease' }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-black'}`}>{t.checkin}</h2>
-                  <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{t.checkinDesc}</p>
-                </div>
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                  isDark ? 'bg-orange-500/20' : 'bg-orange-100'
-                }`}>
-                  <Flame className="w-4 h-4 text-orange-500" />
-                  <span className="font-bold text-orange-500">{streak}</span>
-                </div>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setActiveTab('daily')}
+                  className={`h-11 rounded-xl font-semibold transition-all ${
+                    activeTab === 'daily'
+                      ? 'menu-play-button text-[#1a1a1a]'
+                      : isDark
+                        ? 'bg-[#0f0f11] text-white/80'
+                        : 'bg-[#f0e8d9] text-[#2f2617]'
+                  }`}
+                >
+                  {t.checkin}
+                </button>
+                <button
+                  onClick={() => setActiveTab('dex')}
+                  className={`h-11 rounded-xl font-semibold transition-all ${
+                    activeTab === 'dex'
+                      ? 'menu-play-button text-[#1a1a1a]'
+                      : isDark
+                        ? 'bg-[#0f0f11] text-white/80'
+                        : 'bg-[#f0e8d9] text-[#2f2617]'
+                  }`}
+                >
+                  {t.dexTasks}
+                </button>
+                <button
+                  onClick={() => setActiveTab('quests')}
+                  className={`h-11 rounded-xl font-semibold transition-all ${
+                    activeTab === 'quests'
+                      ? 'menu-play-button text-[#1a1a1a]'
+                      : isDark
+                        ? 'bg-[#0f0f11] text-white/80'
+                        : 'bg-[#f0e8d9] text-[#2f2617]'
+                  }`}
+                >
+                  {t.quests}
+                </button>
               </div>
-
-              {/* Streak days */}
-              <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                {[...Array(7)].map((_, i) => {
-                  const dayNum = i + 1
-                  const currentDay = streak % 7 || 7
-                  const isCompleted = dayNum < currentDay || (streak > 0 && dayNum <= currentDay)
-                  const isCurrent = dayNum === (currentDay % 7) + 1 && !checkedInToday
-
-                  return (
-                    <div
-                      key={i}
-                      className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
-                        isCompleted 
-                          ? 'bg-amber-500 text-black' 
-                          : isCurrent 
-                            ? 'bg-amber-500/30 text-amber-500 border-2 border-amber-500' 
-                            : isDark ? 'bg-[#1a1a1a] text-gray-600' : 'bg-gray-100 text-gray-400'
-                      }`}
-                    >
-                      {isCompleted ? <Check className="w-5 h-5" /> : dayNum}
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* Check-in button */}
-              <button
-                onClick={handleCheckIn}
-                disabled={checkedInToday || checkingIn}
-                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
-                  checkedInToday 
-                    ? isDark ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-amber-500 text-black shadow-lg shadow-amber-500/25'
-                }`}
-              >
-                {checkingIn ? (
-                  t.checking
-                ) : checkedInToday ? (
-                  <>
-                    <Check className="w-5 h-5" />
-                    {t.checkedIn}
-                  </>
-                ) : (
-                  <>
-                    <Gift className="w-5 h-5" />
-                    {t.checkIn} (+{Math.min(100 + streak * 25, 500)})
-                  </>
-                )}
-              </button>
             </div>
 
-            {/* Streak rewards */}
-            <div
-              className={`rounded-2xl p-4 ${isDark ? 'bg-[#111] border border-[#1a1a1a]' : 'bg-white border border-[#e5e5e5]'}`}
-              style={{ animation: 'fadeInUp 0.3s ease 0.1s forwards', opacity: 0 }}
-            >
-              <h3 className={`text-lg font-bold mb-3 ${isDark ? 'text-white' : 'text-black'}`}>{t.streakBonuses}</h3>
-              <div className="space-y-2">
-                {streakRewards.map((reward) => (
-                  <div
-                    key={reward.days}
-                    className={`flex items-center justify-between p-3 rounded-xl transition-all ${
-                      streak >= reward.days 
-                        ? isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
-                        : isDark ? 'bg-[#0a0a0b]' : 'bg-gray-50'
+            {actionError && (
+              <div className={`rounded-xl px-3 py-2 text-sm ${isDark ? 'bg-red-500/10 text-red-300 border border-red-500/20' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                {actionError}
+              </div>
+            )}
+
+            {activeTab === 'daily' && (
+              <>
+                <div
+                  className="rounded-2xl p-5 bg-[rgb(var(--card))] border border-[rgb(var(--border))]"
+                  style={{ animation: 'fadeInUp 0.3s ease' }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-lg font-bold text-[rgb(var(--foreground))]">{t.checkin}</h2>
+                      <p className="text-sm text-[rgb(var(--muted-foreground))]">{t.checkinDesc}</p>
+                    </div>
+                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${isDark ? 'bg-yellow-500/20' : 'bg-yellow-100'}`}>
+                      <Flame className="w-4 h-4 text-yellow-500" />
+                      <span className="font-bold text-yellow-500">{streak}</span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 grid grid-cols-7 gap-1.5">
+                    {[...Array(7)].map((_, index) => {
+                      const dayNum = index + 1
+                      const isCompleted = completedDaysInCycle > 0 && dayNum <= completedDaysInCycle
+                      const showGift = !checkedInToday && dayNum === giftDayInCycle
+
+                      return (
+                        <div
+                          key={dayNum}
+                          className={`relative h-11 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
+                            isCompleted
+                              ? 'bg-amber-500 text-black'
+                              : showGift
+                                ? 'bg-amber-500/20 text-amber-500 border border-amber-500/60'
+                                : isDark
+                                  ? 'bg-[#1a1a1a] text-gray-500'
+                                  : 'bg-[#efe7d7] text-[#9a8f79]'
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <Check className="w-5 h-5" />
+                          ) : showGift ? (
+                            <Gift className="w-5 h-5" />
+                          ) : (
+                            dayNum
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  <button
+                    onClick={handleCheckIn}
+                    disabled={checkedInToday || checkingIn}
+                    className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                      checkedInToday
+                        ? isDark
+                          ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
+                          : 'bg-[#efe7d7] text-[#8e8167] cursor-not-allowed'
+                        : 'menu-play-button text-[#1a1a1a]'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        streak >= reward.days 
-                          ? 'bg-amber-500 text-black' 
-                          : isDark ? 'bg-[#1a1a1a] text-gray-600' : 'bg-gray-200 text-gray-400'
-                      }`}>
-                        {streak >= reward.days ? <Check className="w-4 h-4" /> : <Flame className="w-4 h-4" />}
-                      </div>
-                      <span className={`font-medium ${
-                        streak >= reward.days 
-                          ? 'text-amber-500' 
-                          : isDark ? 'text-gray-400' : 'text-gray-500'
-                      }`}>
-                        {reward.days} {reward.days === 1 ? t.day : t.days}
-                      </span>
-                    </div>
-                    <span className={`font-bold ${
-                      streak >= reward.days ? 'text-amber-500' : isDark ? 'text-gray-600' : 'text-gray-400'
-                    }`}>
-                      +{reward.points}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* DEX Tasks */}
-            <div
-              className={`rounded-2xl p-4 ${isDark ? 'bg-[#111] border border-[#1a1a1a]' : 'bg-white border border-[#e5e5e5]'}`}
-              style={{ animation: 'fadeInUp 0.3s ease 0.2s forwards', opacity: 0 }}
-            >
-              <h3 className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-black'}`}>{t.dexTasks}</h3>
-              <p className={`text-sm mb-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{t.dexTasksDesc}</p>
-              
-              {dexTasks.length === 0 ? (
-                <div className={`text-center py-6 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
-                  <p>{t.noTasks}</p>
+                    {checkingIn ? (
+                      t.checking
+                    ) : checkedInToday ? (
+                      <>
+                        <Check className="w-5 h-5" />
+                        {t.checkedIn}
+                      </>
+                    ) : (
+                      <>
+                        <Gift className="w-5 h-5" />
+                        {t.checkIn} (+{Math.min(100 + streak * 25, 500)})
+                      </>
+                    )}
+                  </button>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {dexTasks.map((task) => {
-                    const isCompleted = completedTasks.has(task.id)
-                    
-                    return (
-                      <button
-                        key={task.id}
-                        onClick={() => handleTaskComplete(task)}
-                        disabled={isCompleted}
-                        className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all active:scale-[0.98] ${
-                          isCompleted 
-                            ? isDark ? 'bg-[#0a0a0b] opacity-60' : 'bg-gray-50 opacity-60'
-                            : isDark ? 'bg-[#0a0a0b] hover:bg-[#151515]' : 'bg-gray-50 hover:bg-gray-100'
+
+                <div
+                  className="rounded-2xl p-4 bg-[rgb(var(--card))] border border-[rgb(var(--border))]"
+                  style={{ animation: 'fadeInUp 0.3s ease 0.1s forwards', opacity: 0 }}
+                >
+                  <h3 className="text-lg font-bold mb-3 text-[rgb(var(--foreground))]">{t.streakBonuses}</h3>
+                  <div className="space-y-2">
+                    {STREAK_REWARDS.map((reward) => (
+                      <div
+                        key={reward.days}
+                        className={`flex items-center justify-between p-3 rounded-xl transition-all ${
+                          streak >= reward.days
+                            ? isDark
+                              ? 'bg-amber-500/10 border border-amber-500/20'
+                              : 'bg-amber-100/60 border border-amber-300/50'
+                            : isDark
+                              ? 'bg-[#0f0f11]'
+                              : 'bg-[#f3ecdf]'
                         }`}
                       >
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl ${
-                          isCompleted 
-                            ? 'bg-green-500/20' 
-                            : isDark ? 'bg-amber-500/20' : 'bg-amber-100'
-                        }`}>
-                          {isCompleted ? <Check className="w-5 h-5 text-green-500" /> : task.icon}
-                        </div>
-                        <div className="flex-1">
-                          <p className={`font-medium ${
-                            isCompleted 
-                              ? isDark ? 'text-gray-600' : 'text-gray-400'
-                              : isDark ? 'text-white' : 'text-black'
-                          }`}>
-                            {task.name}
-                          </p>
-                          <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{task.description}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className={`font-bold ${
-                            isCompleted ? isDark ? 'text-gray-600' : 'text-gray-400' : 'text-amber-500'
-                          }`}>
-                            +{task.reward_points}
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              streak >= reward.days
+                                ? 'bg-amber-500 text-black'
+                                : isDark
+                                  ? 'bg-[#1a1a1a] text-gray-600'
+                                  : 'bg-[#e8deca] text-[#9a8f79]'
+                            }`}
+                          >
+                            {streak >= reward.days ? <Check className="w-4 h-4" /> : <Flame className="w-4 h-4" />}
+                          </div>
+                          <span className={`font-medium ${streak >= reward.days ? 'text-amber-500' : 'text-[rgb(var(--muted-foreground))]'}`}>
+                            {reward.days} {reward.days === 1 ? t.day : t.days}
                           </span>
-                          {!isCompleted && <ExternalLink className={`w-4 h-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />}
                         </div>
-                      </button>
-                    )
-                  })}
+                        <span className={`font-bold ${streak >= reward.days ? 'text-amber-500' : 'text-[rgb(var(--muted-foreground))]'}`}>
+                          +{reward.points}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              )}
-            </div>
+              </>
+            )}
+
+            {(activeTab === 'dex' || activeTab === 'quests') && (
+              <div
+                className="rounded-2xl p-4 bg-[rgb(var(--card))] border border-[rgb(var(--border))]"
+                style={{ animation: 'fadeInUp 0.3s ease' }}
+              >
+                <h3 className="text-lg font-bold mb-1 text-[rgb(var(--foreground))]">
+                  {activeTab === 'dex' ? t.dexTasks : t.quests}
+                </h3>
+                <p className="text-sm mb-4 text-[rgb(var(--muted-foreground))]">
+                  {activeTab === 'dex' ? t.dexTasksDesc : t.questsDesc}
+                </p>
+
+                {activeTab === 'dex' && dexTasks.length === 0 ? (
+                  <div className="text-center py-6 text-[rgb(var(--muted-foreground))]">
+                    <p>{t.noTasks}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {activeTab === 'dex'
+                      ? dexTasks.map((task) => {
+                          const isCompleted = completedTasks.has(task.id)
+                          const isChecking = checkingTaskIds.has(task.id)
+                          const percent = isCompleted ? 100 : isChecking ? 55 : 0
+
+                          return (
+                            <div key={task.id} className="rounded-xl bg-[rgb(var(--background))] p-3 border border-[rgb(var(--border))]">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex items-start gap-2.5">
+                                  <div
+                                    className={`mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                      isCompleted
+                                        ? isDark
+                                          ? 'bg-green-500/20'
+                                          : 'bg-green-100'
+                                        : isChecking
+                                          ? isDark
+                                            ? 'bg-amber-500/20'
+                                            : 'bg-amber-100'
+                                          : isDark
+                                            ? 'bg-amber-500/20'
+                                            : 'bg-amber-100'
+                                    }`}
+                                  >
+                                    {renderDexTaskIcon(task, isCompleted, isChecking)}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className={`font-semibold truncate ${isDark ? 'text-white' : 'text-black'}`}>{task.name}</p>
+                                    <p className={`text-xs ${isChecking ? (isDark ? 'text-amber-400' : 'text-amber-700') : 'text-[rgb(var(--muted-foreground))]'}`}>
+                                      {isChecking ? t.wait : task.description}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="text-right shrink-0">
+                                  <p className={`font-bold ${isCompleted ? 'text-[rgb(var(--muted-foreground))]' : 'text-amber-500'}`}>
+                                    +{task.reward_points}
+                                  </p>
+                                  <div className="mt-0.5 flex justify-end">
+                                    <Beer className={`w-3.5 h-3.5 ${isCompleted ? 'text-[rgb(var(--muted-foreground))]' : 'text-amber-500'}`} />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={`mt-3 h-2 rounded-full overflow-hidden ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e8dfcf]'}`}>
+                                <div className="h-full bg-amber-500 transition-all duration-300" style={{ width: `${percent}%` }} />
+                              </div>
+
+                              <div className="mt-2 flex items-center justify-between">
+                                <span className="text-xs text-[rgb(var(--muted-foreground))]">
+                                  {isCompleted ? '100 / 100' : isChecking ? '55 / 100' : '0 / 100'}
+                                </span>
+                                <button
+                                  onClick={() => handleTaskComplete(task)}
+                                  disabled={isCompleted || isChecking}
+                                  className={`h-8 px-3 rounded-lg text-xs font-bold transition-all ${
+                                    isCompleted
+                                      ? isDark
+                                        ? 'bg-green-500/20 text-green-300'
+                                        : 'bg-green-100 text-green-700'
+                                      : isChecking
+                                        ? isDark
+                                          ? 'bg-amber-500/20 text-amber-300'
+                                          : 'bg-amber-100 text-amber-700'
+                                        : 'menu-play-button text-[#1a1a1a]'
+                                  }`}
+                                >
+                                  {isCompleted ? t.claimed : isChecking ? t.wait : t.open}
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })
+                      : GAME_QUESTS.map((quest) => {
+                          const progress = questProgress.get(quest.id)
+                          const isClaimed = claimedGameQuests.has(quest.id)
+                          const isDone = !!progress?.done
+                          const progressText = `${Math.min(progress?.current ?? 0, quest.target)} / ${quest.target}`
+                          const QuestIcon = QUEST_ICONS[quest.metric] ?? Trophy
+
+                          return (
+                            <div key={quest.id} className="rounded-xl bg-[rgb(var(--background))] p-3 border border-[rgb(var(--border))]">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex items-start gap-2.5">
+                                  <div className={`mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
+                                    <QuestIcon className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className={`font-semibold truncate ${isDark ? 'text-white' : 'text-black'}`}>{quest.name}</p>
+                                    <p className="text-xs text-[rgb(var(--muted-foreground))]">{quest.description}</p>
+                                  </div>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <p className="text-amber-500 font-bold">+{quest.reward_points}</p>
+                                  <div className="mt-0.5 flex justify-end">
+                                    <Beer className="w-3.5 h-3.5 text-amber-500" />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={`mt-3 h-2 rounded-full overflow-hidden ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e8dfcf]'}`}>
+                                <div className="h-full bg-amber-500 transition-all duration-300" style={{ width: `${progress?.percent ?? 0}%` }} />
+                              </div>
+
+                              <div className="mt-2 flex items-center justify-between">
+                                <span className="text-xs text-[rgb(var(--muted-foreground))]">{progressText}</span>
+                                <button
+                                  onClick={() => handleGameQuestClaim(quest)}
+                                  disabled={isClaimed || !isDone || claimingQuestId === quest.id}
+                                  className={`h-8 px-3 rounded-lg text-xs font-bold transition-all ${
+                                    isClaimed
+                                      ? isDark
+                                        ? 'bg-green-500/20 text-green-300'
+                                        : 'bg-green-100 text-green-700'
+                                      : isDone
+                                        ? 'menu-play-button text-[#1a1a1a]'
+                                        : isDark
+                                          ? 'bg-[#1a1a1a] text-gray-500'
+                                          : 'bg-[#efe7d7] text-[#8e8167]'
+                                  }`}
+                                >
+                                  {isClaimed ? t.claimed : claimingQuestId === quest.id ? '...' : isDone ? t.claim : t.notReady}
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -425,11 +961,17 @@ export default function DailyPage() {
           from { opacity: 0; transform: translateY(16px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes fadeInDown {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
       `}</style>
     </div>
+  )
+}
+
+function ExternalLinkFallback(props: React.ComponentProps<'svg'>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <path d="M14 4h6v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 14L20 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M20 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }

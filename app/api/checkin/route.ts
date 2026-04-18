@@ -1,117 +1,149 @@
-"use server"
-
-import { createClient } from "@/lib/supabase/server"
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from 'next/server'
+import { createSupabaseAdminClientOrNull } from '@/lib/server/supabase-admin'
 
 const STREAK_BONUSES = [100, 150, 200, 300, 400, 500, 1000]
 
-export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const body = await request.json()
-  const { wallet_address } = body
+function normalizeWallet(input: unknown) {
+  if (typeof input !== 'string') return ''
+  return input.trim()
+}
 
-  if (!wallet_address) {
-    return NextResponse.json({ error: "Wallet address required" }, { status: 400 })
-  }
+function getTodayDate() {
+  return new Date().toISOString().split('T')[0]
+}
 
-  const today = new Date().toISOString().split("T")[0]
-
-  // Check if already checked in today
-  const { data: todayCheckin } = await supabase
-    .from("daily_checkins")
-    .select("*")
-    .eq("wallet_address", wallet_address)
-    .eq("checkin_date", today)
-    .single()
-
-  if (todayCheckin) {
-    return NextResponse.json({ 
-      error: "Already checked in today", 
-      alreadyCheckedIn: true 
-    }, { status: 400 })
-  }
-
-  // Get yesterday's check-in for streak calculation
+function getYesterdayDate() {
   const yesterday = new Date()
   yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = yesterday.toISOString().split("T")[0]
+  return yesterday.toISOString().split('T')[0]
+}
 
-  const { data: yesterdayCheckin } = await supabase
-    .from("daily_checkins")
-    .select("*")
-    .eq("wallet_address", wallet_address)
-    .eq("checkin_date", yesterdayStr)
-    .single()
-
-  const newStreak = yesterdayCheckin ? yesterdayCheckin.streak_count + 1 : 1
-  const streakIndex = Math.min(newStreak - 1, STREAK_BONUSES.length - 1)
-  const bonus = STREAK_BONUSES[streakIndex]
-
-  // Create check-in
-  const { error: checkinError } = await supabase.from("daily_checkins").insert({
-    wallet_address,
-    checkin_date: today,
-    streak_count: newStreak,
-    bonus_earned: bonus,
-  })
-
-  if (checkinError) {
-    return NextResponse.json({ error: checkinError.message }, { status: 500 })
+export async function POST(request: NextRequest) {
+  const supabase = createSupabaseAdminClientOrNull()
+  if (!supabase) {
+    return NextResponse.json({ error: 'Supabase is not configured' }, { status: 503 })
   }
 
-  // Update user total score with bonus
-  const { data: user } = await supabase
-    .from("users")
-    .select("total_score")
-    .eq("wallet_address", wallet_address)
-    .single()
+  const body = await request.json().catch(() => ({}))
+  const walletAddress = normalizeWallet((body as Record<string, unknown>)?.wallet_address)
 
-  if (user) {
-    await supabase
-      .from("users")
-      .update({ total_score: user.total_score + bonus })
-      .eq("wallet_address", wallet_address)
+  if (!walletAddress) {
+    return NextResponse.json({ error: 'Wallet address required' }, { status: 400 })
   }
 
-  return NextResponse.json({
-    success: true,
-    streak: newStreak,
-    bonus,
-    nextBonus: STREAK_BONUSES[Math.min(newStreak, STREAK_BONUSES.length - 1)],
-  })
+  try {
+    const today = getTodayDate()
+    const yesterday = getYesterdayDate()
+
+    const { data: todayCheckin, error: todayCheckinError } = await supabase
+      .from('daily_checkins')
+      .select('*')
+      .eq('wallet_address', walletAddress)
+      .eq('checkin_date', today)
+      .maybeSingle()
+
+    if (todayCheckinError) throw new Error(todayCheckinError.message)
+    if (todayCheckin) {
+      return NextResponse.json({ error: 'Already checked in today', alreadyCheckedIn: true }, { status: 400 })
+    }
+
+    const { data: yesterdayCheckin, error: yesterdayError } = await supabase
+      .from('daily_checkins')
+      .select('*')
+      .eq('wallet_address', walletAddress)
+      .eq('checkin_date', yesterday)
+      .maybeSingle()
+
+    if (yesterdayError) throw new Error(yesterdayError.message)
+
+    const streak = yesterdayCheckin?.streak_count ? Number(yesterdayCheckin.streak_count) + 1 : 1
+    const bonus = STREAK_BONUSES[Math.min(streak - 1, STREAK_BONUSES.length - 1)]
+
+    const { error: insertError } = await supabase.from('daily_checkins').insert({
+      wallet_address: walletAddress,
+      checkin_date: today,
+      streak_count: streak,
+      bonus_earned: bonus,
+    })
+
+    if (insertError) throw new Error(insertError.message)
+
+    const { data: user, error: userFetchError } = await supabase
+      .from('users')
+      .select('total_score')
+      .eq('wallet_address', walletAddress)
+      .maybeSingle()
+
+    if (userFetchError) throw new Error(userFetchError.message)
+
+    if (user) {
+      const { error: updateUserError } = await supabase
+        .from('users')
+        .update({
+          total_score: Number(user.total_score || 0) + bonus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('wallet_address', walletAddress)
+
+      if (updateUserError) throw new Error(updateUserError.message)
+    }
+
+    return NextResponse.json({
+      success: true,
+      streak,
+      bonus,
+      nextBonus: STREAK_BONUSES[Math.min(streak, STREAK_BONUSES.length - 1)],
+      source: 'supabase',
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unexpected check-in error'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-  const searchParams = request.nextUrl.searchParams
-  const wallet = searchParams.get("wallet")
-
-  if (!wallet) {
-    return NextResponse.json({ error: "Wallet address required" }, { status: 400 })
+  const supabase = createSupabaseAdminClientOrNull()
+  if (!supabase) {
+    return NextResponse.json({ error: 'Supabase is not configured' }, { status: 503 })
   }
 
-  const today = new Date().toISOString().split("T")[0]
+  const walletAddress = normalizeWallet(request.nextUrl.searchParams.get('wallet'))
+  if (!walletAddress) {
+    return NextResponse.json({ error: 'Wallet address required' }, { status: 400 })
+  }
 
-  const { data: todayCheckin } = await supabase
-    .from("daily_checkins")
-    .select("*")
-    .eq("wallet_address", wallet)
-    .eq("checkin_date", today)
-    .single()
+  try {
+    const today = getTodayDate()
 
-  const { data: history } = await supabase
-    .from("daily_checkins")
-    .select("*")
-    .eq("wallet_address", wallet)
-    .order("checkin_date", { ascending: false })
-    .limit(30)
+    const { data: todayCheckin, error: todayError } = await supabase
+      .from('daily_checkins')
+      .select('*')
+      .eq('wallet_address', walletAddress)
+      .eq('checkin_date', today)
+      .maybeSingle()
 
-  const currentStreak = todayCheckin?.streak_count || 0
+    if (todayError) throw new Error(todayError.message)
 
-  return NextResponse.json({
-    checkedInToday: !!todayCheckin,
-    currentStreak,
-    history: history || [],
-    nextBonus: STREAK_BONUSES[Math.min(currentStreak, STREAK_BONUSES.length - 1)],
-  })
+    const { data: history, error: historyError } = await supabase
+      .from('daily_checkins')
+      .select('*')
+      .eq('wallet_address', walletAddress)
+      .order('checkin_date', { ascending: false })
+      .limit(30)
+
+    if (historyError) throw new Error(historyError.message)
+
+    const currentStreak = Number(todayCheckin?.streak_count || 0)
+
+    return NextResponse.json({
+      checkedInToday: !!todayCheckin,
+      currentStreak,
+      history: history || [],
+      nextBonus: STREAK_BONUSES[Math.min(currentStreak, STREAK_BONUSES.length - 1)],
+      source: 'supabase',
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unexpected check-in error'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

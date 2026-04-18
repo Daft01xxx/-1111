@@ -102,6 +102,10 @@ body {
     @apply px-5 py-3 rounded-xl font-medium bg-[rgb(var(--muted))] 
            text-[rgb(var(--foreground))] active:scale-[0.97] transition-transform duration-100;
   }
+
+  .menu-play-button {
+    @apply gold-gradient shadow-[0_10px_22px_rgba(245,158,11,0.34)] active:scale-[0.98] transition-all duration-150;
+  }
 }
 
 /* Minimal Animations */
@@ -147,6 +151,55 @@ body {
 .animate-float { animation: float 3s ease-in-out infinite; }
 .animate-pulse-subtle { animation: pulse-subtle 2s ease-in-out infinite; }
 .animate-shine { animation: shine 2s ease-in-out infinite; }
+
+@keyframes menu-hero-enter {
+  0% { opacity: 0; transform: translateY(24px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes menu-section-enter {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-menu-hero {
+  opacity: 0;
+  animation: menu-hero-enter 0.72s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-menu-section {
+  opacity: 0;
+  animation: menu-section-enter 0.56s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.pause-card-enter {
+  animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (max-width: 900px) {
+  .animate-fadeInUp,
+  .animate-fadeInScale,
+  .animate-menu-hero,
+  .animate-menu-section {
+    animation-duration: 0.28s !important;
+  }
+
+  .animate-float {
+    animation: none !important;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 /* Prevent scroll bounce on iOS */
 @supports (-webkit-touch-callout: none) {

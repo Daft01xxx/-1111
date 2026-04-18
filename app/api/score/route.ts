@@ -1,90 +1,114 @@
-import { createClient } from "@/lib/supabase/server"
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from 'next/server'
+import { createSupabaseAdminClientOrNull } from '@/lib/server/supabase-admin'
+
+function normalizeWallet(input: unknown) {
+  if (typeof input !== 'string') return ''
+  return input.trim()
+}
+
+function safeNum(value: unknown, fallback = 0) {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : fallback
+}
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const body = await request.json()
-  const { wallet_address, username, score, level, meters, bosses_defeated, multiplier_used } = body
-
-  if (!wallet_address || score === undefined) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+  const supabase = createSupabaseAdminClientOrNull()
+  if (!supabase) {
+    return NextResponse.json({ error: 'Supabase is not configured' }, { status: 503 })
   }
 
-  // Get or create user
-  let { data: user } = await supabase
-    .from("users")
-    .select("*")
-    .eq("wallet_address", wallet_address)
-    .single()
+  const body = await request.json().catch(() => ({}))
+  const walletAddress = normalizeWallet((body as Record<string, unknown>)?.wallet_address)
+  const username = typeof (body as Record<string, unknown>)?.username === 'string' ? String((body as Record<string, unknown>).username).trim() : ''
+  const baseScore = Math.max(0, Math.floor(safeNum((body as Record<string, unknown>)?.score, 0)))
+  const level = Math.max(1, Math.floor(safeNum((body as Record<string, unknown>)?.level, 1)))
+  const meters = Math.max(0, Math.floor(safeNum((body as Record<string, unknown>)?.meters, 0)))
+  const bossesDefeated = Math.max(0, Math.floor(safeNum((body as Record<string, unknown>)?.bosses_defeated, 0)))
+  const multiplierUsed = Math.max(1, safeNum((body as Record<string, unknown>)?.multiplier_used, 1))
 
-  if (!user) {
-    // Create new user
-    const { data: newUser, error: createError } = await supabase
-      .from("users")
-      .insert({ 
-        wallet_address,
-        username: username || `Player_${wallet_address.slice(-6)}`,
-        high_score: 0,
-        total_score: 0,
-        level: 1,
-        meters: 0,
-        bosses_defeated: 0,
-        games_played: 0,
-        multiplier: multiplier_used || 1.0
-      })
-      .select()
-      .single()
+  if (!walletAddress || baseScore <= 0) {
+    return NextResponse.json({ error: 'wallet_address and score are required' }, { status: 400 })
+  }
 
-    if (createError) {
-      return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
+  const finalScore = Math.floor(baseScore * multiplierUsed)
+
+  try {
+    const { data: existingUser, error: userFetchError } = await supabase
+      .from('users')
+      .select('id,username,high_score,total_score,games_played,meters,bosses_defeated,current_level')
+      .eq('wallet_address', walletAddress)
+      .maybeSingle()
+
+    if (userFetchError) throw new Error(userFetchError.message)
+
+    let userId = existingUser?.id as string | undefined
+    const nowIso = new Date().toISOString()
+
+    if (!userId) {
+      const { data: insertedUser, error: insertUserError } = await supabase
+        .from('users')
+        .insert({
+          wallet_address: walletAddress,
+          username: username || `Player_${walletAddress.slice(-6)}`,
+          high_score: finalScore,
+          total_score: finalScore,
+          current_level: level,
+          level,
+          meters,
+          bosses_defeated: bossesDefeated,
+          games_played: 1,
+          multiplier: multiplierUsed,
+          updated_at: nowIso,
+        })
+        .select('id')
+        .single()
+
+      if (insertUserError) throw new Error(insertUserError.message)
+      userId = insertedUser.id as string
+    } else {
+      const currentUser = existingUser as NonNullable<typeof existingUser>
+      const newHighScore = Math.max(Number(currentUser.high_score || 0), finalScore)
+      const { error: updateUserError } = await supabase
+        .from('users')
+        .update({
+          username: username || currentUser.username,
+          high_score: newHighScore,
+          total_score: Number(currentUser.total_score || 0) + finalScore,
+          games_played: Number(currentUser.games_played || 0) + 1,
+          meters: Number(currentUser.meters || 0) + meters,
+          bosses_defeated: Number(currentUser.bosses_defeated || 0) + bossesDefeated,
+          current_level: Math.max(Number(currentUser.current_level || 1), level),
+          level: Math.max(Number(currentUser.current_level || 1), level),
+          updated_at: nowIso,
+        })
+        .eq('id', userId)
+
+      if (updateUserError) throw new Error(updateUserError.message)
     }
-    user = newUser
+
+    const { error: insertLbError } = await supabase.from('leaderboard').insert({
+      user_id: userId,
+      wallet_address: walletAddress,
+      username: username || existingUser?.username || `Player_${walletAddress.slice(-6)}`,
+      score: finalScore,
+      level,
+      meters,
+      bosses_defeated: bossesDefeated,
+      multiplier_used: multiplierUsed,
+      created_at: nowIso,
+    })
+
+    if (insertLbError) throw new Error(insertLbError.message)
+
+    return NextResponse.json({
+      success: true,
+      source: 'supabase',
+      finalScore,
+      multiplier: multiplierUsed,
+      newHighScore: finalScore >= Number(existingUser?.high_score || 0),
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unexpected score save error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
-
-  const finalMultiplier = multiplier_used || user?.multiplier || 1.0
-  const finalScore = Math.floor(score * finalMultiplier)
-
-  // Update user stats
-  const userUpdates: Record<string, unknown> = {
-    total_score: (user?.total_score || 0) + finalScore,
-    games_played: (user?.games_played || 0) + 1,
-    meters: (user?.meters || 0) + (meters || 0),
-    updated_at: new Date().toISOString(),
-  }
-
-  if (finalScore > (user?.high_score || 0)) {
-    userUpdates.high_score = finalScore
-  }
-
-  if (level && level > (user?.level || 1)) {
-    userUpdates.level = level
-  }
-
-  if (bosses_defeated) {
-    userUpdates.bosses_defeated = (user?.bosses_defeated || 0) + bosses_defeated
-  }
-
-  await supabase
-    .from("users")
-    .update(userUpdates)
-    .eq("wallet_address", wallet_address)
-
-  // Add to leaderboard (each game creates a new entry)
-  await supabase.from("leaderboard").insert({
-    wallet_address,
-    username: username || user?.username || `Player_${wallet_address.slice(-6)}`,
-    score: finalScore,
-    level: level || user?.level || 1,
-    meters: meters || 0,
-    bosses_defeated: bosses_defeated || 0,
-    multiplier_used: finalMultiplier,
-    created_at: new Date().toISOString(),
-  })
-
-  return NextResponse.json({ 
-    success: true, 
-    finalScore, 
-    multiplier: finalMultiplier,
-    newHighScore: finalScore > (user?.high_score || 0)
-  })
 }

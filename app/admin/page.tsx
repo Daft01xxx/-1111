@@ -5,9 +5,10 @@ import { createClient } from '@/lib/supabase/client'
 import { motion } from 'framer-motion'
 import { 
   Lock, Shield, Users, Music, Handshake, BarChart3, 
-  Plus, Trash2, Upload, Save, ArrowLeft, Eye, EyeOff
+  Plus, Trash2, Eye, EyeOff
 } from 'lucide-react'
 import Link from 'next/link'
+import { AppPageHeader } from '@/components/ui/app-page-header'
 
 const ADMIN_PASSWORD = 'napiwasadmin2024'
 
@@ -15,8 +16,8 @@ interface MusicTrack {
   id: string
   title: string
   artist: string
-  url: string
-  unlock_score: number
+  file_url: string
+  unlock_requirement: number
   is_active: boolean
 }
 
@@ -26,7 +27,7 @@ interface Partner {
   logo_url: string
   website_url: string
   description: string
-  order_index: number
+  sort_order: number
   is_active: boolean
 }
 
@@ -50,7 +51,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false)
 
   // New track form
-  const [newTrack, setNewTrack] = useState({ title: '', artist: '', url: '', unlock_score: 0 })
+  const [newTrack, setNewTrack] = useState({ title: '', artist: '', file_url: '', unlock_requirement: 0 })
   // New partner form  
   const [newPartner, setNewPartner] = useState({ name: '', logo_url: '', website_url: '', description: '' })
 
@@ -91,30 +92,33 @@ export default function AdminPage() {
     const { data: musicData } = await supabase
       .from('music_tracks')
       .select('*')
-      .order('unlock_score', { ascending: true })
+      .order('unlock_requirement', { ascending: true })
     if (musicData) setTracks(musicData)
 
     // Get partners
     const { data: partnersData } = await supabase
       .from('partners')
       .select('*')
-      .order('order_index', { ascending: true })
+      .order('sort_order', { ascending: true })
     if (partnersData) setPartners(partnersData)
 
     setLoading(false)
   }
 
   const handleAddTrack = async () => {
-    if (!newTrack.title || !newTrack.url) return
+    if (!newTrack.title || !newTrack.file_url) return
     
     const supabase = createClient()
     const { error } = await supabase.from('music_tracks').insert({
-      ...newTrack,
+      title: newTrack.title,
+      artist: newTrack.artist,
+      file_url: newTrack.file_url,
+      unlock_requirement: newTrack.unlock_requirement,
       is_active: true,
     })
 
     if (!error) {
-      setNewTrack({ title: '', artist: '', url: '', unlock_score: 0 })
+      setNewTrack({ title: '', artist: '', file_url: '', unlock_requirement: 0 })
       fetchData()
     }
   }
@@ -137,7 +141,7 @@ export default function AdminPage() {
     const supabase = createClient()
     const { error } = await supabase.from('partners').insert({
       ...newPartner,
-      order_index: partners.length,
+      sort_order: partners.length,
       is_active: true,
     })
 
@@ -209,24 +213,18 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-dark-950">
-      {/* Header */}
-      <header className="sticky top-0 z-20 bg-dark-950/90 backdrop-blur-sm border-b border-dark-800 p-4">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="p-2 -m-2 rounded-lg hover:bg-dark-800 transition-colors">
-            <ArrowLeft className="w-6 h-6 text-foam-100" />
-          </Link>
-          <h1 className="text-xl font-display font-bold beer-text flex items-center gap-2">
-            <Shield className="w-5 h-5 text-beer-400" />
-            Admin Panel
-          </h1>
+      <AppPageHeader
+        title="Admin Panel"
+        icon={<Shield className="w-5 h-5 text-beer-400" />}
+        rightSlot={
           <button
             onClick={() => setIsAuthenticated(false)}
-            className="text-sm text-foam-500 hover:text-foam-300"
+            className="h-10 px-3 text-sm text-foam-500 hover:text-foam-300"
           >
             Logout
           </button>
-        </div>
-      </header>
+        }
+      />
 
       {/* Tabs */}
       <div className="flex gap-2 p-4 overflow-x-auto">
@@ -322,15 +320,15 @@ export default function AdminPage() {
               />
               <input
                 type="text"
-                value={newTrack.url}
-                onChange={(e) => setNewTrack({ ...newTrack, url: e.target.value })}
+                value={newTrack.file_url}
+                onChange={(e) => setNewTrack({ ...newTrack, file_url: e.target.value })}
                 placeholder="Audio URL (mp3)"
                 className="w-full px-4 py-2 rounded-lg bg-dark-800 border border-dark-600 text-foam-100 placeholder-foam-500 focus:border-beer-500 focus:outline-none"
               />
               <input
                 type="number"
-                value={newTrack.unlock_score}
-                onChange={(e) => setNewTrack({ ...newTrack, unlock_score: parseInt(e.target.value) || 0 })}
+                value={newTrack.unlock_requirement}
+                onChange={(e) => setNewTrack({ ...newTrack, unlock_requirement: parseInt(e.target.value) || 0 })}
                 placeholder="Unlock score (0 = free)"
                 className="w-full px-4 py-2 rounded-lg bg-dark-800 border border-dark-600 text-foam-100 placeholder-foam-500 focus:border-beer-500 focus:outline-none"
               />
@@ -358,7 +356,7 @@ export default function AdminPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foam-100 truncate">{track.title}</p>
-                    <p className="text-xs text-foam-500">{track.artist} | {track.unlock_score} pts</p>
+                    <p className="text-xs text-foam-500">{track.artist} | {track.unlock_requirement} pts</p>
                   </div>
                   <button
                     onClick={() => handleToggleTrack(track.id, track.is_active)}

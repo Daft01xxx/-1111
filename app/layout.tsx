@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Russo_One } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
+import { AppBottomNav } from '@/components/ui/app-bottom-nav'
 
 const inter = Inter({ 
   subsets: ['latin', 'cyrillic'],
@@ -37,9 +38,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" className={`${inter.variable} ${russo.variable}`}>
-      <body className="min-h-screen bg-[rgb(var(--background))] text-[rgb(var(--foreground))] font-sans antialiased">
+      <body className="relative min-h-screen bg-[rgb(var(--background))] text-[rgb(var(--foreground))] font-sans antialiased">
         <Providers>
-          {children}
+          <div className="relative z-10">
+            {children}
+            <AppBottomNav />
+          </div>
         </Providers>
       </body>
     </html>
